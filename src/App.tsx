@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Spin } from "antd";
+import { fetchMenuData } from "./api/menu";
+import { buildRoutes } from "./routes";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [router, setRouter] = useState<ReturnType<
+    typeof createBrowserRouter
+  > | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  useEffect(() => {
+    const initRouter = async () => {
+      try {
+        // 从后端获取菜单数据
+        const menuData = await fetchMenuData();
+
+        // 根据菜单数据生成路由
+        const routes = buildRoutes(menuData);
+
+        // 创建路由
+        const routerInstance = createBrowserRouter(routes);
+        setRouter(routerInstance);
+      } catch (error) {
+        console.error("Failed to load menu data:", error);
+        // 可以设置一个默认路由或错误页面
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initRouter();
+  }, []);
+
+  if (loading || !router) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" tip="加载中..." />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    );
+  }
+
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;
