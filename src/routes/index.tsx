@@ -33,7 +33,7 @@ export const generateRoutesFromMenu = (
       path: menu.path, // 相对路径，用于路由嵌套
       key: menu.key,
       label: menu.label,
-      icon: getIcon(menu.icon),
+      icon: getIcon(menu.icon, { size: 16 }),
       hidden: menu.hidden,
     };
 

@@ -13,17 +13,12 @@ function App() {
   useEffect(() => {
     const initRouter = async () => {
       try {
-        // 从后端获取菜单数据
         const menuData = await fetchMenuData();
-
-        // 根据菜单数据生成路由
         const routes = buildRoutes(menuData);
-        // 创建路由
         const routerInstance = createBrowserRouter(routes);
         setRouter(routerInstance);
       } catch (error) {
         console.error("Failed to load menu data:", error);
-        // 可以设置一个默认路由或错误页面
       } finally {
         setLoading(false);
       }

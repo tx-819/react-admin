@@ -20,28 +20,28 @@ export const fetchMenuData = async (): Promise<MenuItem[]> => {
           key: "dashboard",
           path: "dashboard",
           label: "仪表盘",
-          icon: "DashboardOutlined",
+          icon: "CircleGauge",
           component: "/dashboard",
         },
         {
           key: "system",
           path: "system",
           label: "系统管理",
-          icon: "UserOutlined",
+          icon: "UserRound",
           children: [
             {
               key: "users",
               path: "users",
               label: "用户管理",
-              icon: "UserOutlined",
+              icon: "UserRound",
               component: "/system/users",
             },
             {
               key: "roles",
               path: "roles",
               label: "角色管理",
-              icon: "RoleOutlined",
-              component: "/system/roles", // 示例：可以使用同一个组件
+              icon: "UserRoundCog",
+              component: "/system/roles", 
             },
           ],
         },
