@@ -21,7 +21,7 @@ export const fetchMenuData = async (): Promise<MenuItem[]> => {
           path: "dashboard",
           label: "仪表盘",
           icon: "DashboardOutlined",
-          component: "dashboard",
+          component: "/dashboard",
         },
         {
           key: "system",
@@ -34,13 +34,13 @@ export const fetchMenuData = async (): Promise<MenuItem[]> => {
               path: "users",
               label: "用户管理",
               icon: "UserOutlined",
-              component: "users",
+              component: "/system/users",
             },
             {
               key: "roles",
               path: "roles",
               label: "角色管理",
-              component: "users", // 示例：可以使用同一个组件
+              component: "/system/roles", // 示例：可以使用同一个组件
             },
           ],
         },
