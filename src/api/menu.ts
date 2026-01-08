@@ -40,6 +40,7 @@ export const fetchMenuData = async (): Promise<MenuItem[]> => {
               key: "roles",
               path: "roles",
               label: "角色管理",
+              icon: "RoleOutlined",
               component: "/system/roles", // 示例：可以使用同一个组件
             },
           ],

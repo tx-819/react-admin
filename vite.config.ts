@@ -10,12 +10,12 @@ export default defineConfig({
       },
     }),
   ],
-  optimizeDeps: {
-    include: ["@ant-design/icons"],
-  },
-  build: {
-    commonjsOptions: {
-      include: [/@ant-design\/icons/, /node_modules/],
-    },
-  },
+  // optimizeDeps: {
+  //   include: ["@ant-design/icons"],
+  // },
+  // build: {
+  //   commonjsOptions: {
+  //     include: [/@ant-design\/icons/, /node_modules/],
+  //   },
+  // },
 });
