@@ -1,20 +1,14 @@
 import { useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { Layout, Menu, theme } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import {
-  getAllChildRoutes,
-  getMenuItems,
-  getRoutes,
-  type RouteItem,
-} from "../routes";
+import { getMenuItems, getRoutes, type RouteItem } from "../routes";
 
 const { Header, Sider, Content } = Layout;
 
 const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -45,95 +39,36 @@ const BasicLayout = () => {
     return null;
   };
 
-  // 递归查找路由
-  const findRoute = (
-    routes: RouteItem[],
-    targetKey: string
-  ): RouteItem | null => {
-    for (const route of routes) {
-      if (route.key === targetKey) {
-        return route;
-      }
-      if (route.children) {
-        const found = findRoute(route.children, targetKey);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  // 根据当前路径获取选中的菜单项（支持嵌套）
-  const getSelectedKey = () => {
-    const pathname = location.pathname;
-    const allRoutes = getAllChildRoutes();
-
-    // 精确匹配
-    let currentRoute = allRoutes.find((route) => {
-      if (route.index) {
-        return pathname === "/";
-      }
-      // 需要构建完整路径来匹配
-      const fullPath = findRoutePath(
-        dynamicRoutes.find((r) => r.path === "/")?.children || [],
-        route.key || ""
-      );
-      return fullPath && pathname === fullPath;
-    });
-
-    // 如果没有精确匹配，尝试前缀匹配（用于嵌套路由）
-    if (!currentRoute) {
-      currentRoute = allRoutes.find((route) => {
-        if (route.path) {
-          const fullPath = findRoutePath(
-            dynamicRoutes.find((r) => r.path === "/")?.children || [],
-            route.key || ""
-          );
-          return fullPath && pathname.startsWith(fullPath);
-        }
-        return false;
-      });
-    }
-
-    return currentRoute?.key ? [currentRoute.key] : [];
-  };
-
   // 菜单点击处理（支持嵌套路由）
   const handleMenuClick = ({ key }: { key: string }) => {
-    const layoutRoute = dynamicRoutes.find((r) => r.path === "/");
-    if (!layoutRoute?.children) return;
-
-    const route = findRoute(layoutRoute.children, key);
-    if (route) {
-      const fullPath = findRoutePath(layoutRoute.children, key);
-      if (fullPath) {
-        navigate(fullPath);
-      }
+    const fullPath = findRoutePath(dynamicRoutes, key);
+    if (fullPath) {
+      navigate(fullPath);
     }
   };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider trigger={null} collapsible collapsed={collapsed}>
+      <Sider trigger={null} theme="light" collapsible collapsed={collapsed}>
         <div
           className="demo-logo-vertical"
           style={{
             height: 32,
             margin: 16,
-            background: "rgba(255, 255, 255, 0.3)",
+            background: "rgba(0, 0, 0, 0.3)",
             borderRadius: 6,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
+            color: "#000",
             fontWeight: "bold",
           }}
         >
           {collapsed ? "A" : "Admin"}
         </div>
         <Menu
-          theme="dark"
+          theme="light"
           mode="inline"
-          selectedKeys={getSelectedKey()}
           items={getMenuItems()}
           onClick={handleMenuClick}
         />

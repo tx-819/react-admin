@@ -18,7 +18,6 @@ function App() {
 
         // 根据菜单数据生成路由
         const routes = buildRoutes(menuData);
-
         // 创建路由
         const routerInstance = createBrowserRouter(routes);
         setRouter(routerInstance);

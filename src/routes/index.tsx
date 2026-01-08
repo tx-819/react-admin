@@ -6,6 +6,7 @@ import BasicLayout from "../layouts/BasicLayout";
 import { loadPageComponent } from "../utils/pageLoader";
 import { getIcon } from "../utils/iconMap";
 import type { MenuItem } from "../api/menu";
+import type { ItemType, MenuItemType } from "antd/es/menu/interface";
 
 // 扩展 RouteObject，添加菜单相关属性
 export type RouteItem = RouteObject & {
@@ -76,7 +77,7 @@ export const buildRoutes = (menuData: MenuItem[]): RouteItem[] => {
     },
   ];
 
-  dynamicRoutes = routes;
+  dynamicRoutes = children;
   return routes;
 };
 
@@ -85,76 +86,26 @@ export const getRoutes = (): RouteItem[] => {
   return dynamicRoutes;
 };
 
-// 获取所有子路由（扁平化，用于菜单和导航）
-export const getChildRoutes = (): RouteItem[] => {
-  const childRoutes: RouteItem[] = [];
-  const traverse = (routeList: RouteItem[]) => {
-    routeList.forEach((route) => {
-      if (route.children) {
-        // 过滤掉 index 路由，只保留有 path 的路由
-        route.children.forEach((child) => {
-          const childItem = child as RouteItem;
-          if (!childItem.index && childItem.key) {
-            childRoutes.push(childItem);
-          }
-        });
-        traverse(route.children as RouteItem[]);
-      }
-    });
-  };
-  traverse(dynamicRoutes);
-  return childRoutes;
-};
-
-// 获取所有路由（包括 index 路由）
-export const getAllChildRoutes = (): RouteItem[] => {
-  const allRoutes: RouteItem[] = [];
-  const traverse = (routeList: RouteItem[]) => {
-    routeList.forEach((route) => {
-      if (route.children) {
-        route.children.forEach((child) => {
-          const childItem = child as RouteItem;
-          if (childItem.key) {
-            allRoutes.push(childItem);
-          }
-        });
-        traverse(route.children as RouteItem[]);
-      }
-    });
-  };
-  traverse(dynamicRoutes);
-  return allRoutes;
-};
-
 // 将路由转换为菜单项（支持嵌套结构）
-const convertRoutesToMenuItems = (routes: RouteItem[]): any[] => {
+const convertRoutesToMenuItems = (
+  routes: RouteItem[]
+): ItemType<MenuItemType>[] => {
   return routes
     .filter((route) => !route.hidden && route.key)
     .map((route) => {
-      const menuItem: any = {
+      const menuItem: ItemType<MenuItemType> = {
         key: route.key!,
-        icon: route.icon,
+        icon: route.icon as ReactNode,
         label: route.label,
+        children: route.children
+          ? convertRoutesToMenuItems(route.children)
+          : undefined,
       };
-
-      // 如果有子路由，递归处理
-      if (route.children && route.children.length > 0) {
-        const children = convertRoutesToMenuItems(route.children);
-        if (children.length > 0) {
-          menuItem.children = children;
-        }
-      }
-
       return menuItem;
     });
 };
 
 // 获取菜单项（支持嵌套结构）
 export const getMenuItems = () => {
-  // 从动态路由中获取第一层子路由（Layout下的直接子路由）
-  const layoutRoute = dynamicRoutes.find((route) => route.path === "/");
-  if (layoutRoute?.children) {
-    return convertRoutesToMenuItems(layoutRoute.children);
-  }
-  return [];
+  return convertRoutesToMenuItems(dynamicRoutes);
 };
