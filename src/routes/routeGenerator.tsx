@@ -17,7 +17,8 @@ export const generateRoutesFromPermissions = (
   return permissions
     .filter(
       (p) =>
-        (isRoot ? p.type === "route" : p.type === "menu") &&
+        // 根级别只处理 route，子级别处理 route 和 menu（过滤掉 action）
+        (isRoot ? p.type === "route" : p.type !== "action") &&
         p.disabled === 0 &&
         p.path !== null
     )
