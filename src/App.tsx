@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Spin } from "antd";
-import { fetchMenuData } from "./api/menu";
+import { getPermissionTree } from "./api/permission";
 import { buildRoutes } from "./routes";
 
 function App() {
@@ -13,12 +13,13 @@ function App() {
   useEffect(() => {
     const initRouter = async () => {
       try {
-        const menuData = await fetchMenuData();
-        const routes = buildRoutes(menuData);
+        // 获取权限树，获取 route 类型的顶级权限（子权限会递归包含）
+        const permissions = await getPermissionTree({ type: "route" });
+        const routes = buildRoutes(permissions);
         const routerInstance = createBrowserRouter(routes);
         setRouter(routerInstance);
       } catch (error) {
-        console.error("Failed to load menu data:", error);
+        console.error("Failed to load permission tree:", error);
       } finally {
         setLoading(false);
       }
