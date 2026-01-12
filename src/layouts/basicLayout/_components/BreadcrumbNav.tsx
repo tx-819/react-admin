@@ -19,7 +19,14 @@ const BreadcrumbNav = () => {
     return items.map((item, index) => {
       const isLast = index === items.length - 1;
       const breadcrumbItem: BreadcrumbItemType = {
-        title: item.title,
+        title:
+          isLast || !item.path ? (
+            item.title
+          ) : (
+            <span className="text-neutral-500 cursor-pointer rounded px-1.5 py-1 transition-colors hover:bg-neutral-200">
+              {item.title}
+            </span>
+          ),
       };
 
       // 如果不是最后一项，添加点击跳转功能
