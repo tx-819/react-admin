@@ -53,7 +53,7 @@ const BasicLayout = () => {
         <div className="demo-logo-vertical" style={logoStyle}>
           {collapsed ? "A" : "Admin"}
         </div>
-        <SideMenu />
+        <SideMenu collapsed={collapsed} />
       </Sider>
       <Layout>
         <Header style={headerStyle}>
