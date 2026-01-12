@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
-import BasicLayout from "../layouts/BasicLayout";
+import BasicLayout from "../layouts/basicLayout";
 import { loadPageComponent } from "../utils/pageLoader";
 import { getIcon } from "../utils/iconMap";
 import type { Permission } from "../api/permission";
