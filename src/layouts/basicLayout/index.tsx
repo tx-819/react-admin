@@ -5,6 +5,7 @@ import { Layout, theme } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import BreadcrumbNav from "./_components/BreadcrumbNav";
 import SideMenu from "./_components/SideMenu";
+import RouteTransition from "./_components/RouteTransition";
 
 const { Header, Sider, Content } = Layout;
 
@@ -29,7 +30,7 @@ const iconStyle: CSSProperties = {
 const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer },
   } = theme.useToken();
 
   const headerStyle: CSSProperties = {
@@ -43,8 +44,6 @@ const BasicLayout = () => {
     margin: "24px 16px",
     padding: 24,
     minHeight: 280,
-    background: colorBgContainer,
-    borderRadius: borderRadiusLG,
   };
 
   return (
@@ -75,7 +74,9 @@ const BasicLayout = () => {
           </div>
         </Header>
         <Content style={contentStyle}>
-          <Outlet />
+          <RouteTransition>
+            <Outlet />
+          </RouteTransition>
         </Content>
       </Layout>
     </Layout>
