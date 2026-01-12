@@ -2,10 +2,10 @@
 export type { RouteItem } from "./types";
 
 // 导出路由生成函数
-export { generateRoutesFromPermissions, buildRoutes } from "./routeGenerator";
+export { buildRoutes } from "./routeGenerator";
 
 // 导出路由存储函数
-export { getRoutes } from "./routeStore";
+export { getRoutes, useRouteStore } from "../../store/routeStore";
 
 // 导出菜单转换函数
 export { getMenuItems } from "./menuConverter";
@@ -16,4 +16,4 @@ export {
   findRoutePath,
   findMenuKeysByPath,
   findParentKeys,
-} from "./routeUtils";
+} from "./utils";

@@ -5,7 +5,7 @@ import { Layout, Menu, theme } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import {
   getMenuItems,
-  getRoutes,
+  useRouteStore,
   findRoutePath,
   findMenuKeysByPath,
   findParentKeys,
@@ -39,7 +39,7 @@ const BasicLayout = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const dynamicRoutes = getRoutes();
+  const dynamicRoutes = useRouteStore((state) => state.routes);
   const menuKeys = useMemo(
     () => findMenuKeysByPath(dynamicRoutes, location.pathname),
     [location.pathname, dynamicRoutes]

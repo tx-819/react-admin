@@ -5,11 +5,11 @@ import { loadPageComponent } from "../utils/pageLoader";
 import { getIcon } from "../utils/iconMap";
 import type { Permission } from "../api/permission";
 import type { RouteItem } from "./types";
-import { setRoutes } from "./routeStore";
-import { buildPath } from "./routeUtils";
+import { setRoutes } from "../../store/routeStore";
+import { buildPath } from "./utils";
 
 // 根据权限数据生成路由配置（支持嵌套）
-export const generateRoutesFromPermissions = (
+const generateRoutesFromPermissions = (
   permissions: Permission[],
   parentPath = "",
   isRoot = true

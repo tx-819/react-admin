@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ItemType, MenuItemType } from "antd/es/menu/interface";
 import type { RouteItem } from "./types";
-import { getRoutes } from "./routeStore";
+import { getRoutes } from "../../store/routeStore";
 
 const convertRoutesToMenuItems = (
   routes: RouteItem[]
