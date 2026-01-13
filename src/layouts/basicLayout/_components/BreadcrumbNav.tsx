@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { Breadcrumb } from "antd";
 import type { BreadcrumbItemType } from "antd/es/breadcrumb/Breadcrumb";
 import {
@@ -12,7 +12,6 @@ const BreadcrumbNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dynamicRoutes = useRouteStore((state) => state.routes);
-
   const breadcrumbItems = useMemo(() => {
     const items = getBreadcrumbItems(dynamicRoutes, location.pathname);
     if (!items || items.length === 0) return [];
@@ -45,6 +44,8 @@ const BreadcrumbNav = () => {
       return breadcrumbItem;
     });
   }, [dynamicRoutes, location.pathname, navigate]);
+
+  console.log("breadcrumbItems", breadcrumbItems);
 
   return <Breadcrumb items={breadcrumbItems} />;
 };

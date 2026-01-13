@@ -16,6 +16,7 @@ function App() {
         // 获取权限树，获取 route 类型的顶级权限（子权限会递归包含）
         const permissions = await getPermissionTree({ type: "route" });
         const routes = buildRoutes(permissions);
+        console.log("routes", routes);
         const routerInstance = createBrowserRouter(routes);
         setRouter(routerInstance);
       } catch (error) {

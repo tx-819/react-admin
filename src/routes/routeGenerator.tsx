@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import BasicLayout from "../layouts/basicLayout";
 import { loadPageComponent } from "../utils/pageLoader";
 import { getIcon } from "../utils/iconMap";
@@ -70,5 +70,11 @@ const generateRoutesFromPermissions = (
 export const buildRoutes = (permissions: Permission[]): RouteItem[] => {
   const children = generateRoutesFromPermissions(permissions);
   setRoutes(children);
-  return [{ path: "/", element: <BasicLayout />, children }];
+  return [
+    {
+      path: "/",
+      element: <BasicLayout />,
+      children,
+    },
+  ];
 };
