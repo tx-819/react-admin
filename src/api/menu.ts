@@ -1,0 +1,148 @@
+// 权限类型
+export type PermissionType = "menu" | "route" | "action";
+
+export interface AppRouteRecord {
+  id: number;
+  meta?: RouteMeta;
+  name: string;
+  children?: AppRouteRecord[];
+  component?: string;
+  path: string;
+}
+
+export interface RouteMeta extends Record<string | number | symbol, unknown> {
+  /** 路由图标 */
+  icon?: string;
+  /** 是否在菜单中隐藏 */
+  isHide?: boolean;
+  /** 是否在标签页中隐藏 */
+  isHideTab?: boolean;
+  /** 是否缓存 */
+  keepAlive?: boolean;
+  /** 操作权限 */
+  authList?: Array<{
+    title: string;
+    authMark: string;
+  }>;
+}
+
+// 获取权限树（从后端API）
+export const getMenuList = async (): Promise<AppRouteRecord[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: 1,
+          path: "dashboard",
+          meta: {
+            icon: "CircleGauge",
+          },
+          name: "仪表盘",
+          children: [
+            {
+              id: 2,
+              path: "console",
+              component: "/dashboard/console",
+              name: "控制台",
+            },
+          ],
+        },
+        {
+          id: 3,
+          path: "system",
+          name: "系统管理",
+          meta: {
+            icon: "UserRound",
+          },
+          children: [
+            {
+              id: 4,
+              path: "users",
+              component: "/system/users",
+              name: "用户管理",
+              meta: {
+                icon: "UserRound",
+                authList: [
+                  {
+                    title: "新增用户",
+                    authMark: "system:users:create",
+                  },
+                  {
+                    title: "编辑用户",
+                    authMark: "system:users:update",
+                  },
+                  {
+                    title: "删除用户",
+                    authMark: "system:users:delete",
+                  },
+                ],
+              },
+            },
+            {
+              id: 5,
+              path: "roles",
+              name: "角色管理",
+              component: "/system/roles",
+              meta: {
+                icon: "UserRoundCog",
+                keepAlive: true,
+                authList: [
+                  {
+                    title: "新增角色",
+                    authMark: "system:roles:create",
+                  },
+                  {
+                    title: "编辑角色",
+                    authMark: "system:roles:update",
+                  },
+                ],
+              },
+            },
+            {
+              id: 6,
+              path: "menu",
+              name: "嵌套菜单",
+              meta: {
+                icon: "UserRound",
+                isHideTab: true,
+              },
+              children: [
+                {
+                  id: 7,
+                  path: "menu-1",
+                  component: "/system/menu/menu-1",
+                  name: "菜单1",
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    }, 100);
+  });
+
+  // 实际使用时，可以这样实现：
+  /*
+  const queryParams = new URLSearchParams();
+  if (params?.type) {
+    queryParams.append('type', params.type);
+  }
+  if (params?.includeDisabled) {
+    queryParams.append('includeDisabled', params.includeDisabled);
+  }
+
+  const response = await fetch(`/api/permissions/tree?${queryParams.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch permission tree');
+  }
+
+  const result: GetPermissionTreeResponse = await response.json();
+  return result.data;
+  */
+};
