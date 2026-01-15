@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Menu } from "antd";
 import { useMenuStore } from "../../../../store/menuStore";
 import type { ItemType } from "antd/es/menu/interface";
+import { useMemo, useState } from "react";
 
 const hasChildren = (
   item: ItemType
@@ -40,16 +41,75 @@ const getFullPath = (
   return null;
 };
 
+// 根据路径查找菜单 key 和父级 keys
+const findMenuKeysByPath = (
+  menuList: ItemType[],
+  targetPath: string,
+  parentPath = "",
+  parentKeys: string[] = []
+): { selectedKey: string | null; openKeys: string[] } | null => {
+  // 规范化路径
+  const normalizePath = (path: string) => {
+    const normalized = path.replace(/\/+$/, "");
+    return normalized.startsWith("/") ? normalized : `/${normalized}`;
+  };
+
+  const normalizedTarget = normalizePath(targetPath);
+
+  for (const item of menuList) {
+    if (!item) continue;
+
+    const itemKey = item.key?.toString() || "";
+    const currentPath = parentPath
+      ? `${parentPath}/${itemKey}`.replace(/\/+/g, "/")
+      : `/${itemKey}`;
+    const normalizedCurrent = normalizePath(currentPath);
+
+    // 检查当前路径是否匹配目标路径
+    if (normalizedCurrent === normalizedTarget) {
+      return {
+        selectedKey: itemKey,
+        openKeys: parentKeys,
+      };
+    }
+
+    // 如果有子项，递归查找
+    if (hasChildren(item)) {
+      const result = findMenuKeysByPath(
+        item.children,
+        targetPath,
+        currentPath,
+        [...parentKeys, itemKey].filter(Boolean)
+      );
+      if (result !== null) {
+        return result;
+      }
+    }
+  }
+  return null;
+};
+
 const SideMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const menuList = useMenuStore((state) => state.menuList);
-  const defaultOpenKeys = location.pathname.split("/").slice(1);
-  const defaultSelectedKeys = [defaultOpenKeys.pop() || ""];
+
+  // 根据路由路径计算选中的 key 和展开的 keys
+  const menuKeys = useMemo(() => {
+    const result = findMenuKeysByPath(menuList, location.pathname);
+    return result || { selectedKey: null, openKeys: [] };
+  }, [menuList, location.pathname]);
+
+  // 计算合并后的 openKeys（路由需要的 + 用户手动展开的）
+  const [openKeys, setOpenKeys] = useState<string[]>(menuKeys.openKeys);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     const fullPath = getFullPath(menuList, key);
     if (fullPath) navigate(`/${fullPath}`);
+  };
+
+  const handleOpenChange = (keys: string[]) => {
+    setOpenKeys(keys);
   };
 
   return (
@@ -57,8 +117,9 @@ const SideMenu = () => {
       theme="light"
       mode="inline"
       items={menuList}
-      defaultSelectedKeys={defaultSelectedKeys}
-      defaultOpenKeys={defaultOpenKeys}
+      selectedKeys={menuKeys.selectedKey ? [menuKeys.selectedKey] : []}
+      openKeys={openKeys}
+      onOpenChange={handleOpenChange}
       onClick={handleMenuClick}
     />
   );

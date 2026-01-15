@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { Outlet } from "react-router-dom";
+import { useOutlet } from "react-router-dom";
 import { Layout, theme } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import BreadcrumbNav from "./_components/BreadcrumbNav";
@@ -29,6 +29,7 @@ const iconStyle: CSSProperties = {
 
 const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const outlet = useOutlet();
   const {
     token: { colorBgContainer },
   } = theme.useToken();
@@ -52,7 +53,7 @@ const BasicLayout = () => {
         <div className="demo-logo-vertical" style={logoStyle}>
           {collapsed ? "A" : "Admin"}
         </div>
-        <SideMenu collapsed={collapsed} />
+        <SideMenu />
       </Sider>
       <Layout>
         <Header style={headerStyle}>
@@ -74,9 +75,7 @@ const BasicLayout = () => {
           </div>
         </Header>
         <Content style={contentStyle}>
-          <RouteTransition>
-            <Outlet />
-          </RouteTransition>
+          <RouteTransition>{outlet}</RouteTransition>
         </Content>
       </Layout>
     </Layout>
