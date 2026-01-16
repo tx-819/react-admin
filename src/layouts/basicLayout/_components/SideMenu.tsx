@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Menu } from "antd";
 import { useMenuStore } from "../../../../store/menuStore";
 import type { ItemType } from "antd/es/menu/interface";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 const hasChildren = (
   item: ItemType
@@ -102,6 +102,10 @@ const SideMenu = () => {
 
   // 计算合并后的 openKeys（路由需要的 + 用户手动展开的）
   const [openKeys, setOpenKeys] = useState<string[]>(menuKeys.openKeys);
+
+  useEffect(() => {
+    setOpenKeys(menuKeys.openKeys);
+  }, [menuKeys.openKeys]);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     const fullPath = getFullPath(menuList, key);

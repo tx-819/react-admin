@@ -41,12 +41,6 @@ const BasicLayout = () => {
     alignItems: "center",
   };
 
-  const contentStyle: CSSProperties = {
-    margin: "24px 16px",
-    padding: 24,
-    minHeight: 280,
-  };
-
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider trigger={null} theme="light" collapsible collapsed={collapsed}>
@@ -74,7 +68,7 @@ const BasicLayout = () => {
             <BreadcrumbNav />
           </div>
         </Header>
-        <Content style={contentStyle}>
+        <Content className="p-6 overflow-hidden">
           <RouteTransition>{outlet}</RouteTransition>
         </Content>
       </Layout>

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
-import { Outlet } from "react-router";
+import { Outlet, Navigate } from "react-router";
 import BasicLayout from "../layouts/basicLayout";
+import Login from "../pages/login";
 import { loadPageComponent } from "../utils/pageLoader";
 import type { AppRouteRecord } from "../api/menu";
 import type { RouteObject } from "react-router-dom";
@@ -49,9 +50,20 @@ export default function buildRoutes(menuList: AppRouteRecord[]): RouteObject[] {
   const children = transformRoutes(menuList);
   return [
     {
+      path: "/login",
+      element: <Login />,
+    },
+    {
       path: "/",
       element: <BasicLayout />,
-      children,
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/dashboard/console" replace />,
+        },
+
+        ...children,
+      ],
     },
-  ];
+  ] as RouteObject[];
 }
