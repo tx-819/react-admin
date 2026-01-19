@@ -1,34 +1,37 @@
 import { useState } from "react";
 import { Form, Input, Button, message } from "antd";
 import { useNavigate, Link } from "react-router-dom";
-import { login } from "../../api/auth";
-import { setAccessToken, setUserInfo } from "../../utils/storage";
+import { register } from "../../api/auth";
 
-const Login = () => {
+const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = async (values: { username: string; password: string }) => {
+  const onFinish = async (values: {
+    username: string;
+    password: string;
+    confirmPassword: string;
+    nickname?: string;
+    avatar?: string;
+  }) => {
     setLoading(true);
     try {
-      // 调用登录API
-      const response = await login({
+      // 调用注册API
+      await register({
         username: values.username,
         password: values.password,
+        nickname: values.nickname,
+        avatar: values.avatar,
       });
 
-      // 保存token和用户信息
-      setAccessToken(response.accessToken);
-      setUserInfo(response.user);
-
-      message.success("登录成功");
-      // 登录成功后跳转到首页
-      navigate("/");
+      message.success("注册成功，请登录");
+      // 注册成功后跳转到登录页
+      navigate("/login");
     } catch (error) {
       // 错误信息已经在request工具中统一处理并显示
       // 这里只记录日志，不重复显示错误提示
-      console.error("登录错误:", error);
+      console.error("注册错误:", error);
     } finally {
       setLoading(false);
     }
@@ -51,17 +54,17 @@ const Login = () => {
         <span className="text-xl font-semibold text-gray-800">Admin</span>
       </div>
 
-      {/* 登录表单区域 */}
+      {/* 注册表单区域 */}
       <div className="w-full p-8 mt-8 relative z-10 mx-auto flex flex-col items-center">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-10">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">欢迎回来</h1>
-            <p className="text-gray-500">输入您的账号和密码登录</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">创建账号</h1>
+            <p className="text-gray-500">填写以下信息完成注册</p>
           </div>
 
           <Form
             form={form}
-            name="login"
+            name="register"
             onFinish={onFinish}
             autoComplete="off"
             layout="vertical"
@@ -70,7 +73,8 @@ const Login = () => {
               name="username"
               rules={[
                 { required: true, message: "请输入用户名" },
-                { min: 3, message: "用户名至少3个字符" },
+                { min: 3, message: "用户名长度必须在 3-50 个字符之间" },
+                { max: 50, message: "用户名长度必须在 3-50 个字符之间" },
               ]}
               className="mb-4"
             >
@@ -79,12 +83,61 @@ const Login = () => {
 
             <Form.Item
               name="password"
-              rules={[{ required: true, message: "请输入密码" }]}
+              rules={[
+                { required: true, message: "请输入密码" },
+                { min: 6, message: "密码长度至少为 6 位" },
+              ]}
               className="mb-4"
             >
               <Input.Password
                 size="large"
                 placeholder="密码"
+                className="h-12"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="confirmPassword"
+              dependencies={["password"]}
+              rules={[
+                { required: true, message: "请确认密码" },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("password") === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error("两次输入的密码不一致"));
+                  },
+                }),
+              ]}
+              className="mb-4"
+            >
+              <Input.Password
+                size="large"
+                placeholder="确认密码"
+                className="h-12"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="nickname"
+              rules={[{ max: 50, message: "昵称长度不能超过 50 个字符" }]}
+              className="mb-4"
+            >
+              <Input size="large" placeholder="昵称（可选）" className="h-12" />
+            </Form.Item>
+
+            <Form.Item
+              name="avatar"
+              rules={[
+                { type: "url", message: "请输入有效的头像 URL" },
+                { max: 500, message: "头像 URL 长度不能超过 500 个字符" },
+              ]}
+              className="mb-4"
+            >
+              <Input
+                size="large"
+                placeholder="头像 URL（可选）"
                 className="h-12"
               />
             </Form.Item>
@@ -98,17 +151,17 @@ const Login = () => {
                 size="large"
                 className="h-12 rounded-lg text-base font-medium"
               >
-                登录
+                注册
               </Button>
             </Form.Item>
 
             <div className="text-center text-sm text-gray-500">
-              还没有账号?{" "}
+              已有账号?{" "}
               <Link
-                to="/register"
+                to="/login"
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                立即注册
+                立即登录
               </Link>
             </div>
           </Form>
@@ -118,4 +171,5 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;
+

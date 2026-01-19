@@ -44,12 +44,58 @@ export const login = async (params: LoginParams): Promise<LoginResponse> => {
 };
 
 /**
+ * 注册请求参数
+ */
+export interface RegisterParams {
+  username: string;
+  password: string;
+  nickname?: string;
+  avatar?: string;
+}
+
+/**
+ * 注册响应数据中的用户信息
+ */
+export interface RegisterUserInfo {
+  id: string;
+  username: string;
+  nickname: string;
+  avatar: string | null;
+  status: number;
+  isSuper: boolean;
+  createdAt: string;
+}
+
+/**
+ * 注册响应数据
+ */
+export interface RegisterResponse {
+  user: RegisterUserInfo;
+}
+
+/**
+ * 用户注册
+ * @param params 注册参数
+ * @returns 注册响应数据
+ */
+export const register = async (
+  params: RegisterParams
+): Promise<RegisterResponse> => {
+  return post<RegisterResponse>("/auth/register", params, {
+    skipAuth: true, // 注册接口不需要认证
+  });
+};
+
+/**
  * 验证Token
  * @returns 用户信息
  */
 export const verifyToken = async (): Promise<UserInfo> => {
-  return post<UserInfo>("/auth/verify", {}, {
-    skipAuth: true, // 验证接口不需要认证
-  });
+  return post<UserInfo>(
+    "/auth/verify",
+    {},
+    {
+      skipAuth: true, // 验证接口不需要认证
+    }
+  );
 };
-

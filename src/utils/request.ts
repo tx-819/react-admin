@@ -6,7 +6,11 @@ import { getAccessToken, clearAuth } from "./storage";
 import { message } from "antd";
 
 // Base URL，可通过环境变量配置
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+// 开发环境：使用相对路径，通过 Vite 代理转发（解决跨域问题）
+// 生产环境：使用完整的 API 地址
+const BASE_URL = import.meta.env.PROD
+  ? import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+  : "/api";
 
 /**
  * 通用响应格式

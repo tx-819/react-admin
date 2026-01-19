@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Outlet, Navigate } from "react-router";
 import BasicLayout from "../layouts/basicLayout";
 import Login from "../pages/login";
+import Register from "../pages/register";
 import { loadPageComponent } from "../utils/pageLoader";
 import type { AppRouteRecord } from "../api/menu";
 import type { RouteObject } from "react-router-dom";
@@ -52,6 +53,10 @@ export default function buildRoutes(menuList: AppRouteRecord[]): RouteObject[] {
     {
       path: "/login",
       element: <Login />,
+    },
+    {
+      path: "/register",
+      element: <Register />,
     },
     {
       path: "/",
