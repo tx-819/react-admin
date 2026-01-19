@@ -1,30 +1,33 @@
 import { useState } from "react";
 import { Form, Input, Button, message } from "antd";
 import { useNavigate } from "react-router-dom";
+import { login } from "../../api/auth";
+import { setAccessToken, setUserInfo } from "../../utils/storage";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = async (values: {
-    role: string;
-    username: string;
-    password: string;
-  }) => {
+  const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      // TODO: 这里添加实际的登录 API 调用
-      console.log("登录信息:", values);
+      // 调用登录API
+      const response = await login({
+        username: values.username,
+        password: values.password,
+      });
 
-      // 模拟登录请求
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 保存token和用户信息
+      setAccessToken(response.accessToken);
+      setUserInfo(response.user);
 
       message.success("登录成功");
       // 登录成功后跳转到首页
       navigate("/");
     } catch (error) {
-      message.error("登录失败，请检查用户名和密码");
+      // 错误信息已经在request工具中统一处理并显示
+      // 这里只记录日志，不重复显示错误提示
       console.error("登录错误:", error);
     } finally {
       setLoading(false);
@@ -62,7 +65,6 @@ const Login = () => {
             onFinish={onFinish}
             autoComplete="off"
             layout="vertical"
-            initialValues={{ role: "super_admin" }}
           >
             <Form.Item
               name="username"
