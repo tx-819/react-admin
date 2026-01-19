@@ -1,11 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
-import { useOutlet } from "react-router-dom";
-import { Layout, theme } from "antd";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { useOutlet, useNavigate } from "react-router-dom";
+import {
+  Layout,
+  theme,
+  Avatar,
+  Dropdown,
+  Space,
+  Typography,
+  message,
+} from "antd";
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
+import type { MenuProps } from "antd";
 import BreadcrumbNav from "./_components/BreadcrumbNav";
 import SideMenu from "./_components/SideMenu";
 import RouteTransition from "./_components/RouteTransition";
+import { getUserInfo, clearAuth } from "../../utils/storage";
+import type { UserInfo } from "../../api/auth";
 
 const { Header, Sider, Content } = Layout;
 
@@ -27,18 +43,59 @@ const iconStyle: CSSProperties = {
   cursor: "pointer",
 };
 
+const { Text } = Typography;
+
 const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const outlet = useOutlet();
+  const navigate = useNavigate();
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+
+  useEffect(() => {
+    // 获取用户信息
+    const user = getUserInfo();
+    setUserInfo(user);
+  }, []);
+
+  const handleLogout = () => {
+    clearAuth();
+    message.success("已退出登录");
+    navigate("/login");
+  };
+
+  const userMenuItems: MenuProps["items"] = [
+    {
+      key: "user-info",
+      label: (
+        <div style={{ padding: "4px 0" }}>
+          <div style={{ fontWeight: 500 }}>{userInfo?.nickname || userInfo?.username}</div>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {userInfo?.username}
+          </Text>
+        </div>
+      ),
+      disabled: true,
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      label: "退出登录",
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+    },
+  ];
 
   const headerStyle: CSSProperties = {
     padding: "0 16px",
     background: colorBgContainer,
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
   };
 
   return (
@@ -66,6 +123,21 @@ const BasicLayout = () => {
               />
             )}
             <BreadcrumbNav />
+          </div>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Space
+                style={{ cursor: "pointer", padding: "0 8px" }}
+                onClick={(e) => e.preventDefault()}
+              >
+                <Avatar
+                  src={userInfo?.avatar}
+                  icon={!userInfo?.avatar && <UserOutlined />}
+                  size="default"
+                />
+                <Text strong>{userInfo?.nickname || userInfo?.username || "用户"}</Text>
+              </Space>
+            </Dropdown>
           </div>
         </Header>
         <Content className="p-6 overflow-hidden">

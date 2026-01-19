@@ -97,7 +97,6 @@ const BreadcrumbNav = () => {
       onClick: () => navigate(item.path),
     }));
   }, [menuList, location.pathname, navigate]);
-  console.log("breadcrumbItems", breadcrumbItems);
 
   return <Breadcrumb items={breadcrumbItems} />;
 };
