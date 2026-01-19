@@ -16,7 +16,6 @@ const useInitRouter = () => {
       const menuList = await getMenuList();
       setMenuList(menuList);
       const routes = buildRoutes(menuList);
-      console.log("routes", routes);
       const routerInstance = createBrowserRouter(routes);
       setRouter(routerInstance);
     } catch (error) {

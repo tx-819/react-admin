@@ -4,6 +4,7 @@ import BasicLayout from "../layouts/basicLayout";
 import Login from "../pages/login";
 import Register from "../pages/register";
 import { loadPageComponent } from "../utils/pageLoader";
+import NProgressFallback from "../components/NProgressFallback";
 import type { AppRouteRecord } from "../api/menu";
 import type { RouteObject } from "react-router-dom";
 
@@ -27,7 +28,7 @@ const transformRoutes = (menuList: AppRouteRecord[]): RouteObject[] => {
       const Component = loadPageComponent(componentPath);
       if (Component) {
         routeItem.element = (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<NProgressFallback />}>
             <Component />
           </Suspense>
         );
