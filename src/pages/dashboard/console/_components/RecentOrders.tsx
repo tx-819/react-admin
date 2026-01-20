@@ -1,14 +1,14 @@
-import { Card, Table, Tag, Button } from "antd";
+import { Card, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import ProTable from "../../../../components/ProTable";
 import type { TableDataItem } from "./types";
 
 interface RecentOrdersProps {
   data: TableDataItem[];
   loading?: boolean;
-  onViewAll?: () => void;
 }
 
-const RecentOrders = ({ data, loading, onViewAll }: RecentOrdersProps) => {
+const RecentOrders = ({ data, loading }: RecentOrdersProps) => {
   const columns: ColumnsType<TableDataItem> = [
     {
       title: "订单ID",
@@ -49,15 +49,8 @@ const RecentOrders = ({ data, loading, onViewAll }: RecentOrdersProps) => {
   ];
 
   return (
-    <Card
-      title="最近订单"
-      extra={
-        <Button type="link" onClick={onViewAll}>
-          查看全部
-        </Button>
-      }
-    >
-      <Table
+    <Card title="最近订单">
+      <ProTable<TableDataItem>
         columns={columns}
         dataSource={data}
         loading={loading}
@@ -69,4 +62,3 @@ const RecentOrders = ({ data, loading, onViewAll }: RecentOrdersProps) => {
 };
 
 export default RecentOrders;
-

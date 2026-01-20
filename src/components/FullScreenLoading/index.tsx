@@ -50,4 +50,3 @@ const FullScreenLoading = () => {
 };
 
 export default FullScreenLoading;
-

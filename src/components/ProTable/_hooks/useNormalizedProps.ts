@@ -1,0 +1,171 @@
+import type { ColumnsType } from "antd/es/table";
+import type { ProTableProps } from "../types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+type TableSize = "small" | "middle" | "large";
+
+// 获取列的标识符（优先使用 dataIndex，如果没有则使用 key）
+export function getColumnIdentifier<T>(
+  col: ColumnsType<T>[number]
+): string | null {
+  // 检查是否是 ColumnType（有 dataIndex 属性）
+  // ColumnGroupType 没有 dataIndex，只有 ColumnType 有
+  if (
+    "dataIndex" in col &&
+    col.dataIndex !== undefined &&
+    col.dataIndex !== null
+  ) {
+    const dataIndex = col.dataIndex;
+    if (typeof dataIndex === "string") {
+      return dataIndex;
+    }
+    if (typeof dataIndex === "number") {
+      return String(dataIndex);
+    }
+    if (Array.isArray(dataIndex)) {
+      return dataIndex.join(".");
+    }
+  }
+  // 如果没有 dataIndex，使用 key
+  if (col.key !== undefined && col.key !== null) {
+    return String(col.key);
+  }
+  return null;
+}
+
+function getInitialVisibleColumns<T>(columns?: ColumnsType<T>): string[] {
+  if (!columns) return [];
+  return columns
+    .map((col) => getColumnIdentifier(col))
+    .filter((id): id is string => id !== null);
+}
+
+// 获取初始表格大小
+const getInitialSize = (size?: TableSize): TableSize => {
+  if (size) {
+    return size;
+  }
+  return "middle";
+};
+
+const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
+  const {
+    request,
+    params,
+    dataSource: externalDataSource,
+    options,
+    loading: externalLoading,
+    columns,
+    ...rest
+  } = props;
+
+  const {
+    showRefresh = true,
+    showSizeChanger = true,
+    showColumnFilter = true,
+  } = options || {};
+
+  const [dataSource, setDataSource] = useState<T[]>(props.dataSource || []);
+  const [loading, setLoading] = useState(false);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>(() =>
+    getInitialVisibleColumns(columns)
+  );
+
+  const [tableSize, setTableSize] = useState<TableSize>(
+    getInitialSize(props.size)
+  );
+
+  // 当 columns 变化时，更新可见列
+  useEffect(() => {
+    if (columns) {
+      const initialKeys = getInitialVisibleColumns(columns);
+      setVisibleColumnKeys((prev) => {
+        // 如果当前没有可见列，或者所有当前可见的列都不在新的 columns 中，则重置
+        if (
+          prev.length === 0 ||
+          !prev.some((key) => initialKeys.includes(key))
+        ) {
+          return initialKeys;
+        }
+        // 否则只保留仍然存在的列
+        return prev.filter((key) => initialKeys.includes(key));
+      });
+    }
+  }, [columns]);
+
+  const filteredColumns = useMemo(() => {
+    if (!columns || !showColumnFilter) {
+      return columns;
+    }
+
+    return columns.filter((col) => {
+      const identifier = getColumnIdentifier(col);
+      // 如果没有标识符（既没有 dataIndex 也没有 key），默认显示
+      if (identifier === null) {
+        return true;
+      }
+      // 根据 visibleColumnKeys 决定是否显示
+      return visibleColumnKeys.includes(identifier);
+    });
+  }, [columns, visibleColumnKeys, showColumnFilter]);
+
+  const finalLoading =
+    externalLoading !== undefined ? externalLoading : loading;
+
+  // 加载数据
+  const loadData = useCallback(async () => {
+    if (!request) {
+      // 如果没有 request 函数，使用外部传入的 dataSource
+      if (externalDataSource) {
+        setDataSource(externalDataSource);
+      }
+      return;
+    }
+    try {
+      setLoading(true);
+      const result = await request(params);
+      setDataSource(result.data || []);
+    } catch (error) {
+      console.error("ProTable loadData error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [request, params, externalDataSource]);
+
+  const handleRefresh = async () => {
+    if (options?.onRefresh) {
+      await options.onRefresh();
+    }
+    await loadData();
+  };
+
+  // 初始化加载数据
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return {
+    ...rest,
+    settingsOptions: {
+      showRefresh,
+      showSizeChanger,
+      showColumnFilter,
+      tableSize,
+      visibleColumnKeys,
+      onRefresh: handleRefresh,
+      loading: finalLoading,
+      columns: columns,
+      onSizeChange: (size: TableSize) => setTableSize(size),
+      onColumnVisibilityChange: (keys: string[]) => setVisibleColumnKeys(keys),
+    },
+    dataSource,
+    loading: finalLoading,
+    size: tableSize,
+    columns: filteredColumns,
+    refMethods: {
+      refresh: handleRefresh,
+    },
+  };
+};
+
+export default useNormalizedProps;

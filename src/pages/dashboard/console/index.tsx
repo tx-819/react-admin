@@ -126,17 +126,13 @@ const Console = () => {
     { name: "年度目标", current: 650, target: 1200, unit: "万元" },
   ];
 
-  const handleViewAllOrders = () => {
-    console.log("查看全部订单");
-  };
-
   return (
     <div className="space-y-6">
       <StatisticCards data={statisticsData} />
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={24}>
-          <RecentOrders data={tableData} onViewAll={handleViewAllOrders} />
+          <RecentOrders data={tableData} />
         </Col>
       </Row>
 

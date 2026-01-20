@@ -13,4 +13,3 @@ const NProgressFallback = () => {
 };
 
 export default NProgressFallback;
-
