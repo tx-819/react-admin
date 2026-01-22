@@ -1,6 +1,6 @@
 import { Card, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import ProTable from "../../../../components/ProTable";
+import ProTable from "@/components/ProTable";
 import type { TableDataItem } from "./types";
 
 interface RecentOrdersProps {
