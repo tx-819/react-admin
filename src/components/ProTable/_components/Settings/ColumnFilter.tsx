@@ -1,76 +1,24 @@
-import { Button, Dropdown, Space, Checkbox } from "antd";
-import {
-  ReloadOutlined,
-  ColumnHeightOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
+import { Button, Dropdown, Checkbox } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { getColumnIdentifier } from "../_hooks/useNormalizedProps";
+import { getColumnIdentifier } from "../../_hooks/useTableSettings";
 
-type TableSize = "small" | "middle" | "large";
-
-interface SettingsProps {
-  /** 是否显示刷新按钮 */
-  showRefresh?: boolean;
-  /** 是否显示表格大小切换 */
-  showSizeChanger?: boolean;
-  /** 是否显示列筛选 */
-  showColumnFilter?: boolean;
-  /** 加载状态 */
-  loading?: boolean;
-  /** 当前表格大小 */
-  tableSize?: TableSize;
+interface ColumnFilterProps {
   /** 表格列配置 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns?: ColumnsType<any>;
   /** 可见列的 key 列表 */
   visibleColumnKeys?: string[];
-  /** 刷新回调 */
-  onRefresh?: () => void;
-  /** 表格大小变化回调 */
-  onSizeChange?: (size: TableSize) => void;
   /** 列可见性变化回调 */
   onColumnVisibilityChange?: (keys: string[]) => void;
 }
 
-const Settings = ({
-  showRefresh = true,
-  showSizeChanger = true,
-  showColumnFilter = true,
-  loading = false,
-  tableSize = "middle",
+const ColumnFilter = ({
   columns = [],
   visibleColumnKeys = [],
-  onRefresh,
-  onSizeChange,
   onColumnVisibilityChange,
-}: SettingsProps) => {
-  // 表格大小菜单项
-  const sizeMenuItems: MenuProps["items"] = [
-    {
-      key: "small",
-      label: "紧凑",
-      onClick: () => onSizeChange?.("small"),
-    },
-    {
-      key: "middle",
-      label: "中等",
-      onClick: () => onSizeChange?.("middle"),
-    },
-    {
-      key: "large",
-      label: "宽松",
-      onClick: () => onSizeChange?.("large"),
-    },
-  ];
-
-  const sizeLabels: Record<TableSize, string> = {
-    small: "紧凑",
-    middle: "中等",
-    large: "宽松",
-  };
-
+}: ColumnFilterProps) => {
   // 处理列可见性变化
   const handleColumnVisibilityChange = (key: string, checked: boolean) => {
     if (!onColumnVisibilityChange) return;
@@ -185,34 +133,19 @@ const Settings = ({
     return items;
   };
 
+  if (!columns || columns.length === 0) {
+    return null;
+  }
+
   return (
-    <Space>
-      {showRefresh && (
-        <Button
-          icon={<ReloadOutlined spin={loading} />}
-          onClick={onRefresh}
-          loading={loading}
-          disabled={loading}
-        />
-      )}
-      {showSizeChanger && (
-        <Dropdown menu={{ items: sizeMenuItems }} placement="bottomRight">
-          <Button icon={<ColumnHeightOutlined />}>
-            {sizeLabels[tableSize]}
-          </Button>
-        </Dropdown>
-      )}
-      {showColumnFilter && columns && columns.length > 0 && (
-        <Dropdown
-          menu={{ items: getColumnFilterMenuItems() }}
-          placement="bottomRight"
-          trigger={["click"]}
-        >
-          <Button icon={<SettingOutlined />}>列设置</Button>
-        </Dropdown>
-      )}
-    </Space>
+    <Dropdown
+      menu={{ items: getColumnFilterMenuItems() }}
+      placement="bottomRight"
+      trigger={["click"]}
+    >
+      <Button icon={<SettingOutlined />}>列设置</Button>
+    </Dropdown>
   );
 };
 
-export default Settings;
+export default ColumnFilter;

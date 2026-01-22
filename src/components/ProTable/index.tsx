@@ -20,10 +20,8 @@ function ProTableInner<T = unknown>(
 
   const { showRefresh, showSizeChanger, showColumnFilter } = settingsOptions;
 
-  // 暴露方法给父组件
   useImperativeHandle(ref, () => refMethods);
 
-  // 渲染表格标题栏
   const renderTitle = (): TableProps<T>["title"] => {
     // 如果不需要显示任何按钮，直接返回原 title
     if (!showRefresh && !showSizeChanger && !showColumnFilter) {
