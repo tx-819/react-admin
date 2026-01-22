@@ -1,4 +1,4 @@
-import { Card, Tag } from "antd";
+import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import ProTable from "@/components/ProTable";
 import type { TableDataItem } from "./types";
@@ -49,15 +49,14 @@ const RecentOrders = ({ data, loading }: RecentOrdersProps) => {
   ];
 
   return (
-    <Card title="最近订单">
-      <ProTable<TableDataItem>
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-        pagination={{ pageSize: 5 }}
-        size="middle"
-      />
-    </Card>
+    <ProTable<TableDataItem>
+      columns={columns}
+      dataSource={data}
+      loading={loading}
+      pagination={{ pageSize: 5 }}
+      size="middle"
+      title="最近订单"
+    />
   );
 };
 

@@ -14,7 +14,7 @@ export interface ProTableOptions {
 }
 
 export interface ProTableProps<T = unknown>
-  extends Omit<TableProps<T>, "dataSource" | "loading"> {
+  extends Omit<TableProps<T>, "dataSource" | "loading" | "title"> {
   /** 数据源 */
   dataSource?: T[];
   /** 加载状态 */
@@ -27,6 +27,8 @@ export interface ProTableProps<T = unknown>
   params?: Record<string, unknown>;
   /** 表格选项配置 */
   options?: ProTableOptions;
+  /** 表格标题 */
+  title?: string | TableProps<T>["title"];
 }
 
 export interface ProTableRef {
