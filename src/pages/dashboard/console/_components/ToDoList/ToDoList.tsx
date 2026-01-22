@@ -1,7 +1,6 @@
 import { Card, List, Checkbox, Button, Popconfirm } from "antd";
 import type { ToDoItem } from "../types";
 import type { CheckboxChangeEvent } from "antd/es/checkbox";
-import { useEffect, useState } from "react";
 import SaveToDoItem from "./SaveToDoItem";
 import "./index.css";
 interface ToDoListProps {
@@ -11,29 +10,15 @@ interface ToDoListProps {
 }
 
 const ToDoList = ({ data, setData, loading }: ToDoListProps) => {
-  const [todoCount, setTodoCount] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [itemData, setItemData] = useState<ToDoItem>({
-    task: "",
-    completed: false,
-  } as ToDoItem);
+  // const [currentItem, setCurrentItem] = useState<ToDoItem>({
+  //   task: "",
+  //   completed: false,
+  // } as ToDoItem);
 
-  // 当待办事项数据变化,更新data集合
-  useEffect(() => {
-    if (itemData) {
-      const newData = [itemData, ...data];
-      setData(newData);
-    }
-  }, [itemData]);
-  // 计算待办事件数量
-  useEffect(() => {
-    const count = data.filter((item) => !item.completed).length;
-    setTodoCount(count);
-  }, [data]);
   // 处理勾选事件
   const handleCheck = (itemId: string) => (e: CheckboxChangeEvent) => {
     const newData = data.map((item) =>
-      item.id === itemId ? { ...item, completed: e.target.checked } : item,
+      item.id === itemId ? { ...item, completed: e.target.checked } : item
     );
     setData(newData);
   };
@@ -49,9 +34,14 @@ const ToDoList = ({ data, setData, loading }: ToDoListProps) => {
         title="待办事项"
         size="small"
         extra={
-          <Button type="link" onClick={() => setOpen(true)}>
-            新增
-          </Button>
+          <SaveToDoItem
+            onSave={(item) => {
+              setData([item, ...data]);
+            }}
+            trigger={() => {
+              return <Button type="link">新增</Button>;
+            }}
+          />
         }
       >
         <List
@@ -59,7 +49,7 @@ const ToDoList = ({ data, setData, loading }: ToDoListProps) => {
             <div>
               待处理&nbsp;
               <span style={{ color: "#ff1824", fontWeight: "bold" }}>
-                {todoCount}
+                {data.filter((item) => !item.completed).length}
               </span>
             </div>
           }
@@ -75,7 +65,6 @@ const ToDoList = ({ data, setData, loading }: ToDoListProps) => {
                   </div>
                 }
               />
-
               <Popconfirm
                 title="删除待办"
                 description="确认删除待办事项?"
@@ -96,12 +85,6 @@ const ToDoList = ({ data, setData, loading }: ToDoListProps) => {
           )}
         />
       </Card>
-      <SaveToDoItem
-        open={open}
-        setOpen={setOpen}
-        setItemData={setItemData}
-        itemData={itemData}
-      />
     </>
   );
 };
