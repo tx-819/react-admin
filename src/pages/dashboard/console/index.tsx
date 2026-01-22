@@ -13,9 +13,39 @@ import type {
   StatisticData,
   ActivityItem,
   SalesProgressItem,
+  ToDoItem,
 } from "./_components/types";
+import ToDoList from "./_components/ToDoList/ToDoList";
+import { useEffect, useState } from "react";
 
 const Console = () => {
+  const [todoData, setTodoData] = useState<ToDoItem[]>([]);
+
+  useEffect(() => {
+    // 模拟获取待办数据
+    // 待办数据
+    const todoDataResponse: ToDoItem[] = [
+      {
+        id: "1",
+        task: "学node",
+        time: "上午 9:00",
+        completed: false,
+      },
+      {
+        id: "2",
+        task: "学React",
+        time: "上午 10:00",
+        completed: true,
+      },
+      {
+        id: "3",
+        task: "写组件",
+        time: "下午 2:00",
+        completed: false,
+      },
+    ];
+    setTodoData(todoDataResponse);
+  }, []);
   // 统计数据
   const statisticsData: StatisticData[] = [
     {
@@ -97,6 +127,12 @@ const Console = () => {
         </Col>
         <Col xs={24} lg={12}>
           <SalesProgress data={salesProgress} />
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <ToDoList data={todoData} setData={setTodoData} />
         </Col>
       </Row>
     </div>

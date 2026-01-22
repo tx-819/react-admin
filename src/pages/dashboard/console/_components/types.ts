@@ -38,3 +38,10 @@ export interface SalesProgressItem {
   unit: string;
 }
 
+// 待办数据接口
+export interface ToDoItem {
+  id?: string;
+  task: string;
+  time?: string;
+  completed: boolean;
+}
