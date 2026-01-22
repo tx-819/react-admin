@@ -21,13 +21,28 @@ const logoStyle: CSSProperties = {
   fontWeight: "bold",
 };
 
+const siderStyle: React.CSSProperties = {
+  overflow: "auto",
+  height: "100vh",
+  position: "sticky",
+  insetInlineStart: 0,
+  top: 0,
+  scrollbarWidth: "thin",
+};
+
 const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const outlet = useOutlet();
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider trigger={null} theme="light" collapsible collapsed={collapsed}>
+      <Sider
+        style={siderStyle}
+        trigger={null}
+        theme="light"
+        collapsible
+        collapsed={collapsed}
+      >
         <div className="demo-logo-vertical" style={logoStyle}>
           {collapsed ? "A" : "Admin"}
         </div>

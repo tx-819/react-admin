@@ -2,13 +2,9 @@ import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import ProTable from "@/components/ProTable";
 import type { TableDataItem } from "./types";
+import { getOrderList } from "@/api/order";
 
-interface RecentOrdersProps {
-  data: TableDataItem[];
-  loading?: boolean;
-}
-
-const RecentOrders = ({ data, loading }: RecentOrdersProps) => {
+const RecentOrders = () => {
   const columns: ColumnsType<TableDataItem> = [
     {
       title: "订单ID",
@@ -51,9 +47,13 @@ const RecentOrders = ({ data, loading }: RecentOrdersProps) => {
   return (
     <ProTable<TableDataItem>
       columns={columns}
-      dataSource={data}
-      loading={loading}
-      pagination={{ pageSize: 5 }}
+      request={async (params) => {
+        const result = await getOrderList(params);
+        return {
+          data: result.data,
+          total: result.total,
+        };
+      }}
       size="middle"
       title="最近订单"
     />

@@ -11,7 +11,6 @@ import RecentActivity from "./_components/RecentActivity";
 import SalesProgress from "./_components/SalesProgress";
 import type {
   StatisticData,
-  TableDataItem,
   ActivityItem,
   SalesProgressItem,
 } from "./_components/types";
@@ -44,50 +43,6 @@ const Console = () => {
       suffix: "元",
       trend: { value: 15.8, isRise: true },
       valueStyle: { color: "#3f8600" },
-    },
-  ];
-
-  // 表格数据
-  const tableData: TableDataItem[] = [
-    {
-      key: "1",
-      id: "ORD-001",
-      name: "张三",
-      status: "已完成",
-      amount: 1280,
-      date: "2024-01-15",
-    },
-    {
-      key: "2",
-      id: "ORD-002",
-      name: "李四",
-      status: "处理中",
-      amount: 2560,
-      date: "2024-01-15",
-    },
-    {
-      key: "3",
-      id: "ORD-003",
-      name: "王五",
-      status: "待支付",
-      amount: 890,
-      date: "2024-01-14",
-    },
-    {
-      key: "4",
-      id: "ORD-004",
-      name: "赵六",
-      status: "已完成",
-      amount: 3450,
-      date: "2024-01-14",
-    },
-    {
-      key: "5",
-      id: "ORD-005",
-      name: "钱七",
-      status: "已取消",
-      amount: 1200,
-      date: "2024-01-13",
     },
   ];
 
@@ -132,7 +87,7 @@ const Console = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={24}>
-          <RecentOrders data={tableData} />
+          <RecentOrders />
         </Col>
       </Row>
 
