@@ -40,6 +40,15 @@ export interface ProFormItemConfig {
   disabled?: boolean;
   /** 表单项宽度（栅格布局） */
   span?: number;
+  /** 表单项响应式宽度（栅格布局） */
+  responsiveSpan?: {
+    xs?: number;
+    sm?: number;
+    md?: number;
+    lg?: number;
+    xl?: number;
+    xxl?: number;
+  };
   /** 表单项额外属性 */
   itemProps?: Record<string, unknown>;
   /** 输入组件额外属性 */
@@ -105,4 +114,3 @@ export interface ProFormRef {
   /** 验证表单 */
   validateFields: () => Promise<Record<string, unknown>>;
 }
-

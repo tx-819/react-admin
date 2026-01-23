@@ -1,4 +1,4 @@
-import { useImperativeHandle, forwardRef } from "react";
+import { useImperativeHandle, forwardRef, useMemo } from "react";
 import {
   Form,
   Input,
@@ -12,6 +12,8 @@ import {
   Upload,
   Button,
   Space,
+  Row,
+  Col,
 } from "antd";
 import useNormalizedProps from "./_hooks/useNormalizedProps";
 import type { ProFormProps, ProFormRef, ProFormItemConfig } from "./types";
@@ -23,7 +25,7 @@ function ProFormInner(
   props: ProFormProps,
   ref: React.ForwardedRef<ProFormRef>
 ) {
-  const { items, layout, labelCol, wrapperCol, formOptions, ...formProps } =
+  const { items, layout, formOptions, ...formProps } =
     useNormalizedProps(props);
 
   const [form] = Form.useForm();
@@ -251,26 +253,40 @@ function ProFormInner(
     }
   };
 
-  return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <Form
-        form={form}
-        layout={layout}
-        labelCol={labelCol}
-        wrapperCol={wrapperCol}
-        onFinish={handleFinish}
-        {...formProps}
-      >
-        {items.map((item) => renderFormItem(item))}
+  // 当 layout 为 inline 时，使用 Row 和 Col 栅格布局
+  const useGridLayout = layout === "inline";
 
+  // 计算默认的 span（当 layout 为 inline 且表单项未设置 span 时）
+  const defaultSpan = useMemo(() => {
+    if (!useGridLayout) return undefined;
+    // 默认一行3个表单项（每个占8列）
+    return 8;
+  }, [useGridLayout]);
+
+  return (
+    <div>
+      <Form form={form} layout={layout} onFinish={handleFinish} {...formProps}>
+        {useGridLayout ? (
+          <Row gutter={[16, 16]} style={{ width: "100%" }}>
+            {items.map((item) => {
+              // 否则使用默认响应式配置
+              return (
+                <Col
+                  key={
+                    Array.isArray(item.name) ? item.name.join(".") : item.name
+                  }
+                  span={defaultSpan}
+                >
+                  {renderFormItem(item)}
+                </Col>
+              );
+            })}
+          </Row>
+        ) : (
+          <>{items.map((item) => renderFormItem(item))}</>
+        )}
         {(formOptions.showSubmitButton || formOptions.showResetButton) && (
-          <Form.Item
-            wrapperCol={
-              layout === "horizontal"
-                ? { offset: labelCol?.span || 0, span: wrapperCol?.span || 18 }
-                : undefined
-            }
-          >
+          <Form.Item>
             <Space>
               {formOptions.showSubmitButton && (
                 <Button
