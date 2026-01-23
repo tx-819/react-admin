@@ -1,10 +1,8 @@
 import { Suspense } from "react";
-import { Outlet, Navigate } from "react-router";
-import BasicLayout from "../layouts/basicLayout";
-import Login from "../pages/login";
-import Register from "../pages/register";
+import { Outlet } from "react-router";
 import { loadPageComponent } from "../utils/pageLoader";
 import NProgressFallback from "../components/NProgressFallback";
+import { staticRoutes } from "./staticRoutes";
 import type { AppRouteRecord } from "../api/menu";
 import type { RouteObject } from "react-router-dom";
 
@@ -50,26 +48,17 @@ const transformRoutes = (menuList: AppRouteRecord[]): RouteObject[] => {
 // 生成完整路由结构
 export default function buildRoutes(menuList: AppRouteRecord[]): RouteObject[] {
   const children = transformRoutes(menuList);
-  return [
-    {
-      path: "/login",
-      element: <Login />,
-    },
-    {
-      path: "/register",
-      element: <Register />,
-    },
-    {
-      path: "/",
-      element: <BasicLayout />,
-      children: [
-        {
-          index: true,
-          element: <Navigate to="/dashboard/console" replace />,
-        },
 
-        ...children,
-      ],
-    },
-  ] as RouteObject[];
+  // 将动态路由添加到 BasicLayout 的 children 中
+  const routes = staticRoutes.map((route) => {
+    if (route.path === "/" && route.children) {
+      return {
+        ...route,
+        children: [...route.children, ...children],
+      };
+    }
+    return route;
+  });
+
+  return routes as RouteObject[];
 }
