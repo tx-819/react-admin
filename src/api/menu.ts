@@ -26,6 +26,104 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
   }>;
 }
 
+/**
+ * 菜单项接口（用于菜单管理页面）
+ */
+export interface MenuItem {
+  id: string;
+  path: string;
+  name: string;
+  component?: string;
+  meta?: {
+    icon?: string;
+    keepAlive?: boolean;
+    authList?: Array<{
+      title: string;
+      authMark: string;
+    }>;
+  };
+  children?: MenuItem[];
+  key?: string; // 用于表格的 key
+}
+
+/**
+ * 获取菜单列表响应
+ */
+export interface GetMenuListResponse {
+  code: number;
+  message: string;
+  data: MenuItem[];
+}
+
+/**
+ * 获取菜单列表
+ * @returns 菜单列表
+ */
+export const getMenuListApi = async (): Promise<MenuItem[]> => {
+  const { get } = await import("../utils/request");
+  return get<MenuItem[]>("/menus");
+};
+
+/**
+ * 创建菜单请求参数
+ */
+export interface CreateMenuParams {
+  path: string;
+  name: string;
+  component?: string;
+  parentId?: string | null;
+  icon?: string;
+  keepAlive?: boolean;
+  sort?: number;
+  status?: number;
+  remark?: string;
+  meta?: {
+    authList?: Array<{
+      title: string;
+      authMark: string;
+    }>;
+  };
+}
+
+/**
+ * 创建菜单响应
+ */
+export interface CreateMenuResponse {
+  id: string;
+  path: string;
+  name: string;
+  component?: string;
+  parentId: string | null;
+  icon?: string;
+  keepAlive: number;
+  sort: number;
+  status: number;
+  remark?: string;
+  createdAt: string;
+  updatedAt: string;
+  parent: MenuItem | null;
+  children: MenuItem[];
+  actions: Array<{
+    id: string;
+    menuId: string;
+    title: string;
+    authMark: string;
+    sort: number;
+  }>;
+}
+
+/**
+ * 创建菜单
+ * @param params 菜单参数
+ * @returns 创建的菜单数据
+ */
+export const createMenuApi = async (
+  params: CreateMenuParams
+): Promise<CreateMenuResponse> => {
+  const { post } = await import("../utils/request");
+  return post<CreateMenuResponse>("/menus", params);
+};
+
 // 获取权限树（从后端API）
 export const getMenuList = async (): Promise<AppRouteRecord[]> => {
   return new Promise((resolve) => {
@@ -101,19 +199,11 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
             {
               id: 6,
               path: "menu",
-              name: "嵌套菜单",
+              name: "菜单管理",
+              component: "/system/menu",
               meta: {
-                icon: "UserRound",
-                isHideTab: true,
+                icon: "Menu",
               },
-              children: [
-                {
-                  id: 7,
-                  path: "menu-1",
-                  component: "/system/menu/menu-1",
-                  name: "菜单1",
-                },
-              ],
             },
           ],
         },

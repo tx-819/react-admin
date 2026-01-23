@@ -2,21 +2,14 @@ import { useMemo } from "react";
 import type { ProFormProps, ProFormOptions } from "../types";
 
 const useNormalizedProps = (props: ProFormProps) => {
-  const {
-    items,
-    options,
-    layout = "vertical",
-    showSubmitButton,
-    showResetButton,
-    ...rest
-  } = props;
+  const { items, options, showSubmitButton, showResetButton, ...rest } = props;
 
   // 合并选项配置
   const formOptions: Required<ProFormOptions> = useMemo(() => {
     const defaultOptions: Required<ProFormOptions> = {
       showSubmitButton: true,
       submitText: "提交",
-      showResetButton: false,
+      showResetButton: true,
       resetText: "重置",
       submitLoading: false,
       onSubmit: async () => {},
@@ -41,7 +34,6 @@ const useNormalizedProps = (props: ProFormProps) => {
   return {
     ...rest,
     items,
-    layout,
     formOptions,
   };
 };
