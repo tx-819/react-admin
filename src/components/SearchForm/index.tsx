@@ -19,17 +19,11 @@ function SearchFormInner(
   props: SearchFormProps,
   ref: React.ForwardedRef<SearchFormRef>
 ) {
-  const {
-    items,
-    options,
-    showSearchButton,
-    showResetButton,
-    collapsible,
-    ...formProps
-  } = props;
+  const { items, options, ...formProps } = props;
 
   const proFormRef = useRef<ProFormRef>(null);
   const [collapsed, setCollapsed] = useState(options?.defaultCollapsed ?? true);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // 合并搜索表单选项
   const searchOptions: SearchFormOptions = useMemo(() => {
@@ -38,10 +32,7 @@ function SearchFormInner(
       searchText: "搜索",
       showResetButton: true,
       resetText: "重置",
-      searchLoading: false,
-      onSearch: async () => {},
-      onReset: () => {},
-      collapsible: false,
+      showCollapseButton: true,
       defaultCollapsed: true,
       defaultShowItems: 3,
     };
@@ -49,20 +40,8 @@ function SearchFormInner(
     return {
       ...defaultOptions,
       ...options,
-      showSearchButton:
-        showSearchButton !== undefined
-          ? showSearchButton
-          : options?.showSearchButton ?? defaultOptions.showSearchButton,
-      showResetButton:
-        showResetButton !== undefined
-          ? showResetButton
-          : options?.showResetButton ?? defaultOptions.showResetButton,
-      collapsible:
-        collapsible !== undefined
-          ? collapsible
-          : options?.collapsible ?? defaultOptions.collapsible,
     };
-  }, [options, showSearchButton, showResetButton, collapsible]);
+  }, [options]);
 
   // 过滤掉隐藏的表单项
   const visibleItems = useMemo(
@@ -97,7 +76,10 @@ function SearchFormInner(
   // 计算需要显示的表单项
   const displayItems = useMemo(() => {
     const defaultShowItems = searchOptions.defaultShowItems ?? 3;
-    if (!searchOptions.collapsible || visibleItems.length <= defaultShowItems) {
+    if (
+      !searchOptions.showCollapseButton ||
+      visibleItems.length <= defaultShowItems
+    ) {
       return processedItems;
     }
     const visibleProcessedItems = processedItems.filter((item) => !item.hidden);
@@ -105,7 +87,7 @@ function SearchFormInner(
       ? visibleProcessedItems.slice(0, defaultShowItems)
       : visibleProcessedItems;
   }, [
-    searchOptions.collapsible,
+    searchOptions.showCollapseButton,
     searchOptions.defaultShowItems,
     visibleItems.length,
     processedItems,
@@ -114,45 +96,33 @@ function SearchFormInner(
 
   // 是否需要显示展开/收起按钮
   const showCollapseButton =
-    searchOptions.collapsible &&
+    searchOptions.showCollapseButton &&
     visibleItems.length > (searchOptions.defaultShowItems ?? 3);
 
   // 处理搜索
   const handleSearch = async () => {
-    if (proFormRef.current) {
-      await proFormRef.current.submit();
+    try {
+      const values = await proFormRef.current?.validateFields();
+      setSearchLoading(true);
+      await formProps.onSearch?.(values);
+    } catch (error) {
+      console.error("搜索失败:", error);
+    } finally {
+      setSearchLoading(false);
     }
   };
 
   // 处理重置
   const handleReset = () => {
-    if (proFormRef.current) {
-      proFormRef.current.reset();
-    }
-    if (searchOptions.onReset) {
-      searchOptions.onReset();
-    }
+    proFormRef.current?.onReset();
   };
 
   // 暴露给外部的方法
   useImperativeHandle(ref, () => {
-    const form = proFormRef.current?.form;
     return {
-      form: form!,
-      search: handleSearch,
-      reset: handleReset,
-      getFieldsValue: () => proFormRef.current?.getFieldsValue() ?? {},
-      setFieldsValue: (values: Record<string, unknown>) => {
-        if (proFormRef.current) {
-          proFormRef.current.setFieldsValue(values);
-        }
-      },
-      validateFields: async () => {
-        if (proFormRef.current) {
-          return await proFormRef.current.validateFields();
-        }
-        return {};
-      },
+      ...proFormRef.current!,
+      onSearch: handleSearch,
+      onReset: handleReset,
     };
   });
 
@@ -163,9 +133,6 @@ function SearchFormInner(
       submitText: searchOptions.searchText,
       showResetButton: false,
       resetText: searchOptions.resetText,
-      submitLoading: searchOptions.searchLoading,
-      onSubmit: searchOptions.onSearch,
-      onReset: searchOptions.onReset,
     };
   }, [searchOptions]);
 
@@ -183,8 +150,8 @@ function SearchFormInner(
           <ProForm
             ref={proFormRef}
             items={displayItems}
-            layout="inline"
             {...formProps}
+            layout="inline"
             options={proFormOptions}
           />
         </div>
@@ -194,17 +161,17 @@ function SearchFormInner(
           showCollapseButton) && (
           <div style={{ flexShrink: 0 }}>
             <Space>
+              {searchOptions.showResetButton && (
+                <Button onClick={handleReset}>{searchOptions.resetText}</Button>
+              )}
               {searchOptions.showSearchButton && (
                 <Button
                   type="primary"
-                  loading={searchOptions.searchLoading}
                   onClick={handleSearch}
+                  loading={searchLoading}
                 >
                   {searchOptions.searchText}
                 </Button>
-              )}
-              {searchOptions.showResetButton && (
-                <Button onClick={handleReset}>{searchOptions.resetText}</Button>
               )}
               {showCollapseButton && (
                 <Button

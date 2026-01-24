@@ -1,4 +1,4 @@
-import { useImperativeHandle, forwardRef } from "react";
+import { useImperativeHandle, forwardRef, useState } from "react";
 import {
   Form,
   Input,
@@ -25,239 +25,101 @@ function ProFormInner(
   props: ProFormProps,
   ref: React.ForwardedRef<ProFormRef>
 ) {
-  const { items, formOptions, ...formProps } = useNormalizedProps(props);
+  const { items, formOptions, layout, onSubmit, onReset, ...formProps } =
+    useNormalizedProps(props);
 
   const [form] = Form.useForm();
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   // 处理表单提交
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      if (formOptions.onSubmit) {
-        await formOptions.onSubmit(values);
+      setSubmitLoading(true);
+      if (onSubmit) {
+        await onSubmit(values);
       }
     } catch (error) {
       console.error("表单验证失败:", error);
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
   // 处理表单重置
   const handleReset = () => {
     form.resetFields();
-    if (formOptions.onReset) {
-      formOptions.onReset();
+    if (onReset) {
+      onReset();
     }
   };
 
   // 暴露给外部的方法
   useImperativeHandle(ref, () => ({
-    form,
-    submit: handleSubmit,
-    reset: handleReset,
-    getFieldsValue: () => form.getFieldsValue(),
-    setFieldsValue: (values: Record<string, unknown>) =>
-      form.setFieldsValue(values),
-    validateFields: async () => {
-      return await form.validateFields();
-    },
+    ...form,
+    onReset: handleReset,
   }));
 
   // 渲染表单项
   const renderFormItem = (item: ProFormItemConfig) => {
     const {
-      name,
-      label,
       type = "input",
-      rules = [],
-      placeholder,
-      initialValue,
-      required,
-      hidden,
-      disabled,
-      itemProps = {},
       fieldProps = {},
       render,
       options = [],
-      dependencies,
-      shouldUpdate,
+      ...formItemProps
     } = item;
-
-    // 如果设置了 required，自动添加必填规则
-    const finalRules = (() => {
-      if (
-        required &&
-        !rules.some((rule) => "required" in rule && rule.required)
-      ) {
-        return [
-          {
-            required: true,
-            message: `请输入${
-              label || (Array.isArray(name) ? name.join(".") : name)
-            }`,
-          },
-          ...rules,
-        ];
-      }
-      return rules;
-    })();
 
     // 自定义渲染
     if (render) {
-      return (
-        <Form.Item
-          key={Array.isArray(name) ? name.join(".") : name}
-          name={name}
-          label={label}
-          rules={finalRules}
-          initialValue={initialValue}
-          hidden={hidden}
-          dependencies={dependencies}
-          shouldUpdate={shouldUpdate}
-          {...itemProps}
-        >
-          {render(form)}
-        </Form.Item>
-      );
+      return <Form.Item {...formItemProps}>{render(form)}</Form.Item>;
     }
 
     // 根据类型渲染不同的输入组件
     const renderInput = () => {
       switch (type) {
         case "input":
-          return (
-            <Input
-              placeholder={placeholder}
-              disabled={disabled}
-              {...fieldProps}
-            />
-          );
+          return <Input {...fieldProps} />;
         case "password":
-          return (
-            <Input.Password
-              placeholder={placeholder}
-              disabled={disabled}
-              {...fieldProps}
-            />
-          );
+          return <Input.Password {...fieldProps} />;
         case "textarea":
-          return (
-            <TextArea
-              placeholder={placeholder}
-              disabled={disabled}
-              {...fieldProps}
-            />
-          );
+          return <TextArea {...fieldProps} />;
         case "number":
-          return (
-            <InputNumber
-              placeholder={placeholder}
-              disabled={disabled}
-              style={{ width: "100%" }}
-              {...fieldProps}
-            />
-          );
+          return <InputNumber style={{ width: "100%" }} {...fieldProps} />;
         case "select":
-          return (
-            <Select
-              placeholder={placeholder}
-              disabled={disabled}
-              options={options}
-              {...fieldProps}
-            />
-          );
+          return <Select options={options} {...fieldProps} />;
         case "datePicker":
-          return (
-            <DatePicker
-              placeholder={placeholder}
-              disabled={disabled}
-              style={{ width: "100%" }}
-              {...fieldProps}
-            />
-          );
+          return <DatePicker style={{ width: "100%" }} {...fieldProps} />;
         case "dateRangePicker":
-          return (
-            <RangePicker
-              placeholder={[
-                placeholder || "开始日期",
-                placeholder || "结束日期",
-              ]}
-              disabled={disabled}
-              style={{ width: "100%" }}
-              {...fieldProps}
-            />
-          );
+          return <RangePicker style={{ width: "100%" }} {...fieldProps} />;
         case "timePicker":
-          return (
-            <TimePicker
-              placeholder={placeholder}
-              disabled={disabled}
-              style={{ width: "100%" }}
-              {...fieldProps}
-            />
-          );
+          return <TimePicker style={{ width: "100%" }} {...fieldProps} />;
         case "switch":
-          return <Switch disabled={disabled} {...fieldProps} />;
+          return <Switch {...fieldProps} />;
         case "checkbox":
-          return (
-            <Checkbox.Group
-              disabled={disabled}
-              options={options}
-              {...fieldProps}
-            />
-          );
+          return <Checkbox.Group options={options} {...fieldProps} />;
         case "radio":
-          return (
-            <Radio.Group
-              disabled={disabled}
-              options={options}
-              {...fieldProps}
-            />
-          );
+          return <Radio.Group options={options} {...fieldProps} />;
         case "upload":
-          return <Upload disabled={disabled} {...fieldProps} />;
+          return <Upload {...fieldProps} />;
         case "custom":
           return null; // 自定义类型必须使用 render
         default:
-          return (
-            <Input
-              placeholder={placeholder}
-              disabled={disabled}
-              {...fieldProps}
-            />
-          );
+          return <Input {...fieldProps} />;
       }
     };
 
-    return (
-      <Form.Item
-        key={Array.isArray(name) ? name.join(".") : name}
-        name={name}
-        label={label}
-        rules={finalRules}
-        initialValue={initialValue}
-        hidden={hidden}
-        dependencies={dependencies}
-        shouldUpdate={shouldUpdate}
-        {...itemProps}
-      >
-        {renderInput()}
-      </Form.Item>
-    );
-  };
-
-  // 处理表单完成事件
-  const handleFinish = async (values: Record<string, unknown>) => {
-    if (formOptions.onSubmit) {
-      await formOptions.onSubmit(values);
-    }
+    return <Form.Item {...formItemProps}>{renderInput()}</Form.Item>;
   };
 
   return (
     <div>
-      <Form form={form} onFinish={handleFinish} {...formProps}>
-        <Row gutter={16} style={{ width: "100%" }}>
+      <Form form={form} layout={layout} {...formProps}>
+        <Row
+          gutter={layout === "inline" ? [16, 16] : 16}
+          style={{ width: "100%" }}
+        >
           {items.map((item) => {
-            // 否则使用默认响应式配置
             return (
               <Col
                 key={Array.isArray(item.name) ? item.name.join(".") : item.name}
@@ -270,7 +132,7 @@ function ProFormInner(
         </Row>
         {(formOptions.showSubmitButton || formOptions.showResetButton) && (
           <Form.Item>
-            <Space style={{ display: "flex", justifyContent: "flex-end" }}>
+            <Space className="flex justify-end">
               {formOptions.showResetButton && (
                 <Button onClick={handleReset}>{formOptions.resetText}</Button>
               )}
@@ -278,7 +140,7 @@ function ProFormInner(
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={formOptions.submitLoading}
+                  loading={submitLoading}
                   onClick={handleSubmit}
                 >
                   {formOptions.submitText}

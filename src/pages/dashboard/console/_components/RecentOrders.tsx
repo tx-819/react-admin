@@ -60,19 +60,25 @@ const RecentOrders = () => {
       name: "orderId",
       label: "订单ID",
       type: "input",
-      placeholder: "请输入订单ID",
+      fieldProps: {
+        placeholder: "请输入订单ID",
+      },
     },
     {
       name: "customerName",
       label: "客户名称",
       type: "input",
-      placeholder: "请输入客户名称",
+      fieldProps: {
+        placeholder: "请输入客户名称",
+      },
     },
     {
       name: "status",
       label: "状态",
       type: "select",
-      placeholder: "请选择状态",
+      fieldProps: {
+        placeholder: "请选择状态",
+      },
       options: [
         { label: "已完成", value: "已完成" },
         { label: "处理中", value: "处理中" },
@@ -125,12 +131,8 @@ const RecentOrders = () => {
       <SearchForm
         ref={searchFormRef}
         items={searchItems}
-        options={{
-          onSearch: handleSearch,
-          onReset: handleReset,
-          collapsible: true,
-          defaultShowItems: 3,
-        }}
+        onSearch={handleSearch}
+        onReset={handleReset}
       />
       <ProTable<TableDataItem>
         ref={tableRef}
