@@ -13,11 +13,14 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     dataSource: externalDataSource,
     loading: externalLoading,
     pagination: externalPagination,
+    search: searchOptions,
     ...rest
   } = props;
 
   const [dataSource, setDataSource] = useState<T[]>(props.dataSource || []);
   const [loading, setLoading] = useState(false);
+  // 搜索参数状态
+  const [searchParams, setSearchParams] = useState<Record<string, unknown>>({});
 
   // 分页状态管理
   const [paginationState, setPaginationState] = useState(() => {
@@ -56,7 +59,11 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
 
   // 加载数据，自动支持分页
   const loadData = useCallback(
-    async (page?: number, pageSize?: number) => {
+    async (
+      page?: number,
+      pageSize?: number,
+      overrideSearchParams?: Record<string, unknown>
+    ) => {
       if (!request) {
         // 如果没有 request 函数，使用外部传入的 dataSource
         if (externalDataSource) {
@@ -71,9 +78,13 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
 
       try {
         setLoading(true);
-        // 合并请求参数，自动添加分页参数
+        // 合并请求参数，自动添加分页参数和搜索参数
+        // 如果提供了 overrideSearchParams，优先使用它
         const requestParams = {
           ...params,
+          ...(overrideSearchParams !== undefined
+            ? overrideSearchParams
+            : searchParams),
           current: currentPage,
           pageSize: currentPageSize,
         };
@@ -94,7 +105,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
         setLoading(false);
       }
     },
-    [request, params, externalDataSource]
+    [request, params, searchParams, externalDataSource]
   );
 
   const handleRefresh = async () => {
@@ -153,6 +164,37 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     loadData();
   }, [loadData]);
 
+  // 处理搜索
+  const handleSearch = useCallback(
+    async (values: Record<string, unknown>) => {
+      const currentPageSize = paginationStateRef.current.pageSize;
+      // 搜索时重置到第一页
+      setPaginationState((prev) => ({
+        ...prev,
+        current: 1,
+      }));
+      // 更新搜索参数
+      setSearchParams(values);
+      // 直接使用新的搜索参数加载数据
+      await loadData(1, currentPageSize, values);
+    },
+    [loadData]
+  );
+
+  // 处理重置
+  const handleReset = useCallback(async () => {
+    const currentPageSize = paginationStateRef.current.pageSize;
+    // 重置时重置到第一页
+    setPaginationState((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+    // 清空搜索参数
+    setSearchParams({});
+    // 直接使用空的搜索参数加载数据
+    await loadData(1, currentPageSize, {});
+  }, [loadData]);
+
   return {
     ...rest,
     settingsOptions: {
@@ -166,6 +208,10 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     columns: filteredColumns,
     pagination,
     onChange: handleTableChange,
+    search: searchOptions,
+    searchParams,
+    onSearch: handleSearch,
+    onReset: handleReset,
     refMethods: {
       refresh: handleRefresh,
     },

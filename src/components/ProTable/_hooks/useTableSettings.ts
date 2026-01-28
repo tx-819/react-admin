@@ -1,4 +1,4 @@
-import type { ColumnsType } from "antd/es/table";
+import type { ProColumnType } from "../types";
 import { useEffect, useMemo, useState } from "react";
 
 type TableSize = "small" | "middle" | "large";
@@ -14,7 +14,7 @@ interface UseTableSettingsOptions {
 
 interface UseTableSettingsProps<T = unknown> {
   /** 表格列配置 */
-  columns?: ColumnsType<T>;
+  columns?: ProColumnType<T>[];
   /** 初始表格大小 */
   initialSize?: TableSize;
   /** Settings 选项配置 */
@@ -30,9 +30,7 @@ const getInitialSize = (size?: TableSize): TableSize => {
 };
 
 // 获取列的标识符（优先使用 dataIndex，如果没有则使用 key）
-export function getColumnIdentifier<T>(
-  col: ColumnsType<T>[number]
-): string | null {
+export function getColumnIdentifier<T>(col: ProColumnType<T>): string | null {
   // 检查是否是 ColumnType（有 dataIndex 属性）
   // ColumnGroupType 没有 dataIndex，只有 ColumnType 有
   if (
@@ -59,7 +57,7 @@ export function getColumnIdentifier<T>(
 }
 
 export function getInitialVisibleColumns<T>(
-  columns?: ColumnsType<T>
+  columns?: ProColumnType<T>[]
 ): string[] {
   if (!columns) return [];
   return columns
@@ -105,7 +103,7 @@ const useTableSettings = <T = unknown>({
   }, [columns]);
 
   // 根据可见列过滤 columns
-  const filteredColumns = useMemo(() => {
+  const filteredColumns = useMemo((): ProColumnType<T>[] | undefined => {
     if (!columns || !showColumnFilter) {
       return columns;
     }
@@ -118,7 +116,7 @@ const useTableSettings = <T = unknown>({
       }
       // 根据 visibleColumnKeys 决定是否显示
       return visibleColumnKeys.includes(identifier);
-    });
+    }) as ProColumnType<T>[];
   }, [columns, visibleColumnKeys, showColumnFilter]);
 
   return {

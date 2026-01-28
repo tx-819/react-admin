@@ -131,8 +131,8 @@ function ProFormInner(
           })}
         </Row>
         {(formOptions.showSubmitButton || formOptions.showResetButton) && (
-          <Form.Item>
-            <Space className="flex justify-end">
+          <Form.Item className="flex justify-end">
+            <Space>
               {formOptions.showResetButton && (
                 <Button onClick={handleReset}>{formOptions.resetText}</Button>
               )}

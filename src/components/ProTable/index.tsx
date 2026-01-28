@@ -1,8 +1,10 @@
-import { useImperativeHandle, forwardRef } from "react";
+import { useImperativeHandle, forwardRef, useMemo } from "react";
 import { Table } from "antd";
 import Settings from "./_components/Settings";
 import useNormalizedProps from "./_hooks/useNormalizedProps";
 import type { ProTableProps, ProTableRef } from "./types";
+import SearchForm from "../SearchForm";
+import type { SearchFormOptions } from "../SearchForm";
 
 function ProTableInner<T = unknown>(
   props: ProTableProps<T>,
@@ -14,6 +16,9 @@ function ProTableInner<T = unknown>(
     columns,
     refMethods,
     settingsOptions,
+    search: searchOptions,
+    onSearch,
+    onReset,
     ...tableProps
   } = useNormalizedProps(props);
 
@@ -41,16 +46,91 @@ function ProTableInner<T = unknown>(
     );
   };
 
+  // 判断是否显示搜索表单：默认显示（当 search 不是 false 且有 formItem 的列时）
+  const shouldShowSearch = useMemo(() => {
+    if (searchOptions === false) {
+      return false;
+    }
+    // 检查是否有列配置了 formItem
+    return columns?.some((column) => column.formItem) ?? false;
+  }, [columns, searchOptions]);
+
+  // 构建搜索表单项
+  const searchItems = useMemo(() => {
+    if (!columns || !shouldShowSearch) {
+      return [];
+    }
+
+    return columns
+      .map((column) => {
+        // 如果没有 formItem 配置，跳过
+        if (!column.formItem) {
+          return null;
+        }
+
+        // 处理 dataIndex，可能是 string、number 或 array
+        let name: string | string[] | undefined;
+        if (column.dataIndex !== undefined && column.dataIndex !== null) {
+          if (typeof column.dataIndex === "string") {
+            name = column.dataIndex;
+          } else if (typeof column.dataIndex === "number") {
+            name = String(column.dataIndex);
+          } else if (Array.isArray(column.dataIndex)) {
+            name = column.dataIndex.map(String);
+          }
+        } else if (column.key !== undefined && column.key !== null) {
+          name = String(column.key);
+        }
+
+        // 处理 title，可能是 string、ReactNode 或函数
+        let label: string | undefined;
+        if (typeof column.title === "string") {
+          label = column.title;
+        } else if (column.title === undefined || column.title === null) {
+          label = undefined;
+        } else {
+          // 如果是 ReactNode 或函数，尝试提取文本或使用默认值
+          label = name as string | undefined;
+        }
+
+        // 如果没有 name，跳过
+        if (!name) {
+          return null;
+        }
+
+        return {
+          ...column.formItem,
+          name,
+          label,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [columns, shouldShowSearch]);
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <Table
-        {...tableProps}
-        columns={columns}
-        title={renderTitle()}
-        dataSource={dataSource}
-        loading={loading}
-      />
-    </div>
+    <>
+      {shouldShowSearch && (
+        <SearchForm
+          items={searchItems}
+          options={
+            searchOptions === true || searchOptions === undefined
+              ? undefined
+              : (searchOptions as SearchFormOptions)
+          }
+          onSearch={onSearch}
+          onReset={onReset}
+        />
+      )}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <Table
+          {...tableProps}
+          columns={columns}
+          title={renderTitle()}
+          dataSource={dataSource}
+          loading={loading}
+        />
+      </div>
+    </>
   );
 }
 

@@ -1,4 +1,6 @@
-import type { TableProps } from "antd/es/table";
+import type { ColumnType, TableProps } from "antd/es/table";
+import type { SearchFormOptions } from "../SearchForm";
+import type { ProFormItemConfig } from "../ProForm/types";
 
 export interface ProTableOptions {
   /** 是否显示刷新按钮 */
@@ -13,8 +15,14 @@ export interface ProTableOptions {
   showColumnFilter?: boolean;
 }
 
+export interface ProColumnType<RecordType = unknown>
+  extends ColumnType<RecordType> {
+  /** 搜索表单项配置 */
+  formItem?: Omit<ProFormItemConfig, "name" | "label">;
+}
+
 export interface ProTableProps<T = unknown>
-  extends Omit<TableProps<T>, "dataSource" | "loading" | "title"> {
+  extends Omit<TableProps<T>, "dataSource" | "loading" | "title" | "columns"> {
   /** 数据源 */
   dataSource?: T[];
   /** 加载状态 */
@@ -29,6 +37,10 @@ export interface ProTableProps<T = unknown>
   options?: ProTableOptions;
   /** 表格标题 */
   title?: string | TableProps<T>["title"];
+  /** 搜索表单，默认为 true（自动显示），可传入 false 禁用或传入配置对象 */
+  search?: false | true | SearchFormOptions;
+  /** 表格列配置 */
+  columns?: ProColumnType<T>[];
 }
 
 export interface ProTableRef {

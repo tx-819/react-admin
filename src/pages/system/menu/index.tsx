@@ -21,7 +21,6 @@ import {
 
 const Menu = () => {
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const tableRef = useRef<ProTableRef>(null);
   const formRef = useRef<ProFormRef>(null);
   const [menuTreeData, setMenuTreeData] = useState<MenuItem[]>([]);
@@ -176,10 +175,10 @@ const Menu = () => {
       label: "菜单名称",
       type: "input",
       required: true,
-      placeholder: "请输入菜单名称",
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: "请输入菜单名称",
       },
     },
     {
@@ -187,45 +186,43 @@ const Menu = () => {
       label: "菜单路径",
       type: "input",
       required: true,
-      placeholder: "请输入菜单路径，如：dashboard",
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: "请输入菜单路径，如：dashboard",
       },
     },
     {
       name: "component",
       label: "组件路径",
       type: "input",
-      placeholder: "请输入组件路径，如：views/Dashboard.vue",
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: "请输入组件路径，如：views/Dashboard.vue",
       },
     },
     {
       name: "parentId",
       label: "父菜单",
       type: "select",
-      placeholder: "请选择父菜单",
       initialValue: null,
       options: parentMenuOptions,
+      labelCol: { span: 6 },
       fieldProps: {
+        placeholder: "请选择父菜单",
         allowClear: true,
       },
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
-      },
     },
     {
       name: "icon",
       label: "图标",
       type: "input",
-      placeholder: "请输入图标名称",
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: "请输入图标名称",
       },
     },
     {
@@ -234,8 +231,9 @@ const Menu = () => {
       type: "switch",
       initialValue: false,
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
+      labelCol: { span: 6 },
+      fieldProps: {
+        min: 0,
       },
     },
     {
@@ -243,13 +241,11 @@ const Menu = () => {
       label: "排序",
       type: "number",
       initialValue: 0,
+      labelCol: { span: 6 },
       fieldProps: {
         min: 0,
       },
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
-      },
     },
     {
       name: "status",
@@ -261,28 +257,27 @@ const Menu = () => {
         { label: "禁用", value: 0 },
       ],
       span: 12,
-      itemProps: {
-        labelCol: { span: 6 },
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: "请选择状态",
       },
     },
     {
       name: "remark",
       label: "备注",
       type: "textarea",
-      placeholder: "请输入备注信息",
-      span: 24,
-      itemProps: {
-        labelCol: { span: 3 },
+      fieldProps: {
+        placeholder: "请输入备注信息",
       },
+      span: 24,
+      labelCol: { span: 3 },
     },
     {
       name: ["meta", "authList"],
       label: "操作权限",
       type: "custom",
       span: 24,
-      itemProps: {
-        labelCol: { span: 3 },
-      },
+      labelCol: { span: 3 },
       render: () => (
         <Form.List name={["meta", "authList"]}>
           {(fields, { add, remove }) => (
@@ -337,7 +332,6 @@ const Menu = () => {
   // 处理新增菜单
   const handleCreate = async (values: Record<string, unknown>) => {
     try {
-      setLoading(true);
       const meta = values.meta as Record<string, unknown> | undefined;
       const params: CreateMenuParams = {
         path: values.path as string,
@@ -364,15 +358,13 @@ const Menu = () => {
       await createMenuApi(params);
       message.success("创建成功");
       setModalOpen(false);
-      formRef.current?.reset();
+      formRef.current?.onReset();
       // 刷新表格
       if (tableRef.current) {
         await tableRef.current.refresh();
       }
     } catch (error) {
       console.error("创建菜单失败:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -427,7 +419,7 @@ const Menu = () => {
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
-          formRef.current?.reset();
+          formRef.current?.onReset();
         }}
         footer={null}
         width={800}
@@ -439,8 +431,11 @@ const Menu = () => {
           options={{
             submitText: "创建",
             resetText: "重置",
-            submitLoading: loading,
-            onSubmit: handleCreate,
+          }}
+          onSubmit={handleCreate}
+          onReset={() => {
+            formRef.current?.onReset();
+            setModalOpen(false);
           }}
         />
       </Modal>

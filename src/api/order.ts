@@ -10,12 +10,12 @@ export interface GetOrderListParams {
   pageNum?: number;
   pageSize?: number;
   size?: number;
-  // 搜索参数
-  orderId?: string;
-  customerName?: string;
+  // 搜索参数（直接使用表格字段名）
+  id?: string;
+  name?: string;
   status?: string;
-  startDate?: string;
-  endDate?: string;
+  amount?: string | number;
+  date?: string;
 }
 
 /**
@@ -167,40 +167,42 @@ export const getOrderList = async (
   let filteredData = [...mockOrders];
 
   // 按订单ID过滤
-  if (params?.orderId) {
+  if (params?.id) {
     filteredData = filteredData.filter((order) =>
-      order.id.toLowerCase().includes(params.orderId!.toLowerCase())
+      order.id.toLowerCase().includes(params.id!.toLowerCase())
     );
   }
 
   // 按客户名称过滤
-  if (params?.customerName) {
+  if (params?.name) {
     filteredData = filteredData.filter((order) =>
-      order.name.includes(params.customerName!)
+      order.name.includes(params.name!)
     );
   }
 
   // 按状态过滤
   if (params?.status) {
-    filteredData = filteredData.filter((order) => order.status === params.status);
+    filteredData = filteredData.filter(
+      (order) => order.status === params.status
+    );
   }
 
-  // 按日期范围过滤
-  if (params?.startDate || params?.endDate) {
-    filteredData = filteredData.filter((order) => {
-      const orderDate = new Date(order.date);
-      if (params.startDate) {
-        const startDate = new Date(params.startDate);
-        if (orderDate < startDate) return false;
-      }
-      if (params.endDate) {
-        const endDate = new Date(params.endDate);
-        // 设置为当天的结束时间
-        endDate.setHours(23, 59, 59, 999);
-        if (orderDate > endDate) return false;
-      }
-      return true;
-    });
+  // 按金额过滤
+  if (params?.amount) {
+    const amountValue =
+      typeof params.amount === "string"
+        ? parseFloat(params.amount)
+        : params.amount;
+    if (!isNaN(amountValue)) {
+      filteredData = filteredData.filter(
+        (order) => order.amount === amountValue
+      );
+    }
+  }
+
+  // 按日期过滤
+  if (params?.date) {
+    filteredData = filteredData.filter((order) => order.date === params.date);
   }
 
   // 获取分页参数
@@ -226,7 +228,7 @@ export const getOrderListApi = async (
   params?: GetOrderListParams
 ): Promise<GetOrderListResponse> => {
   const queryParams = new URLSearchParams();
-  
+
   if (params?.current) queryParams.append("current", String(params.current));
   if (params?.pageSize) queryParams.append("pageSize", String(params.pageSize));
   if (params?.page) queryParams.append("page", String(params.page));
@@ -241,4 +243,3 @@ export const getOrderListApi = async (
 
   return response;
 };
-
