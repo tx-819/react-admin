@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Tag, Space, Button, Modal, message, Form, Input } from "antd";
 import {
   EditOutlined,
@@ -10,8 +10,7 @@ import type { ColumnsType } from "antd/es/table";
 import ProTable from "@/components/ProTable";
 import type { ProTableRef } from "@/components/ProTable/types";
 import ProForm from "@/components/ProForm";
-import type { ProFormRef } from "@/components/ProForm/types";
-import type { ProFormItemConfig } from "@/components/ProForm/types";
+import type { ProFormRef, ProFormItemConfig } from "@/components/ProForm/types";
 import {
   getMenuListApi,
   createMenuApi,
@@ -21,9 +20,9 @@ import {
 
 const Menu = () => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
   const tableRef = useRef<ProTableRef>(null);
   const formRef = useRef<ProFormRef>(null);
-  const [menuTreeData, setMenuTreeData] = useState<MenuItem[]>([]);
 
   // 处理树形数据，添加 key 和完整路径
   const processMenuData = (data: MenuItem[], parentPath = ""): MenuItem[] => {
@@ -41,33 +40,6 @@ const Menu = () => {
     });
   };
 
-  // 父菜单选项
-  const parentMenuOptions = useMemo(() => {
-    // 将树形菜单数据转换为选择器选项（用于父菜单选择）
-    const flattenMenuForSelect = (
-      data: MenuItem[],
-      level = 0
-    ): Array<{ label: string; value: string | null }> => {
-      const result: Array<{ label: string; value: string | null }> = [];
-      data.forEach((item) => {
-        const prefix = "  ".repeat(level);
-        result.push({
-          label: `${prefix}${item.name}`,
-          value: item.id,
-        });
-        if (item.children && item.children.length > 0) {
-          result.push(...flattenMenuForSelect(item.children, level + 1));
-        }
-      });
-      return result;
-    };
-
-    return [
-      { label: "无（顶级菜单）", value: null },
-      ...flattenMenuForSelect(menuTreeData),
-    ];
-  }, [menuTreeData]);
-
   // 表格列定义
   const columns: ColumnsType<MenuItem> = [
     {
@@ -75,16 +47,6 @@ const Menu = () => {
       dataIndex: "name",
       key: "name",
       width: 200,
-      render: (text: string, record: MenuItem) => {
-        return (
-          <span>
-            {record.meta?.icon && (
-              <span className="mr-2">{record.meta.icon}</span>
-            )}
-            {text}
-          </span>
-        );
-      },
     },
     {
       title: "路径",
@@ -142,6 +104,19 @@ const Menu = () => {
       fixed: "right",
       render: (_: unknown, record: MenuItem) => (
         <Space>
+          {!record.component && (
+            <Button
+              type="link"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                handleOpenModal(record.id);
+              }}
+            >
+              新增子菜单
+            </Button>
+          )}
+
           <Button
             type="link"
             size="small"
@@ -168,8 +143,7 @@ const Menu = () => {
     },
   ];
 
-  // 新增菜单表单配置
-  const formItems: ProFormItemConfig[] = [
+  const formItems = [
     {
       name: "name",
       label: "菜单名称",
@@ -201,19 +175,6 @@ const Menu = () => {
       fieldProps: {
         placeholder: "请输入组件路径，如：views/Dashboard.vue",
       },
-    },
-    {
-      name: "parentId",
-      label: "父菜单",
-      type: "select",
-      initialValue: null,
-      options: parentMenuOptions,
-      labelCol: { span: 6 },
-      fieldProps: {
-        placeholder: "请选择父菜单",
-        allowClear: true,
-      },
-      span: 12,
     },
     {
       name: "icon",
@@ -337,10 +298,8 @@ const Menu = () => {
         path: values.path as string,
         name: values.name as string,
         component: values.component as string | undefined,
-        parentId:
-          values.parentId === null
-            ? null
-            : (values.parentId as string | undefined),
+        // 如果有 defaultParentId，使用它；否则为 null（顶级菜单）
+        parentId: defaultParentId ?? null,
         icon: values.icon as string | undefined,
         keepAlive: values.keepAlive as boolean | undefined,
         sort: (values.sort as number) ?? 0,
@@ -358,6 +317,7 @@ const Menu = () => {
       await createMenuApi(params);
       message.success("创建成功");
       setModalOpen(false);
+      setDefaultParentId(null);
       formRef.current?.onReset();
       // 刷新表格
       if (tableRef.current) {
@@ -369,16 +329,20 @@ const Menu = () => {
   };
 
   // 打开新增弹窗
-  const handleOpenModal = async () => {
-    // 加载菜单树数据用于父菜单选择
-    try {
-      const data = await getMenuListApi();
-      setMenuTreeData(data);
-      setModalOpen(true);
-    } catch (error) {
-      console.error("加载菜单数据失败:", error);
-    }
+  const handleOpenModal = async (parentId?: string | null) => {
+    // 如果传入了 parentId，设置为默认父菜单
+    setDefaultParentId(parentId ?? null);
+    setModalOpen(true);
   };
+
+  // 当弹窗打开且 defaultParentId 变化时，设置表单初始值
+  useEffect(() => {
+    if (modalOpen && formRef.current) {
+      formRef.current.setFieldsValue({
+        parentId: defaultParentId,
+      });
+    }
+  }, [modalOpen, defaultParentId]);
 
   return (
     <>
@@ -387,7 +351,7 @@ const Menu = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={handleOpenModal}
+          onClick={() => handleOpenModal()}
         >
           新增菜单
         </Button>
@@ -415,10 +379,11 @@ const Menu = () => {
 
       {/* 新增菜单弹窗 */}
       <Modal
-        title="新增菜单"
+        title={defaultParentId ? "新增子菜单" : "新增菜单"}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
+          setDefaultParentId(null);
           formRef.current?.onReset();
         }}
         footer={null}
@@ -427,16 +392,8 @@ const Menu = () => {
       >
         <ProForm
           ref={formRef}
-          items={formItems}
-          options={{
-            submitText: "创建",
-            resetText: "重置",
-          }}
+          items={formItems as ProFormItemConfig[]}
           onSubmit={handleCreate}
-          onReset={() => {
-            formRef.current?.onReset();
-            setModalOpen(false);
-          }}
         />
       </Modal>
     </>

@@ -113,8 +113,11 @@ function SearchFormInner(
   };
 
   // 处理重置
-  const handleReset = () => {
-    proFormRef.current?.onReset();
+  const handleReset = async () => {
+    // 重置表单字段
+    proFormRef.current?.resetFields();
+    // 调用外部的重置回调（来自 ProTable）
+    await formProps.onReset?.();
   };
 
   // 暴露给外部的方法
@@ -151,6 +154,7 @@ function SearchFormInner(
             ref={proFormRef}
             items={displayItems}
             {...formProps}
+            onReset={undefined}
             layout="inline"
             options={proFormOptions}
           />
