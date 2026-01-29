@@ -89,7 +89,7 @@ const BreadcrumbNav = () => {
 
   const breadcrumbItems = useMemo(() => {
     const items = getBreadcrumbItems(menuList, location.pathname);
-    console.log("items", items);
+
     if (!items || items.length === 0) return [];
 
     return items.map((item) => ({

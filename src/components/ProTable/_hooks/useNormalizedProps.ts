@@ -22,6 +22,16 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
   // 搜索参数状态
   const [searchParams, setSearchParams] = useState<Record<string, unknown>>({});
 
+  // 使用 ref 存储 request 和 params，避免因引用变化导致不必要的重新加载
+  const requestRef = useRef(request);
+  const paramsRef = useRef(params);
+
+  // 更新 ref 的值
+  useEffect(() => {
+    requestRef.current = request;
+    paramsRef.current = params;
+  }, [request, params]);
+
   // 分页状态管理
   const [paginationState, setPaginationState] = useState(() => {
     if (externalPagination === false) {
@@ -64,7 +74,11 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
       pageSize?: number,
       overrideSearchParams?: Record<string, unknown>
     ) => {
-      if (!request) {
+      // 使用 ref 获取最新的 request 和 params，避免依赖项变化
+      const currentRequest = requestRef.current;
+      const currentParams = paramsRef.current;
+
+      if (!currentRequest) {
         // 如果没有 request 函数，使用外部传入的 dataSource
         if (externalDataSource) {
           setDataSource(externalDataSource);
@@ -81,7 +95,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
         // 合并请求参数，自动添加分页参数和搜索参数
         // 如果提供了 overrideSearchParams，优先使用它
         const requestParams = {
-          ...params,
+          ...currentParams,
           ...(overrideSearchParams !== undefined
             ? overrideSearchParams
             : searchParams),
@@ -89,7 +103,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
           pageSize: currentPageSize,
         };
 
-        const result = await request(requestParams);
+        const result = await currentRequest(requestParams);
 
         setDataSource(result.data || []);
 
@@ -105,7 +119,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
         setLoading(false);
       }
     },
-    [request, params, searchParams, externalDataSource]
+    [searchParams, externalDataSource]
   );
 
   const handleRefresh = async () => {
@@ -196,6 +210,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
   }, [loadData]);
 
   return {
+    rowKey: "id",
     ...rest,
     settingsOptions: {
       ...tableSettingsOptions,

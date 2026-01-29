@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Tag, Space, Button, Modal, message, Form, Input } from "antd";
+import { useState, useRef } from "react";
+import { Tag, Space, Button, Modal, message, Form, Input, Tooltip } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -14,31 +14,19 @@ import type { ProFormRef, ProFormItemConfig } from "@/components/ProForm/types";
 import {
   getMenuListApi,
   createMenuApi,
+  updateMenuApi,
+  deleteMenuApi,
   type MenuItem,
   type CreateMenuParams,
+  type UpdateMenuParams,
 } from "@/api/menu";
 
 const Menu = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
+  const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null);
   const tableRef = useRef<ProTableRef>(null);
   const formRef = useRef<ProFormRef>(null);
-
-  // 处理树形数据，添加 key 和完整路径
-  const processMenuData = (data: MenuItem[], parentPath = ""): MenuItem[] => {
-    return data.map((item) => {
-      const currentPath = parentPath ? `${parentPath}/${item.path}` : item.path;
-      const processedItem: MenuItem = {
-        ...item,
-        key: item.id,
-        path: currentPath,
-      };
-      if (item.children && item.children.length > 0) {
-        processedItem.children = processMenuData(item.children, currentPath);
-      }
-      return processedItem;
-    });
-  };
 
   // 表格列定义
   const columns: ColumnsType<MenuItem> = [
@@ -86,14 +74,14 @@ const Menu = () => {
       width: 200,
       render: (authList: Array<{ title: string; authMark: string }>) => {
         if (!authList || authList.length === 0) return "-";
+        const authCount = authList.length;
+        const authTitles = authList.map((auth) => auth.title).join("、");
         return (
-          <Space wrap>
-            {authList.map((auth, index) => (
-              <Tag key={index} color="blue">
-                {auth.title}
-              </Tag>
-            ))}
-          </Space>
+          <Tooltip title={authTitles}>
+            <Tag color="blue" style={{ cursor: "pointer" }}>
+              {authCount}个权限
+            </Tag>
+          </Tooltip>
         );
       },
     },
@@ -122,7 +110,7 @@ const Menu = () => {
             size="small"
             icon={<EditOutlined />}
             onClick={() => {
-              console.log("编辑", record);
+              handleEdit(record);
             }}
           >
             编辑
@@ -133,7 +121,7 @@ const Menu = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() => {
-              console.log("删除", record);
+              handleDelete(record);
             }}
           >
             删除
@@ -143,7 +131,7 @@ const Menu = () => {
     },
   ];
 
-  const formItems = [
+  const formItems: ProFormItemConfig[] = [
     {
       name: "name",
       label: "菜单名称",
@@ -151,6 +139,7 @@ const Menu = () => {
       required: true,
       span: 12,
       labelCol: { span: 6 },
+      initialValue: editingMenu?.name,
       fieldProps: {
         placeholder: "请输入菜单名称",
       },
@@ -162,6 +151,7 @@ const Menu = () => {
       required: true,
       span: 12,
       labelCol: { span: 6 },
+      initialValue: editingMenu?.path,
       fieldProps: {
         placeholder: "请输入菜单路径，如：dashboard",
       },
@@ -172,8 +162,9 @@ const Menu = () => {
       type: "input",
       span: 12,
       labelCol: { span: 6 },
+      initialValue: editingMenu?.component,
       fieldProps: {
-        placeholder: "请输入组件路径，如：views/Dashboard.vue",
+        placeholder: "请输入组件路径，如：/dashboard/console",
       },
     },
     {
@@ -182,6 +173,7 @@ const Menu = () => {
       type: "input",
       span: 12,
       labelCol: { span: 6 },
+      initialValue: editingMenu?.meta?.icon,
       fieldProps: {
         placeholder: "请输入图标名称",
       },
@@ -190,9 +182,9 @@ const Menu = () => {
       name: "keepAlive",
       label: "是否缓存",
       type: "switch",
-      initialValue: false,
       span: 12,
       labelCol: { span: 6 },
+      initialValue: editingMenu?.keepAlive,
       fieldProps: {
         min: 0,
       },
@@ -201,8 +193,8 @@ const Menu = () => {
       name: "sort",
       label: "排序",
       type: "number",
-      initialValue: 0,
       labelCol: { span: 6 },
+      initialValue: editingMenu?.sort || 0,
       fieldProps: {
         min: 0,
       },
@@ -212,7 +204,7 @@ const Menu = () => {
       name: "status",
       label: "状态",
       type: "select",
-      initialValue: 1,
+      initialValue: editingMenu?.status || 1,
       options: [
         { label: "启用", value: 1 },
         { label: "禁用", value: 0 },
@@ -227,6 +219,7 @@ const Menu = () => {
       name: "remark",
       label: "备注",
       type: "textarea",
+      initialValue: editingMenu?.remark || "",
       fieldProps: {
         placeholder: "请输入备注信息",
       },
@@ -240,7 +233,10 @@ const Menu = () => {
       span: 24,
       labelCol: { span: 3 },
       render: () => (
-        <Form.List name={["meta", "authList"]}>
+        <Form.List
+          name={["meta", "authList"]}
+          initialValue={editingMenu?.meta?.authList || []}
+        >
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
@@ -328,21 +324,79 @@ const Menu = () => {
     }
   };
 
+  // 处理更新菜单
+  const handleUpdate = async (values: Record<string, unknown>) => {
+    if (!editingMenu) return;
+    try {
+      const meta = values.meta as Record<string, unknown> | undefined;
+      const params: UpdateMenuParams = {
+        path: values.path as string,
+        name: values.name as string,
+        component: values.component as string | undefined,
+        icon: values.icon as string | undefined,
+        keepAlive: values.keepAlive as boolean | undefined,
+        sort: (values.sort as number) ?? 0,
+        status: (values.status as number) ?? 1,
+        remark: values.remark as string | undefined,
+        meta: meta?.authList
+          ? {
+              authList: meta.authList as Array<{
+                title: string;
+                authMark: string;
+              }>,
+            }
+          : undefined,
+      };
+      await updateMenuApi(editingMenu.id, params);
+      message.success("更新成功");
+      setModalOpen(false);
+      setEditingMenu(null);
+      formRef.current?.onReset();
+      // 刷新表格
+      if (tableRef.current) {
+        await tableRef.current.refresh();
+      }
+    } catch (error) {
+      console.error("更新菜单失败:", error);
+    }
+  };
+
   // 打开新增弹窗
   const handleOpenModal = async (parentId?: string | null) => {
     // 如果传入了 parentId，设置为默认父菜单
     setDefaultParentId(parentId ?? null);
+    setEditingMenu(null);
     setModalOpen(true);
   };
 
-  // 当弹窗打开且 defaultParentId 变化时，设置表单初始值
-  useEffect(() => {
-    if (modalOpen && formRef.current) {
-      formRef.current.setFieldsValue({
-        parentId: defaultParentId,
-      });
-    }
-  }, [modalOpen, defaultParentId]);
+  // 打开编辑弹窗
+  const handleEdit = (record: MenuItem) => {
+    setEditingMenu(record);
+    setDefaultParentId(null);
+    setModalOpen(true);
+  };
+
+  // 处理删除菜单
+  const handleDelete = (record: MenuItem) => {
+    Modal.confirm({
+      title: "确认删除",
+      okText: "确定",
+      cancelText: "取消",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await deleteMenuApi(record.id);
+          message.success("删除成功");
+          // 刷新表格
+          if (tableRef.current) {
+            await tableRef.current.refresh();
+          }
+        } catch (error) {
+          console.error("删除菜单失败:", error);
+        }
+      },
+    });
+  };
 
   return (
     <>
@@ -362,10 +416,9 @@ const Menu = () => {
         request={async () => {
           const data = await getMenuListApi();
           // 处理树形数据，添加 key 和完整路径
-          const processedData = processMenuData(data);
           return {
-            data: processedData,
-            total: processedData.length,
+            data,
+            total: data.length,
           };
         }}
         pagination={false}
@@ -377,13 +430,16 @@ const Menu = () => {
         }}
       />
 
-      {/* 新增菜单弹窗 */}
+      {/* 新增/编辑菜单弹窗 */}
       <Modal
-        title={defaultParentId ? "新增子菜单" : "新增菜单"}
+        title={
+          editingMenu ? "编辑菜单" : defaultParentId ? "新增子菜单" : "新增菜单"
+        }
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
           setDefaultParentId(null);
+          setEditingMenu(null);
           formRef.current?.onReset();
         }}
         footer={null}
@@ -392,8 +448,8 @@ const Menu = () => {
       >
         <ProForm
           ref={formRef}
-          items={formItems as ProFormItemConfig[]}
-          onSubmit={handleCreate}
+          items={formItems}
+          onSubmit={editingMenu ? handleUpdate : handleCreate}
         />
       </Modal>
     </>
