@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Form, Input, Button, message } from "antd";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { login } from "../../api/auth";
 import { setAccessToken, setUserInfo } from "../../utils/storage";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const [form] = Form.useForm();
 
   const onFinish = async (values: { username: string; password: string }) => {
@@ -24,7 +23,7 @@ const Login = () => {
 
       message.success("登录成功");
       // 登录成功后跳转到首页
-      navigate("/");
+      location.href = "/";
     } catch (error) {
       // 错误信息已经在request工具中统一处理并显示
       // 这里只记录日志，不重复显示错误提示
