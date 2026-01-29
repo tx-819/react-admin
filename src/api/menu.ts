@@ -4,7 +4,7 @@ import { get, post, put, del } from "../utils/request";
 export type PermissionType = "menu" | "route" | "action";
 
 export interface AppRouteRecord {
-  id: number;
+  id: string;
   meta?: RouteMeta;
   name: string;
   children?: AppRouteRecord[];
@@ -215,7 +215,7 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
     setTimeout(() => {
       resolve([
         {
-          id: 1,
+          id: "1",
           path: "dashboard",
           meta: {
             icon: "CircleGauge",
@@ -223,7 +223,7 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
           name: "仪表盘",
           children: [
             {
-              id: 2,
+              id: "2",
               path: "console",
               component: "/dashboard/console",
               name: "控制台",
@@ -231,7 +231,7 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
           ],
         },
         {
-          id: 3,
+          id: "3",
           path: "system",
           name: "系统管理",
           meta: {
@@ -239,7 +239,7 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
           },
           children: [
             {
-              id: 4,
+              id: "4",
               path: "users",
               component: "/system/users",
               name: "用户管理",
@@ -262,7 +262,7 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
               },
             },
             {
-              id: 5,
+              id: "5",
               path: "roles",
               name: "角色管理",
               component: "/system/roles",
@@ -282,7 +282,7 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
               },
             },
             {
-              id: 6,
+              id: "6",
               path: "menu",
               name: "菜单管理",
               component: "/system/menu",
@@ -295,29 +295,4 @@ export const getMenuList = async (): Promise<AppRouteRecord[]> => {
       ]);
     }, 100);
   });
-
-  // 实际使用时，可以这样实现：
-  /*
-  const queryParams = new URLSearchParams();
-  if (params?.type) {
-    queryParams.append('type', params.type);
-  }
-  if (params?.includeDisabled) {
-    queryParams.append('includeDisabled', params.includeDisabled);
-  }
-
-  const response = await fetch(`/api/permissions/tree?${queryParams.toString()}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${getAccessToken()}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch permission tree');
-  }
-
-  const result: GetPermissionTreeResponse = await response.json();
-  return result.data;
-  */
 };

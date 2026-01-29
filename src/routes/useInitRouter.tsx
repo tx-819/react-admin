@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { getMenuList } from "../api/menu";
+import { getUserMenus } from "../api/auth";
 import buildRoutes from "./buildRoutes";
 import { createBrowserRouter } from "react-router-dom";
 import { setMenuList } from "../../store/menuStore";
+import { staticRoutes } from "./staticRoutes";
 
 const useInitRouter = () => {
   const [router, setRouter] = useState<ReturnType<
@@ -12,15 +13,18 @@ const useInitRouter = () => {
 
   const initRouter = async () => {
     try {
-      // 获取权限树，获取 route 类型的顶级权限（子权限会递归包含）
-      const menuList = await getMenuList();
-      setMenuList(menuList);
-      const routes = buildRoutes(menuList);
+      // 获取当前用户有权限的菜单列表
+      const userMenus = await getUserMenus();
+      // 转换为路由格式
+      setMenuList(userMenus);
+      const routes = buildRoutes(userMenus);
       const routerInstance = createBrowserRouter(routes);
       setRouter(routerInstance);
+      setLoading(false);
     } catch (error) {
-      console.error("Failed to load permission tree:", error);
-    } finally {
+      console.error("Failed to load user menus:", error);
+      const routerInstance = createBrowserRouter(staticRoutes);
+      setRouter(routerInstance);
       setLoading(false);
     }
   };
