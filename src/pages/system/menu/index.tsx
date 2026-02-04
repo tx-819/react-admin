@@ -20,6 +20,7 @@ import {
   type CreateMenuParams,
   type UpdateMenuParams,
 } from "@/api/menu";
+import Access from "@/components/Access";
 
 const Menu = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -93,39 +94,44 @@ const Menu = () => {
       render: (_: unknown, record: MenuItem) => (
         <Space>
           {!record.component && (
+            <Access code="create">
+              <Button
+                type="link"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  handleOpenModal(record.id);
+                }}
+              >
+                新增子菜单
+              </Button>
+            </Access>
+          )}
+          <Access code="update">
             <Button
               type="link"
               size="small"
-              icon={<PlusOutlined />}
+              icon={<EditOutlined />}
               onClick={() => {
-                handleOpenModal(record.id);
+                handleEdit(record);
               }}
             >
-              新增子菜单
+              编辑
             </Button>
-          )}
-
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => {
-              handleEdit(record);
-            }}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              handleDelete(record);
-            }}
-          >
-            删除
-          </Button>
+          </Access>
+          <Access code="delete">
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                handleDelete(record);
+              }}
+            >
+              删除
+            </Button>
+          </Access>
         </Space>
       ),
     },
@@ -402,13 +408,15 @@ const Menu = () => {
     <>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">菜单管理</h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => handleOpenModal()}
-        >
-          新增菜单
-        </Button>
+        <Access code="create">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => handleOpenModal()}
+          >
+            新增菜单
+          </Button>
+        </Access>
       </div>
       <ProTable<MenuItem>
         ref={tableRef}

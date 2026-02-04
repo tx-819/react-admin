@@ -21,6 +21,7 @@ import {
   type UpdateUserParams,
   type RoleOption,
 } from "@/api/user";
+import Access from "@/components/Access";
 
 const Users = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -143,27 +144,31 @@ const Users = () => {
       fixed: "right",
       render: (_: unknown, record: UserItem) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => {
-              handleEdit(record);
-            }}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              handleDelete(record);
-            }}
-          >
-            删除
-          </Button>
+          <Access code="update">
+            <Button
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => {
+                handleEdit(record);
+              }}
+            >
+              编辑
+            </Button>
+          </Access>
+          <Access code="delete">
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                handleDelete(record);
+              }}
+            >
+              删除
+            </Button>
+          </Access>
         </Space>
       ),
     },
@@ -391,13 +396,15 @@ const Users = () => {
     <>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">用户管理</h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleOpenModal}
-        >
-          新增用户
-        </Button>
+        <Access code="create">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleOpenModal}
+          >
+            新增用户
+          </Button>
+        </Access>
       </div>
       <ProTable<UserItem>
         ref={tableRef}

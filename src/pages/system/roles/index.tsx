@@ -24,6 +24,7 @@ import {
   type UpdateRoleParams,
   type PermissionItem,
 } from "@/api/role";
+import Access from "@/components/Access";
 
 const Roles = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,16 +111,18 @@ const Roles = () => {
       fixed: "right",
       render: (_: unknown, record: RoleItem) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => {
-              handleEdit(record);
-            }}
-          >
-            编辑
-          </Button>
+          <Access code="update">
+            <Button
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => {
+                handleEdit(record);
+              }}
+            >
+              编辑
+            </Button>
+          </Access>
           <Button
             type="link"
             size="small"
@@ -130,17 +133,19 @@ const Roles = () => {
           >
             权限
           </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              handleDelete(record);
-            }}
-          >
-            删除
-          </Button>
+          <Access code="delete">
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                handleDelete(record);
+              }}
+            >
+              删除
+            </Button>
+          </Access>
         </Space>
       ),
     },
@@ -520,13 +525,15 @@ const Roles = () => {
     <>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">角色管理</h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleOpenModal}
-        >
-          新增角色
-        </Button>
+        <Access code="create">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleOpenModal}
+          >
+            新增角色
+          </Button>
+        </Access>
       </div>
       <ProTable<RoleItem>
         ref={tableRef}
