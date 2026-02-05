@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Form, Input, Button, message } from "antd";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { login } from "../../api/auth";
 import { setAccessToken, setUserInfo } from "../../utils/storage";
 
 const Login = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -21,7 +23,7 @@ const Login = () => {
       setAccessToken(response.accessToken);
       setUserInfo(response.user);
 
-      message.success("登录成功");
+      message.success(t("login.loginSuccess"));
       // 登录成功后跳转到首页
       location.href = "/";
     } catch (error) {
@@ -54,8 +56,10 @@ const Login = () => {
       <div className="w-full p-8 mt-8 relative z-10 mx-auto flex flex-col items-center">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-10">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">欢迎回来</h1>
-            <p className="text-gray-500">输入您的账号和密码登录</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              {t("login.title")}
+            </h1>
+            <p className="text-gray-500">{t("login.subtitle")}</p>
           </div>
 
           <Form
@@ -68,22 +72,28 @@ const Login = () => {
             <Form.Item
               name="username"
               rules={[
-                { required: true, message: "请输入用户名" },
-                { min: 3, message: "用户名至少3个字符" },
+                { required: true, message: t("login.rules.usernameRequired") },
+                { min: 3, message: t("login.rules.usernameMinLength") },
               ]}
               className="mb-4"
             >
-              <Input size="large" placeholder="用户名" className="h-12" />
+              <Input
+                size="large"
+                placeholder={t("login.placeholder.username")}
+                className="h-12"
+              />
             </Form.Item>
 
             <Form.Item
               name="password"
-              rules={[{ required: true, message: "请输入密码" }]}
+              rules={[
+                { required: true, message: t("login.rules.passwordRequired") },
+              ]}
               className="mb-4"
             >
               <Input.Password
                 size="large"
-                placeholder="密码"
+                placeholder={t("login.placeholder.password")}
                 className="h-12"
               />
             </Form.Item>
@@ -97,17 +107,17 @@ const Login = () => {
                 size="large"
                 className="h-12 rounded-lg text-base font-medium"
               >
-                登录
+                {t("login.login")}
               </Button>
             </Form.Item>
 
             <div className="text-center text-sm text-gray-500">
-              还没有账号?{" "}
+              {t("login.noAccount")}{" "}
               <Link
                 to="/register"
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                立即注册
+                {t("login.registerNow")}
               </Link>
             </div>
           </Form>

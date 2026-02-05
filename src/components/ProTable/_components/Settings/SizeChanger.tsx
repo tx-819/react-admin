@@ -1,6 +1,7 @@
 import { Button, Dropdown } from "antd";
 import { ColumnHeightOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
+import { useTranslation } from "react-i18next";
 
 type TableSize = "small" | "middle" | "large";
 
@@ -11,31 +12,27 @@ interface SizeChangerProps {
   onSizeChange?: (size: TableSize) => void;
 }
 
-const sizeLabels: Record<TableSize, string> = {
-  small: "紧凑",
-  middle: "中等",
-  large: "宽松",
-};
-
 const SizeChanger = ({
   tableSize = "middle",
   onSizeChange,
 }: SizeChangerProps) => {
+  const { t } = useTranslation();
+
   // 表格大小菜单项
   const sizeMenuItems: MenuProps["items"] = [
     {
       key: "small",
-      label: "紧凑",
+      label: t("tableSettings.size.small"),
       onClick: () => onSizeChange?.("small"),
     },
     {
       key: "middle",
-      label: "中等",
+      label: t("tableSettings.size.middle"),
       onClick: () => onSizeChange?.("middle"),
     },
     {
       key: "large",
-      label: "宽松",
+      label: t("tableSettings.size.large"),
       onClick: () => onSizeChange?.("large"),
     },
   ];
@@ -43,11 +40,10 @@ const SizeChanger = ({
   return (
     <Dropdown menu={{ items: sizeMenuItems }} placement="bottomRight">
       <Button icon={<ColumnHeightOutlined />}>
-        {sizeLabels[tableSize]}
+        {t(`tableSettings.size.${tableSize}`)}
       </Button>
     </Dropdown>
   );
 };
 
 export default SizeChanger;
-

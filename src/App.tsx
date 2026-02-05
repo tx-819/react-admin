@@ -1,8 +1,7 @@
-import { ConfigProvider } from "antd";
-import zhCN from "antd/locale/zh_CN";
 import { RouterProvider } from "react-router-dom";
 import { useInitRouter } from "./routes";
 import FullScreenLoading from "./components/FullScreenLoading";
+import AntdConfigProvider from "./components/AntdConfigProvider";
 
 function App() {
   const { router, loading } = useInitRouter();
@@ -12,9 +11,9 @@ function App() {
   }
 
   return (
-    <ConfigProvider locale={zhCN}>
+    <AntdConfigProvider>
       <RouterProvider router={router} />
-    </ConfigProvider>
+    </AntdConfigProvider>
   );
 }
 

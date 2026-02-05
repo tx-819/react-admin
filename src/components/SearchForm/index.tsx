@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Button, Space } from "antd";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import ProForm, { type ProFormRef } from "../ProForm";
 import type {
   SearchFormProps,
@@ -19,6 +20,7 @@ function SearchFormInner(
   props: SearchFormProps,
   ref: React.ForwardedRef<SearchFormRef>
 ) {
+  const { t } = useTranslation();
   const { items, options, ...formProps } = props;
 
   const proFormRef = useRef<ProFormRef>(null);
@@ -29,9 +31,9 @@ function SearchFormInner(
   const searchOptions: SearchFormOptions = useMemo(() => {
     const defaultOptions = {
       showSearchButton: true,
-      searchText: "搜索",
+      searchText: t("search"),
       showResetButton: true,
-      resetText: "重置",
+      resetText: t("reset"),
       showCollapseButton: true,
       defaultCollapsed: true,
       defaultShowItems: 3,
@@ -41,7 +43,7 @@ function SearchFormInner(
       ...defaultOptions,
       ...options,
     };
-  }, [options]);
+  }, [options, t]);
 
   // 过滤掉隐藏的表单项
   const visibleItems = useMemo(
@@ -105,8 +107,6 @@ function SearchFormInner(
       const values = await proFormRef.current?.validateFields();
       setSearchLoading(true);
       await formProps.onSearch?.(values);
-    } catch (error) {
-      console.error("搜索失败:", error);
     } finally {
       setSearchLoading(false);
     }
@@ -183,7 +183,7 @@ function SearchFormInner(
                   onClick={() => setCollapsed(!collapsed)}
                   icon={collapsed ? <DownOutlined /> : <UpOutlined />}
                 >
-                  {collapsed ? "展开" : "收起"}
+                  {collapsed ? t("expand") : t("collapse")}
                 </Button>
               )}
             </Space>

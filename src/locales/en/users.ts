@@ -1,0 +1,32 @@
+export default {
+  title: "User Management",
+  list: "User List",
+  create: "Create User",
+  edit: "Edit User",
+  username: "Username",
+  nickname: "Nickname",
+  avatar: "Avatar",
+  avatarUrl: "Avatar URL",
+  status: "Status",
+  isSuper: "Super Admin",
+  roles: "Roles",
+  placeholder: {
+    username: "Please enter username",
+    usernameWithRule: "Please enter username (3-50 characters)",
+    nickname: "Please enter nickname",
+    avatarUrl: "Please enter avatar URL",
+    status: "Please select status",
+    roles: "Please select roles",
+    password: "Please enter password",
+    passwordEdit: "Leave blank to keep current password",
+  },
+  rules: {
+    usernameLength: "Username must be between 3-50 characters",
+  },
+  message: {
+    loadRolesError: "Failed to load roles",
+    createError: "Failed to create user",
+    updateError: "Failed to update user",
+    deleteError: "Failed to delete user",
+  },
+};

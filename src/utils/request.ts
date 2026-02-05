@@ -4,6 +4,7 @@
 
 import { getAccessToken, clearAuth } from "./storage";
 import { message } from "antd";
+import i18n from "./i18n";
 
 // Base URL，可通过环境变量配置
 // 开发环境：使用相对路径，通过 Vite 代理转发（解决跨域问题）
@@ -74,33 +75,35 @@ export const request = async <T>(
         if (!window.location.pathname.includes("/login")) {
           window.location.href = "/login";
         }
-        message.error("登录已过期，请重新登录");
-        throw new Error("未认证或Token无效");
+        message.error(i18n.t("error.loginExpired"));
+        throw new Error(i18n.t("error.unauthorized"));
       }
 
       // 403 权限不足
       if (response.status === 403) {
-        message.error(result.message || "权限不足或用户被禁用");
-        throw new Error(result.message || "权限不足");
+        message.error(result.message || i18n.t("error.forbidden"));
+        throw new Error(result.message || i18n.t("error.forbiddenShort"));
       }
 
       // 其他错误
-      message.error(result.message || "请求失败");
-      throw new Error(result.message || `请求失败: ${response.status}`);
+      message.error(result.message || i18n.t("error.requestFailed"));
+      throw new Error(
+        result.message || `${i18n.t("error.requestFailed")}: ${response.status}`
+      );
     }
 
     // 处理业务状态码
     if (result.code !== 200 && result.code !== 201) {
-      message.error(result.message || "操作失败");
-      throw new Error(result.message || "操作失败");
+      message.error(result.message || i18n.t("error.operationFailed"));
+      throw new Error(result.message || i18n.t("error.operationFailed"));
     }
 
     return result.data;
   } catch (error) {
     // 网络错误或其他错误
     if (error instanceof TypeError && error.message.includes("fetch")) {
-      message.error("网络错误，请检查网络连接");
-      throw new Error("网络错误");
+      message.error(i18n.t("error.networkError"));
+      throw new Error(i18n.t("error.networkErrorShort"));
     }
     throw error;
   }

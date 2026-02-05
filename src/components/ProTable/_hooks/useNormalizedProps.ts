@@ -1,9 +1,11 @@
 import type { ProTableProps } from "../types";
 import type { TablePaginationConfig } from "antd/es/table";
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import useTableSettings from "./useTableSettings";
 
 const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
+  const { t } = useTranslation();
   const {
     request,
     params,
@@ -153,7 +155,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     return {
       showSizeChanger: true,
       showQuickJumper: true,
-      showTotal: (total: number) => `共 ${total} 条`,
+      showTotal: (total: number) => t("pagination.total", { total }),
       ...basePagination,
       current: paginationState.current,
       pageSize: paginationState.pageSize,
@@ -171,7 +173,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
         handleTableChange({ current, pageSize: size });
       },
     };
-  }, [externalPagination, paginationState, handleTableChange]);
+  }, [externalPagination, paginationState, handleTableChange, t]);
 
   // 初始化加载数据
   useEffect(() => {

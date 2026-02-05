@@ -2,6 +2,7 @@ import { Button, Dropdown, Checkbox } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 import { getColumnIdentifier } from "../../_hooks/useTableSettings";
 
 interface ColumnFilterProps {
@@ -19,6 +20,7 @@ const ColumnFilter = ({
   visibleColumnKeys = [],
   onColumnVisibilityChange,
 }: ColumnFilterProps) => {
+  const { t } = useTranslation();
   // 处理列可见性变化
   const handleColumnVisibilityChange = (key: string, checked: boolean) => {
     if (!onColumnVisibilityChange) return;
@@ -54,7 +56,7 @@ const ColumnFilter = ({
       return [
         {
           key: "no-columns",
-          label: "暂无列配置",
+          label: t("tableSettings.noColumns"),
           disabled: true,
         },
       ];
@@ -69,7 +71,7 @@ const ColumnFilter = ({
       return [
         {
           key: "no-filterable-columns",
-          label: "暂无可筛选的列",
+          label: t("tableSettings.noFilterableColumns"),
           disabled: true,
         },
       ];
@@ -96,7 +98,7 @@ const ColumnFilter = ({
             onChange={(e) => handleSelectAll(e.target.checked)}
             onClick={(e) => e.stopPropagation()}
           >
-            全选
+            {t("tableSettings.selectAll")}
           </Checkbox>
         ),
       },
@@ -143,7 +145,9 @@ const ColumnFilter = ({
       placement="bottomRight"
       trigger={["click"]}
     >
-      <Button icon={<SettingOutlined />}>列设置</Button>
+      <Button icon={<SettingOutlined />}>
+        {t("tableSettings.columnSettings")}
+      </Button>
     </Dropdown>
   );
 };

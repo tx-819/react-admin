@@ -1,0 +1,38 @@
+export default {
+  title: "菜单管理",
+  list: "菜单列表",
+  create: "新增菜单",
+  createChild: "新增子菜单",
+  edit: "编辑菜单",
+  name: "菜单名称",
+  path: "菜单路径",
+  component: "组件",
+  componentPath: "组件路径",
+  icon: "图标",
+  keepAlive: "缓存",
+  isKeepAlive: "是否缓存",
+  sort: "排序",
+  authList: "操作权限",
+  authTitle: "权限标题",
+  authMark: "权限标识",
+  addAuth: "添加权限",
+  permissionsCount: "个权限",
+  placeholder: {
+    name: "请输入菜单名称",
+    path: "请输入菜单路径，如：dashboard",
+    componentPath: "请输入组件路径，如：/dashboard/console",
+    icon: "请输入图标名称",
+    authTitle: "权限标题",
+    authMark: "权限标识",
+  },
+  rules: {
+    authTitleRequired: "请输入权限标题",
+    authMarkRequired: "请输入权限标识",
+  },
+  message: {
+    createError: "创建菜单失败",
+    updateError: "更新菜单失败",
+    deleteError: "删除菜单失败",
+  },
+};
+

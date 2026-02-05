@@ -7,6 +7,7 @@ import {
   SafetyOutlined,
 } from "@ant-design/icons";
 import type { DataNode } from "antd/es/tree";
+import { useTranslation } from "react-i18next";
 import ProTable from "@/components/ProTable";
 import type { ProTableRef, ProColumnType } from "@/components/ProTable/types";
 import ProForm from "@/components/ProForm";
@@ -27,6 +28,7 @@ import {
 import Access from "@/components/Access";
 
 const Roles = () => {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<RoleItem | null>(null);
@@ -39,180 +41,243 @@ const Roles = () => {
   const tableRef = useRef<ProTableRef>(null);
   const formRef = useRef<ProFormRef>(null);
 
+  // 打开编辑弹窗
+  const handleEdit = useCallback((record: RoleItem) => {
+    setEditingRole(record);
+    setModalOpen(true);
+  }, []);
+
+  // 处理删除角色
+  const handleDelete = useCallback(
+    (record: RoleItem) => {
+      Modal.confirm({
+        title: t("confirmDelete"),
+        okText: t("okText"),
+        cancelText: t("cancelText"),
+        okType: "danger",
+        onOk: async () => {
+          try {
+            await deleteRoleApi(record.id);
+            message.success(t("deleteSuccess"));
+            // 刷新表格
+            if (tableRef.current) {
+              await tableRef.current.refresh();
+            }
+          } catch (error) {
+            console.error(t("roles.message.deleteError"), error);
+          }
+        },
+      });
+    },
+    [t]
+  );
+
+  // 打开权限配置弹窗
+  const handleOpenPermissionModal = useCallback(
+    async (record: RoleItem) => {
+      setPermissionRole(record);
+      setPermissionModalOpen(true);
+      setLoadingPermissions(true);
+      setSelectedPermissionIds([]);
+
+      try {
+        // 并行加载所有权限和角色已有权限
+        const [allPermissions, rolePermissions] = await Promise.all([
+          getPermissionsApi(),
+          getRolePermissionsApi(record.id),
+        ]);
+
+        setPermissions(allPermissions);
+        // 提取角色已有权限的 ID
+        const rolePermissionIds = rolePermissions.permissions.map((p) => p.id);
+        setSelectedPermissionIds(rolePermissionIds);
+      } catch (error) {
+        console.error(t("roles.message.loadPermissionsError"), error);
+        message.error(t("roles.message.loadPermissionsError"));
+      } finally {
+        setLoadingPermissions(false);
+      }
+    },
+    [t]
+  );
+
   // 表格列定义
-  const columns: ProColumnType<RoleItem>[] = [
-    {
-      title: "角色名称",
-      dataIndex: "name",
-      key: "name",
-      width: 200,
-      formItem: {
-        type: "input",
-        fieldProps: {
-          placeholder: "请输入角色名称",
+  const columns: ProColumnType<RoleItem>[] = useMemo(
+    () => [
+      {
+        title: t("roles.name"),
+        dataIndex: "name",
+        key: "name",
+        width: 200,
+        formItem: {
+          type: "input",
+          fieldProps: {
+            placeholder: t("roles.placeholder.name"),
+          },
         },
       },
-    },
-    {
-      title: "角色代码",
-      dataIndex: "code",
-      key: "code",
-      width: 200,
-      formItem: {
-        type: "input",
-        fieldProps: {
-          placeholder: "请输入角色代码",
+      {
+        title: t("roles.code"),
+        dataIndex: "code",
+        key: "code",
+        width: 200,
+        formItem: {
+          type: "input",
+          fieldProps: {
+            placeholder: t("roles.placeholder.code"),
+          },
         },
       },
-    },
-    {
-      title: "状态",
-      dataIndex: "status",
-      key: "status",
-      width: 100,
-      render: (status: number) => (
-        <Tag color={status === 1 ? "success" : "default"}>
-          {status === 1 ? "启用" : "禁用"}
-        </Tag>
-      ),
-      formItem: {
-        type: "select",
-        options: [
-          { label: "启用", value: 1 },
-          { label: "禁用", value: 0 },
-        ],
-        fieldProps: {
-          placeholder: "请选择状态",
-          allowClear: true,
+      {
+        title: t("status"),
+        dataIndex: "status",
+        key: "status",
+        width: 100,
+        render: (status: number) => (
+          <Tag color={status === 1 ? "success" : "default"}>
+            {status === 1 ? t("enabled") : t("disabled")}
+          </Tag>
+        ),
+        formItem: {
+          type: "select",
+          options: [
+            { label: t("enabled"), value: 1 },
+            { label: t("disabled"), value: 0 },
+          ],
+          fieldProps: {
+            placeholder: t("statusPlaceholder"),
+            allowClear: true,
+          },
         },
       },
-    },
-    {
-      title: "备注",
-      dataIndex: "remark",
-      key: "remark",
-      width: 300,
-      render: (remark: string) => remark || "-",
-    },
-    {
-      title: "创建时间",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 180,
-      render: (createdAt: string) => {
-        if (!createdAt) return "-";
-        return new Date(createdAt).toLocaleString("zh-CN");
+      {
+        title: t("remark"),
+        dataIndex: "remark",
+        key: "remark",
+        width: 300,
+        render: (remark: string) => remark || "-",
       },
-    },
-    {
-      title: "操作",
-      key: "action",
-      width: 150,
-      fixed: "right",
-      render: (_: unknown, record: RoleItem) => (
-        <Space>
-          <Access code="update">
+      {
+        title: t("createdAt"),
+        dataIndex: "createdAt",
+        key: "createdAt",
+        width: 180,
+        render: (createdAt: string) => {
+          if (!createdAt) return "-";
+          return new Date(createdAt).toLocaleString();
+        },
+      },
+      {
+        title: t("action"),
+        key: "action",
+        width: 150,
+        fixed: "right",
+        render: (_: unknown, record: RoleItem) => (
+          <Space>
+            <Access code="update">
+              <Button
+                type="link"
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => {
+                  handleEdit(record);
+                }}
+              >
+                {t("edit")}
+              </Button>
+            </Access>
             <Button
               type="link"
               size="small"
-              icon={<EditOutlined />}
+              icon={<SafetyOutlined />}
               onClick={() => {
-                handleEdit(record);
+                handleOpenPermissionModal(record);
               }}
             >
-              编辑
+              {t("permissions")}
             </Button>
-          </Access>
-          <Button
-            type="link"
-            size="small"
-            icon={<SafetyOutlined />}
-            onClick={() => {
-              handleOpenPermissionModal(record);
-            }}
-          >
-            权限
-          </Button>
-          <Access code="delete">
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => {
-                handleDelete(record);
-              }}
-            >
-              删除
-            </Button>
-          </Access>
-        </Space>
-      ),
-    },
-  ];
+            <Access code="delete">
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => {
+                  handleDelete(record);
+                }}
+              >
+                {t("delete")}
+              </Button>
+            </Access>
+          </Space>
+        ),
+      },
+    ],
+    [t, handleEdit, handleDelete, handleOpenPermissionModal]
+  );
 
   // 表单配置
   const formItems: ProFormItemConfig[] = useMemo(
     () => [
       {
         name: "name",
-        label: "角色名称",
+        label: t("roles.name"),
         type: "input",
         required: true,
         span: 12,
         labelCol: { span: 6 },
         initialValue: editingRole?.name,
         fieldProps: {
-          placeholder: "请输入角色名称",
+          placeholder: t("roles.placeholder.name"),
         },
       },
       {
         name: "code",
-        label: "角色代码",
+        label: t("roles.code"),
         type: "input",
         required: true,
         span: 12,
         labelCol: { span: 6 },
         initialValue: editingRole?.code,
         fieldProps: {
-          placeholder: "请输入角色代码（小写字母、数字、下划线）",
+          placeholder: t("roles.placeholder.code"),
         },
         rules: [
           {
             pattern: /^[a-z0-9_]+$/,
-            message: "角色代码只能包含小写字母、数字和下划线",
+            message: t("roles.rules.codePattern"),
           },
         ],
       },
       {
         name: "status",
-        label: "状态",
+        label: t("status"),
         type: "select",
         initialValue: editingRole?.status ?? 1,
         options: [
-          { label: "启用", value: 1 },
-          { label: "禁用", value: 0 },
+          { label: t("enabled"), value: 1 },
+          { label: t("disabled"), value: 0 },
         ],
         span: 12,
         labelCol: { span: 6 },
         fieldProps: {
-          placeholder: "请选择状态",
+          placeholder: t("statusPlaceholder"),
         },
       },
       {
         name: "remark",
-        label: "备注",
+        label: t("remark"),
         type: "textarea",
         initialValue: editingRole?.remark || "",
         fieldProps: {
-          placeholder: "请输入备注信息",
+          placeholder: t("remarkPlaceholder"),
           rows: 4,
         },
         span: 24,
         labelCol: { span: 3 },
       },
     ],
-    [editingRole]
+    [editingRole, t]
   );
 
   // 处理新增角色
@@ -225,7 +290,7 @@ const Roles = () => {
         status: (values.status as number) ?? 1,
       };
       await createRoleApi(params);
-      message.success("创建成功");
+      message.success(t("createSuccess"));
       setModalOpen(false);
       formRef.current?.onReset();
       // 刷新表格
@@ -233,7 +298,7 @@ const Roles = () => {
         await tableRef.current.refresh();
       }
     } catch (error) {
-      console.error("创建角色失败:", error);
+      console.error(t("roles.message.createError"), error);
     }
   };
 
@@ -248,7 +313,7 @@ const Roles = () => {
         status: values.status as number | undefined,
       };
       await updateRoleApi(editingRole.id, params);
-      message.success("更新成功");
+      message.success(t("updateSuccess"));
       setModalOpen(false);
       setEditingRole(null);
       formRef.current?.onReset();
@@ -257,7 +322,7 @@ const Roles = () => {
         await tableRef.current.refresh();
       }
     } catch (error) {
-      console.error("更新角色失败:", error);
+      console.error(t("roles.message.updateError"), error);
     }
   };
 
@@ -265,35 +330,6 @@ const Roles = () => {
   const handleOpenModal = () => {
     setEditingRole(null);
     setModalOpen(true);
-  };
-
-  // 打开编辑弹窗
-  const handleEdit = (record: RoleItem) => {
-    setEditingRole(record);
-    setModalOpen(true);
-  };
-
-  // 处理删除角色
-  const handleDelete = (record: RoleItem) => {
-    Modal.confirm({
-      title: "确认删除",
-      content: `确定要删除角色"${record.name}"吗？`,
-      okText: "确定",
-      cancelText: "取消",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await deleteRoleApi(record.id);
-          message.success("删除成功");
-          // 刷新表格
-          if (tableRef.current) {
-            await tableRef.current.refresh();
-          }
-        } catch (error) {
-          console.error("删除角色失败:", error);
-        }
-      },
-    });
   };
 
   // 构建权限ID到父权限ID的映射关系
@@ -379,32 +415,6 @@ const Roles = () => {
     }));
   };
 
-  // 打开权限配置弹窗
-  const handleOpenPermissionModal = async (record: RoleItem) => {
-    setPermissionRole(record);
-    setPermissionModalOpen(true);
-    setLoadingPermissions(true);
-    setSelectedPermissionIds([]);
-
-    try {
-      // 并行加载所有权限和角色已有权限
-      const [allPermissions, rolePermissions] = await Promise.all([
-        getPermissionsApi(),
-        getRolePermissionsApi(record.id),
-      ]);
-
-      setPermissions(allPermissions);
-      // 提取角色已有权限的 ID
-      const rolePermissionIds = rolePermissions.permissions.map((p) => p.id);
-      setSelectedPermissionIds(rolePermissionIds);
-    } catch (error) {
-      console.error("加载权限数据失败:", error);
-      message.error("加载权限数据失败");
-    } finally {
-      setLoadingPermissions(false);
-    }
-  };
-
   // 处理权限树选择变化
   const handlePermissionTreeChange = (
     checkedKeys:
@@ -477,12 +487,12 @@ const Roles = () => {
       await updateRolePermissionsApi(permissionRole.id, {
         permissionIds: selectedPermissionIds,
       });
-      message.success("权限更新成功");
+      message.success(t("roles.message.updatePermissionsSuccess"));
       setPermissionModalOpen(false);
       setPermissionRole(null);
       setSelectedPermissionIds([]);
     } catch (error) {
-      console.error("更新角色权限失败:", error);
+      console.error(t("roles.message.updatePermissionsError"), error);
     }
   };
 
@@ -524,14 +534,14 @@ const Roles = () => {
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold">角色管理</h2>
+        <h2 className="text-xl font-bold">{t("roles.title")}</h2>
         <Access code="create">
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleOpenModal}
           >
-            新增角色
+            {t("roles.create")}
           </Button>
         </Access>
       </div>
@@ -540,7 +550,7 @@ const Roles = () => {
         columns={columns}
         request={handleRequest}
         size="middle"
-        title="角色列表"
+        title={t("roles.list")}
         options={{
           showRefresh: true,
           showSizeChanger: true,
@@ -549,7 +559,7 @@ const Roles = () => {
 
       {/* 新增/编辑角色弹窗 */}
       <Modal
-        title={editingRole ? "编辑角色" : "新增角色"}
+        title={editingRole ? t("roles.edit") : t("roles.create")}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -557,7 +567,7 @@ const Roles = () => {
           formRef.current?.onReset();
         }}
         footer={null}
-        width={700}
+        width={860}
         destroyOnHidden
       >
         <ProForm
@@ -569,7 +579,7 @@ const Roles = () => {
 
       {/* 权限配置弹窗 */}
       <Modal
-        title={`配置权限 - ${permissionRole?.name}`}
+        title={`${t("roles.configurePermissions")} - ${permissionRole?.name}`}
         open={permissionModalOpen}
         onCancel={() => {
           setPermissionModalOpen(false);
@@ -593,7 +603,7 @@ const Roles = () => {
             />
           ) : (
             <div style={{ textAlign: "center", padding: "20px" }}>
-              {loadingPermissions ? "加载中..." : "暂无权限数据"}
+              {loadingPermissions ? t("loading") : t("noPermissions")}
             </div>
           )}
         </Spin>

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Tag, Space, Button, Modal, message, Avatar } from "antd";
 import {
   EditOutlined,
@@ -6,6 +6,7 @@ import {
   PlusOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import ProTable from "@/components/ProTable";
 import type { ProTableRef, ProColumnType } from "@/components/ProTable/types";
 import ProForm from "@/components/ProForm";
@@ -24,6 +25,7 @@ import {
 import Access from "@/components/Access";
 
 const Users = () => {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [roles, setRoles] = useState<RoleOption[]>([]);
@@ -37,40 +39,71 @@ const Users = () => {
         const roleList = await getAllRolesApi();
         setRoles(roleList);
       } catch (error) {
-        console.error("加载角色列表失败:", error);
+        console.error(t("users.message.loadRolesError"), error);
       }
     };
     loadRoles();
+  }, [t]);
+
+  // 打开编辑弹窗
+  const handleEdit = useCallback((record: UserItem) => {
+    setEditingUser(record);
+    setModalOpen(true);
   }, []);
+
+  // 处理删除用户
+  const handleDelete = useCallback(
+    (record: UserItem) => {
+      Modal.confirm({
+        title: t("confirmDelete"),
+        okText: t("okText"),
+        cancelText: t("cancelText"),
+        okType: "danger",
+        onOk: async () => {
+          try {
+            await deleteUserApi(record.id);
+            message.success(t("deleteSuccess"));
+            // 刷新表格
+            if (tableRef.current) {
+              await tableRef.current.refresh();
+            }
+          } catch (error) {
+            console.error(t("users.message.deleteError"), error);
+          }
+        },
+      });
+    },
+    [t]
+  );
 
   // 表格列定义
   const columns: ProColumnType<UserItem>[] = [
     {
-      title: "用户名",
+      title: t("users.username"),
       dataIndex: "username",
       key: "username",
       width: 150,
       formItem: {
         type: "input",
         fieldProps: {
-          placeholder: "请输入用户名",
+          placeholder: t("users.placeholder.username"),
         },
       },
     },
     {
-      title: "昵称",
+      title: t("users.nickname"),
       dataIndex: "nickname",
       key: "nickname",
       width: 150,
       formItem: {
         type: "input",
         fieldProps: {
-          placeholder: "请输入昵称",
+          placeholder: t("users.placeholder.nickname"),
         },
       },
     },
     {
-      title: "头像",
+      title: t("users.avatar"),
       dataIndex: "avatar",
       key: "avatar",
       width: 80,
@@ -79,38 +112,40 @@ const Users = () => {
       ),
     },
     {
-      title: "状态",
+      title: t("users.status"),
       dataIndex: "status",
       key: "status",
       width: 100,
       render: (status: number) => (
         <Tag color={status === 1 ? "success" : "default"}>
-          {status === 1 ? "启用" : "禁用"}
+          {status === 1 ? t("enabled") : t("disabled")}
         </Tag>
       ),
       formItem: {
         type: "select",
         options: [
-          { label: "启用", value: 1 },
-          { label: "禁用", value: 0 },
+          { label: t("enabled"), value: 1 },
+          { label: t("disabled"), value: 0 },
         ],
         fieldProps: {
-          placeholder: "请选择状态",
+          placeholder: t("users.placeholder.status"),
           allowClear: true,
         },
       },
     },
     {
-      title: "超级管理员",
+      title: t("users.isSuper"),
       dataIndex: "isSuper",
       key: "isSuper",
       width: 120,
       render: (isSuper: boolean) => (
-        <Tag color={isSuper ? "red" : "default"}>{isSuper ? "是" : "否"}</Tag>
+        <Tag color={isSuper ? "red" : "default"}>
+          {isSuper ? t("yes") : t("no")}
+        </Tag>
       ),
     },
     {
-      title: "角色",
+      title: t("users.roles"),
       dataIndex: "roles",
       key: "roles",
       width: 200,
@@ -128,17 +163,17 @@ const Users = () => {
       },
     },
     {
-      title: "创建时间",
+      title: t("createdAt"),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 180,
       render: (createdAt: string) => {
         if (!createdAt) return "-";
-        return new Date(createdAt).toLocaleString("zh-CN");
+        return new Date(createdAt).toLocaleString();
       },
     },
     {
-      title: "操作",
+      title: t("action"),
       key: "action",
       width: 150,
       fixed: "right",
@@ -153,7 +188,7 @@ const Users = () => {
                 handleEdit(record);
               }}
             >
-              编辑
+              {t("edit")}
             </Button>
           </Access>
           <Access code="delete">
@@ -166,7 +201,7 @@ const Users = () => {
                 handleDelete(record);
               }}
             >
-              删除
+              {t("delete")}
             </Button>
           </Access>
         </Space>
@@ -175,97 +210,102 @@ const Users = () => {
   ];
 
   // 表单配置
-  const formItems: ProFormItemConfig[] = useMemo(
-    () => [
-      {
-        name: "username",
-        label: "用户名",
-        type: "input",
-        required: true,
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingUser?.username,
-        fieldProps: {
-          placeholder: "请输入用户名（3-50个字符）",
+  const formItems: ProFormItemConfig[] = [
+    {
+      name: "username",
+      label: t("users.username"),
+      type: "input",
+      required: true,
+      span: 12,
+      labelCol: { span: 6 },
+      initialValue: editingUser?.username,
+      fieldProps: {
+        placeholder: t("users.placeholder.usernameWithRule"),
+      },
+      rules: [
+        {
+          min: 3,
+          max: 50,
+          message: t("users.rules.usernameLength"),
         },
-        rules: [{ min: 3, max: 50, message: "用户名长度必须在3-50个字符之间" }],
+      ],
+    },
+    {
+      name: "password",
+      label: editingUser ? t("newPassword") : t("password"),
+      type: "password",
+      required: !editingUser, // 编辑时密码可选
+      span: 12,
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: editingUser
+          ? t("users.placeholder.passwordEdit")
+          : t("users.placeholder.password"),
       },
-      {
-        name: "password",
-        label: editingUser ? "新密码" : "密码",
-        type: "password",
-        required: !editingUser, // 编辑时密码可选
-        span: 12,
-        labelCol: { span: 6 },
-        fieldProps: {
-          placeholder: editingUser ? "留空则不修改密码" : "请输入密码",
-        },
+    },
+    {
+      name: "nickname",
+      label: t("users.nickname"),
+      type: "input",
+      span: 12,
+      labelCol: { span: 6 },
+      initialValue: editingUser?.nickname,
+      fieldProps: {
+        placeholder: t("users.placeholder.nickname"),
       },
-      {
-        name: "nickname",
-        label: "昵称",
-        type: "input",
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingUser?.nickname,
-        fieldProps: {
-          placeholder: "请输入昵称",
-        },
+    },
+    {
+      name: "avatar",
+      label: t("users.avatarUrl"),
+      type: "input",
+      span: 12,
+      labelCol: { span: 6 },
+      initialValue: editingUser?.avatar || "",
+      fieldProps: {
+        placeholder: t("users.placeholder.avatarUrl"),
       },
-      {
-        name: "avatar",
-        label: "头像URL",
-        type: "input",
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingUser?.avatar || "",
-        fieldProps: {
-          placeholder: "请输入头像URL",
-        },
+    },
+    {
+      name: "status",
+      label: t("users.status"),
+      type: "select",
+      initialValue: editingUser?.status ?? 1,
+      options: [
+        { label: t("enabled"), value: 1 },
+        { label: t("disabled"), value: 0 },
+      ],
+      span: 12,
+      labelCol: { span: 6 },
+      fieldProps: {
+        placeholder: t("users.placeholder.status"),
       },
-      {
-        name: "status",
-        label: "状态",
-        type: "select",
-        initialValue: editingUser?.status ?? 1,
-        options: [
-          { label: "启用", value: 1 },
-          { label: "禁用", value: 0 },
-        ],
-        span: 12,
-        labelCol: { span: 6 },
-        fieldProps: {
-          placeholder: "请选择状态",
-        },
+    },
+    {
+      name: "isSuper",
+      label: t("users.isSuper"),
+      type: "switch",
+      initialValue: editingUser?.isSuper ?? false,
+      span: 12,
+      labelCol: { span: 6 },
+    },
+    {
+      name: "roleIds",
+      label: t("users.roles"),
+      type: "select",
+      initialValue: editingUser?.roles?.map((r) => r.id) || [],
+      options: roles.map((role) => ({
+        label: role.name,
+        value: role.id,
+      })),
+      span: 24,
+      labelCol: { span: 3 },
+      fieldProps: {
+        mode: "multiple",
+        placeholder: t("users.placeholder.roles"),
+        allowClear: true,
       },
-      {
-        name: "isSuper",
-        label: "超级管理员",
-        type: "switch",
-        initialValue: editingUser?.isSuper ?? false,
-        span: 12,
-        labelCol: { span: 6 },
-      },
-      {
-        name: "roleIds",
-        label: "角色",
-        type: "select",
-        initialValue: editingUser?.roles?.map((r) => r.id) || [],
-        options: roles.map((role) => ({
-          label: role.name,
-          value: role.id,
-        })),
-        span: 24,
-        labelCol: { span: 3 },
-        fieldProps: {
-          mode: "multiple",
-          placeholder: "请选择角色",
-          allowClear: true,
-        },
-      },
-    ],
-    [editingUser, roles]
-  );
+    },
+  ];
 
   // 处理新增用户
   const handleCreate = async (values: Record<string, unknown>) => {
@@ -280,7 +320,7 @@ const Users = () => {
         roleIds: values.roleIds as string[] | undefined,
       };
       await createUserApi(params);
-      message.success("创建成功");
+      message.success(t("createSuccess"));
       setModalOpen(false);
       formRef.current?.onReset();
       // 刷新表格
@@ -288,7 +328,7 @@ const Users = () => {
         await tableRef.current.refresh();
       }
     } catch (error) {
-      console.error("创建用户失败:", error);
+      console.error(t("users.message.createError"), error);
     }
   };
 
@@ -309,7 +349,7 @@ const Users = () => {
         params.password = values.password as string;
       }
       await updateUserApi(editingUser.id, params);
-      message.success("更新成功");
+      message.success(t("updateSuccess"));
       setModalOpen(false);
       setEditingUser(null);
       formRef.current?.onReset();
@@ -318,7 +358,7 @@ const Users = () => {
         await tableRef.current.refresh();
       }
     } catch (error) {
-      console.error("更新用户失败:", error);
+      console.error(t("users.message.updateError"), error);
     }
   };
 
@@ -326,35 +366,6 @@ const Users = () => {
   const handleOpenModal = () => {
     setEditingUser(null);
     setModalOpen(true);
-  };
-
-  // 打开编辑弹窗
-  const handleEdit = (record: UserItem) => {
-    setEditingUser(record);
-    setModalOpen(true);
-  };
-
-  // 处理删除用户
-  const handleDelete = (record: UserItem) => {
-    Modal.confirm({
-      title: "确认删除",
-      content: `确定要删除用户"${record.username}"吗？`,
-      okText: "确定",
-      cancelText: "取消",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await deleteUserApi(record.id);
-          message.success("删除成功");
-          // 刷新表格
-          if (tableRef.current) {
-            await tableRef.current.refresh();
-          }
-        } catch (error) {
-          console.error("删除用户失败:", error);
-        }
-      },
-    });
   };
 
   // 使用 useCallback 包装 request 函数，避免每次渲染都重新创建
@@ -395,14 +406,14 @@ const Users = () => {
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold">用户管理</h2>
+        <h2 className="text-xl font-bold">{t("users.title")}</h2>
         <Access code="create">
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleOpenModal}
           >
-            新增用户
+            {t("users.create")}
           </Button>
         </Access>
       </div>
@@ -411,7 +422,7 @@ const Users = () => {
         columns={columns}
         request={handleRequest}
         size="middle"
-        title="用户列表"
+        title={t("users.list")}
         options={{
           showRefresh: true,
           showSizeChanger: true,
@@ -420,7 +431,7 @@ const Users = () => {
 
       {/* 新增/编辑用户弹窗 */}
       <Modal
-        title={editingUser ? "编辑用户" : "新增用户"}
+        title={editingUser ? t("users.edit") : t("users.create")}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -446,7 +457,7 @@ const Users = () => {
           }
         }}
         footer={null}
-        width={700}
+        width={960}
         destroyOnHidden
       >
         <ProForm

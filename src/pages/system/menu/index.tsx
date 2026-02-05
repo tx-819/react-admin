@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { Tag, Space, Button, Modal, message, Form, Input, Tooltip } from "antd";
 import {
   EditOutlined,
@@ -7,6 +7,7 @@ import {
   MinusCircleOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 import ProTable from "@/components/ProTable";
 import type { ProTableRef } from "@/components/ProTable/types";
 import ProForm from "@/components/ProForm";
@@ -23,274 +24,338 @@ import {
 import Access from "@/components/Access";
 
 const Menu = () => {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
   const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null);
   const tableRef = useRef<ProTableRef>(null);
   const formRef = useRef<ProFormRef>(null);
 
+  // 打开新增弹窗
+  const handleOpenModal = useCallback((parentId?: string | null) => {
+    // 如果传入了 parentId，设置为默认父菜单
+    setDefaultParentId(parentId ?? null);
+    setEditingMenu(null);
+    setModalOpen(true);
+  }, []);
+
+  // 打开编辑弹窗
+  const handleEdit = useCallback((record: MenuItem) => {
+    setEditingMenu(record);
+    setDefaultParentId(null);
+    setModalOpen(true);
+  }, []);
+
+  // 处理删除菜单
+  const handleDelete = useCallback(
+    (record: MenuItem) => {
+      Modal.confirm({
+        title: t("confirmDelete"),
+        okText: t("okText"),
+        cancelText: t("cancelText"),
+        okType: "danger",
+        onOk: async () => {
+          try {
+            await deleteMenuApi(record.id);
+            message.success(t("deleteSuccess"));
+            // 刷新表格
+            if (tableRef.current) {
+              await tableRef.current.refresh();
+            }
+          } catch (error) {
+            console.error(t("menu.message.deleteError"), error);
+          }
+        },
+      });
+    },
+    [t]
+  );
+
   // 表格列定义
-  const columns: ColumnsType<MenuItem> = [
-    {
-      title: "菜单名称",
-      dataIndex: "name",
-      key: "name",
-      width: 200,
-    },
-    {
-      title: "路径",
-      dataIndex: "path",
-      key: "path",
-      width: 250,
-    },
-    {
-      title: "组件",
-      dataIndex: "component",
-      key: "component",
-      width: 200,
-      render: (component: string) => component || "-",
-    },
-    {
-      title: "图标",
-      dataIndex: ["meta", "icon"],
-      key: "icon",
-      width: 100,
-      render: (icon: string) => icon || "-",
-    },
-    {
-      title: "缓存",
-      dataIndex: ["meta", "keepAlive"],
-      key: "keepAlive",
-      width: 80,
-      render: (keepAlive: boolean) => (
-        <Tag color={keepAlive ? "success" : "default"}>
-          {keepAlive ? "是" : "否"}
-        </Tag>
-      ),
-    },
-    {
-      title: "权限",
-      dataIndex: ["meta", "authList"],
-      key: "authList",
-      width: 200,
-      render: (authList: Array<{ title: string; authMark: string }>) => {
-        if (!authList || authList.length === 0) return "-";
-        const authCount = authList.length;
-        const authTitles = authList.map((auth) => auth.title).join("、");
-        return (
-          <Tooltip title={authTitles}>
-            <Tag color="blue" style={{ cursor: "pointer" }}>
-              {authCount}个权限
-            </Tag>
-          </Tooltip>
-        );
+  const columns: ColumnsType<MenuItem> = useMemo(
+    () => [
+      {
+        title: t("menu.name"),
+        dataIndex: "name",
+        key: "name",
+        width: 200,
       },
-    },
-    {
-      title: "操作",
-      key: "action",
-      width: 150,
-      fixed: "right",
-      render: (_: unknown, record: MenuItem) => (
-        <Space>
-          {!record.component && (
-            <Access code="create">
+      {
+        title: t("menu.path"),
+        dataIndex: "path",
+        key: "path",
+        width: 250,
+      },
+      {
+        title: t("menu.component"),
+        dataIndex: "component",
+        key: "component",
+        width: 200,
+        render: (component: string) => component || "-",
+      },
+      {
+        title: t("menu.icon"),
+        dataIndex: ["meta", "icon"],
+        key: "icon",
+        width: 100,
+        render: (icon: string) => icon || "-",
+      },
+      {
+        title: t("menu.keepAlive"),
+        dataIndex: ["meta", "keepAlive"],
+        key: "keepAlive",
+        width: 80,
+        render: (keepAlive: boolean) => (
+          <Tag color={keepAlive ? "success" : "default"}>
+            {keepAlive ? t("yes") : t("no")}
+          </Tag>
+        ),
+      },
+      {
+        title: t("permissions"),
+        dataIndex: ["meta", "authList"],
+        key: "authList",
+        width: 200,
+        render: (authList: Array<{ title: string; authMark: string }>) => {
+          if (!authList || authList.length === 0) return "-";
+          const authCount = authList.length;
+          const authTitles = authList.map((auth) => auth.title).join("、");
+          return (
+            <Tooltip title={authTitles}>
+              <Tag color="blue" style={{ cursor: "pointer" }}>
+                {authCount}
+                {t("menu.permissionsCount")}
+              </Tag>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        title: t("action"),
+        key: "action",
+        width: 150,
+        fixed: "right",
+        render: (_: unknown, record: MenuItem) => (
+          <Space>
+            {!record.component && (
+              <Access code="create">
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    handleOpenModal(record.id);
+                  }}
+                >
+                  {t("menu.createChild")}
+                </Button>
+              </Access>
+            )}
+            <Access code="update">
               <Button
                 type="link"
                 size="small"
-                icon={<PlusOutlined />}
+                icon={<EditOutlined />}
                 onClick={() => {
-                  handleOpenModal(record.id);
+                  handleEdit(record);
                 }}
               >
-                新增子菜单
+                {t("edit")}
               </Button>
             </Access>
-          )}
-          <Access code="update">
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                handleEdit(record);
-              }}
-            >
-              编辑
-            </Button>
-          </Access>
-          <Access code="delete">
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => {
-                handleDelete(record);
-              }}
-            >
-              删除
-            </Button>
-          </Access>
-        </Space>
-      ),
-    },
-  ];
+            <Access code="delete">
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => {
+                  handleDelete(record);
+                }}
+              >
+                {t("delete")}
+              </Button>
+            </Access>
+          </Space>
+        ),
+      },
+    ],
+    [t, handleOpenModal, handleEdit, handleDelete]
+  );
 
-  const formItems: ProFormItemConfig[] = [
-    {
-      name: "name",
-      label: "菜单名称",
-      type: "input",
-      required: true,
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingMenu?.name,
-      fieldProps: {
-        placeholder: "请输入菜单名称",
+  const formItems: ProFormItemConfig[] = useMemo(
+    () => [
+      {
+        name: "name",
+        label: t("menu.name"),
+        type: "input",
+        required: true,
+        span: 12,
+        labelCol: { span: 6 },
+        initialValue: editingMenu?.name,
+        fieldProps: {
+          placeholder: t("menu.placeholder.name"),
+        },
       },
-    },
-    {
-      name: "path",
-      label: "菜单路径",
-      type: "input",
-      required: true,
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingMenu?.path,
-      fieldProps: {
-        placeholder: "请输入菜单路径，如：dashboard",
+      {
+        name: "path",
+        label: t("menu.path"),
+        type: "input",
+        required: true,
+        span: 12,
+        labelCol: { span: 6 },
+        initialValue: editingMenu?.path,
+        fieldProps: {
+          placeholder: t("menu.placeholder.path"),
+        },
       },
-    },
-    {
-      name: "component",
-      label: "组件路径",
-      type: "input",
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingMenu?.component,
-      fieldProps: {
-        placeholder: "请输入组件路径，如：/dashboard/console",
+      {
+        name: "component",
+        label: t("menu.componentPath"),
+        type: "input",
+        span: 12,
+        labelCol: { span: 6 },
+        initialValue: editingMenu?.component,
+        fieldProps: {
+          placeholder: t("menu.placeholder.componentPath"),
+        },
       },
-    },
-    {
-      name: "icon",
-      label: "图标",
-      type: "input",
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingMenu?.meta?.icon,
-      fieldProps: {
-        placeholder: "请输入图标名称",
+      {
+        name: "icon",
+        label: t("menu.icon"),
+        type: "input",
+        span: 12,
+        labelCol: { span: 6 },
+        initialValue: editingMenu?.meta?.icon,
+        fieldProps: {
+          placeholder: t("menu.placeholder.icon"),
+        },
       },
-    },
-    {
-      name: "keepAlive",
-      label: "是否缓存",
-      type: "switch",
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingMenu?.keepAlive,
-      fieldProps: {
-        min: 0,
+      {
+        name: "keepAlive",
+        label: t("menu.isKeepAlive"),
+        type: "switch",
+        span: 12,
+        labelCol: { span: 6 },
+        initialValue: editingMenu?.keepAlive,
+        fieldProps: {
+          min: 0,
+        },
       },
-    },
-    {
-      name: "sort",
-      label: "排序",
-      type: "number",
-      labelCol: { span: 6 },
-      initialValue: editingMenu?.sort || 0,
-      fieldProps: {
-        min: 0,
+      {
+        name: "sort",
+        label: t("menu.sort"),
+        type: "number",
+        labelCol: { span: 6 },
+        initialValue: editingMenu?.sort || 0,
+        fieldProps: {
+          min: 0,
+        },
+        span: 12,
       },
-      span: 12,
-    },
-    {
-      name: "status",
-      label: "状态",
-      type: "select",
-      initialValue: editingMenu?.status || 1,
-      options: [
-        { label: "启用", value: 1 },
-        { label: "禁用", value: 0 },
-      ],
-      span: 12,
-      labelCol: { span: 6 },
-      fieldProps: {
-        placeholder: "请选择状态",
+      {
+        name: "status",
+        label: t("status"),
+        type: "select",
+        initialValue: editingMenu?.status || 1,
+        options: [
+          { label: t("enabled"), value: 1 },
+          { label: t("disabled"), value: 0 },
+        ],
+        span: 12,
+        labelCol: { span: 6 },
+        fieldProps: {
+          placeholder: t("statusPlaceholder"),
+        },
       },
-    },
-    {
-      name: "remark",
-      label: "备注",
-      type: "textarea",
-      initialValue: editingMenu?.remark || "",
-      fieldProps: {
-        placeholder: "请输入备注信息",
+      {
+        name: "remark",
+        label: t("remark"),
+        type: "textarea",
+        initialValue: editingMenu?.remark || "",
+        fieldProps: {
+          placeholder: t("remarkPlaceholder"),
+        },
+        span: 24,
+        labelCol: { span: 3 },
       },
-      span: 24,
-      labelCol: { span: 3 },
-    },
-    {
-      name: ["meta", "authList"],
-      label: "操作权限",
-      type: "custom",
-      span: 24,
-      labelCol: { span: 3 },
-      render: () => (
-        <Form.List
-          name={["meta", "authList"]}
-          initialValue={editingMenu?.meta?.authList || []}
-        >
-          {(fields, { add, remove }) => (
-            <>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space
-                  key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
-                  align="baseline"
-                >
-                  <Form.Item
-                    {...restField}
-                    name={[name, "title"]}
-                    rules={[{ required: true, message: "请输入权限标题" }]}
+      {
+        name: ["meta", "authList"],
+        label: t("menu.authList"),
+        type: "custom",
+        span: 24,
+        labelCol: { span: 3 },
+        render: () => (
+          <Form.List
+            name={["meta", "authList"]}
+            initialValue={editingMenu?.meta?.authList || []}
+          >
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space
+                    key={key}
+                    style={{ display: "flex", marginBottom: 8 }}
+                    align="baseline"
                   >
-                    <Input placeholder="权限标题" style={{ width: 150 }} />
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "authMark"]}
-                    rules={[{ required: true, message: "请输入权限标识" }]}
-                  >
-                    <Input placeholder="权限标识" style={{ width: 200 }} />
-                  </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "title"]}
+                      rules={[
+                        {
+                          required: true,
+                          message: t("menu.rules.authTitleRequired"),
+                        },
+                      ]}
+                    >
+                      <Input
+                        placeholder={t("menu.placeholder.authTitle")}
+                        style={{ width: 150 }}
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "authMark"]}
+                      rules={[
+                        {
+                          required: true,
+                          message: t("menu.rules.authMarkRequired"),
+                        },
+                      ]}
+                    >
+                      <Input
+                        placeholder={t("menu.placeholder.authMark")}
+                        style={{ width: 200 }}
+                      />
+                    </Form.Item>
+                    <Button
+                      type="link"
+                      danger
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => remove(name)}
+                    >
+                      {t("delete")}
+                    </Button>
+                  </Space>
+                ))}
+                <Form.Item>
                   <Button
-                    type="link"
-                    danger
-                    icon={<MinusCircleOutlined />}
-                    onClick={() => remove(name)}
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
                   >
-                    删除
+                    {t("menu.addAuth")}
                   </Button>
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() => add()}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  添加权限
-                </Button>
-              </Form.Item>
-            </>
-          )}
-        </Form.List>
-      ),
-    },
-  ];
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+        ),
+      },
+    ],
+    [editingMenu, t]
+  );
 
   // 处理新增菜单
   const handleCreate = async (values: Record<string, unknown>) => {
@@ -317,7 +382,7 @@ const Menu = () => {
           : undefined,
       };
       await createMenuApi(params);
-      message.success("创建成功");
+      message.success(t("createSuccess"));
       setModalOpen(false);
       setDefaultParentId(null);
       formRef.current?.onReset();
@@ -326,7 +391,7 @@ const Menu = () => {
         await tableRef.current.refresh();
       }
     } catch (error) {
-      console.error("创建菜单失败:", error);
+      console.error(t("menu.message.createError"), error);
     }
   };
 
@@ -354,7 +419,7 @@ const Menu = () => {
           : undefined,
       };
       await updateMenuApi(editingMenu.id, params);
-      message.success("更新成功");
+      message.success(t("updateSuccess"));
       setModalOpen(false);
       setEditingMenu(null);
       formRef.current?.onReset();
@@ -363,58 +428,21 @@ const Menu = () => {
         await tableRef.current.refresh();
       }
     } catch (error) {
-      console.error("更新菜单失败:", error);
+      console.error(t("menu.message.updateError"), error);
     }
-  };
-
-  // 打开新增弹窗
-  const handleOpenModal = async (parentId?: string | null) => {
-    // 如果传入了 parentId，设置为默认父菜单
-    setDefaultParentId(parentId ?? null);
-    setEditingMenu(null);
-    setModalOpen(true);
-  };
-
-  // 打开编辑弹窗
-  const handleEdit = (record: MenuItem) => {
-    setEditingMenu(record);
-    setDefaultParentId(null);
-    setModalOpen(true);
-  };
-
-  // 处理删除菜单
-  const handleDelete = (record: MenuItem) => {
-    Modal.confirm({
-      title: "确认删除",
-      okText: "确定",
-      cancelText: "取消",
-      okType: "danger",
-      onOk: async () => {
-        try {
-          await deleteMenuApi(record.id);
-          message.success("删除成功");
-          // 刷新表格
-          if (tableRef.current) {
-            await tableRef.current.refresh();
-          }
-        } catch (error) {
-          console.error("删除菜单失败:", error);
-        }
-      },
-    });
   };
 
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold">菜单管理</h2>
+        <h2 className="text-xl font-bold">{t("menu.title")}</h2>
         <Access code="create">
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => handleOpenModal()}
           >
-            新增菜单
+            {t("menu.create")}
           </Button>
         </Access>
       </div>
@@ -431,7 +459,7 @@ const Menu = () => {
         }}
         pagination={false}
         size="middle"
-        title="菜单列表"
+        title={t("menu.list")}
         options={{
           showRefresh: true,
           showSizeChanger: false,
@@ -441,7 +469,11 @@ const Menu = () => {
       {/* 新增/编辑菜单弹窗 */}
       <Modal
         title={
-          editingMenu ? "编辑菜单" : defaultParentId ? "新增子菜单" : "新增菜单"
+          editingMenu
+            ? t("menu.edit")
+            : defaultParentId
+            ? t("menu.createChild")
+            : t("menu.create")
         }
         open={modalOpen}
         onCancel={() => {
@@ -451,7 +483,7 @@ const Menu = () => {
           formRef.current?.onReset();
         }}
         footer={null}
-        width={800}
+        width={1060}
         destroyOnHidden
       >
         <ProForm

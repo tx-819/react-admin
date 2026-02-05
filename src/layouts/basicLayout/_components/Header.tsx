@@ -17,9 +17,11 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
+import { useTranslation } from "react-i18next";
 import BreadcrumbNav from "./BreadcrumbNav";
-import { getUserInfo, clearAuth } from "../../../utils/storage";
-import type { UserInfo } from "../../../api/auth";
+import { getUserInfo, clearAuth } from "@/utils/storage";
+import type { UserInfo } from "@/api/auth";
+import SelectLang from "@/components/SelectLang";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -35,6 +37,7 @@ interface HeaderProps {
 }
 
 const Header = ({ collapsed, onToggle }: HeaderProps) => {
+  const { t } = useTranslation();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const navigate = useNavigate();
   const {
@@ -49,7 +52,7 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
 
   const handleLogout = () => {
     clearAuth();
-    message.success("已退出登录");
+    message.success(t("logoutSuccess"));
     navigate("/login");
   };
 
@@ -73,7 +76,7 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
     },
     {
       key: "logout",
-      label: "退出登录",
+      label: t("logout"),
       icon: <LogoutOutlined />,
       onClick: handleLogout,
     },
@@ -106,6 +109,7 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
         <BreadcrumbNav />
       </div>
       <div style={{ display: "flex", alignItems: "center" }}>
+        <SelectLang />
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space
             style={{ cursor: "pointer", padding: "0 8px" }}
@@ -117,7 +121,7 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
               size="default"
             />
             <Text strong>
-              {userInfo?.nickname || userInfo?.username || "用户"}
+              {userInfo?.nickname || userInfo?.username || t("user")}
             </Text>
           </Space>
         </Dropdown>
@@ -127,4 +131,3 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
 };
 
 export default Header;
-

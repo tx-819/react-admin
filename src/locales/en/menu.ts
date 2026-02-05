@@ -1,0 +1,38 @@
+export default {
+  title: "Menu Management",
+  list: "Menu List",
+  create: "Create Menu",
+  createChild: "Create Sub Menu",
+  edit: "Edit Menu",
+  name: "Menu Name",
+  path: "Menu Path",
+  component: "Component",
+  componentPath: "Component Path",
+  icon: "Icon",
+  keepAlive: "Cache",
+  isKeepAlive: "Keep Alive",
+  sort: "Sort",
+  authList: "Operation Permissions",
+  authTitle: "Permission Title",
+  authMark: "Permission Mark",
+  addAuth: "Add Permission",
+  permissionsCount: " permissions",
+  placeholder: {
+    name: "Please enter menu name",
+    path: "Please enter menu path, e.g.: dashboard",
+    componentPath: "Please enter component path, e.g.: /dashboard/console",
+    icon: "Please enter icon name",
+    authTitle: "Permission Title",
+    authMark: "Permission Mark",
+  },
+  rules: {
+    authTitleRequired: "Please enter permission title",
+    authMarkRequired: "Please enter permission mark",
+  },
+  message: {
+    createError: "Failed to create menu",
+    updateError: "Failed to update menu",
+    deleteError: "Failed to delete menu",
+  },
+};
+
