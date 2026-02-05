@@ -11,30 +11,36 @@ const pageModules = import.meta.glob<{ default: ComponentType<unknown> }>(
 // 将路径转换为 glob 匹配的格式
 // /dashboard -> ../pages/dashboard/index.tsx
 // /system/users -> ../pages/system/users/index.tsx
-const getModulePath = (pageKey: string): string => {
-  const normalizedPath = pageKey.startsWith("/") ? pageKey.slice(1) : pageKey;
+const getRealPath = (relativePath: string): string => {
+  const normalizedPath = relativePath.startsWith("/")
+    ? relativePath.slice(1)
+    : relativePath;
   return `../pages/${normalizedPath}/index.tsx`;
 };
 
-// 动态加载页面组件（返回懒加载组件）
-export const loadPageComponent = (
-  pageKey: string
-): LazyExoticComponent<ComponentType<unknown>> | null => {
-  const modulePath = getModulePath(pageKey);
-  const loader = pageModules[modulePath];
+/**
+ * 渲染组件
+ * @param relativePath 相对路径
+ * @returns 懒加载组件
+ */
+export default function renderComponent(
+  relativePath: string
+): LazyExoticComponent<ComponentType<unknown>> | null {
+  const realPath = getRealPath(relativePath);
+  const component = pageModules[realPath];
 
-  if (!loader) {
+  if (!component) {
     if (import.meta.env.DEV) {
       const availablePaths = Object.keys(pageModules).map((path) =>
         path.replace("../pages/", "/").replace("/index.tsx", "")
       );
       console.warn(
-        `Page component not found for key: ${pageKey}.`,
+        `Component not found for path: ${relativePath}.`,
         `Available paths: ${availablePaths.join(", ")}`
       );
     }
     return null;
   }
 
-  return lazy(loader);
-};
+  return lazy(component);
+}

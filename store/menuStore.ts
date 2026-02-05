@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AppRouteRecord } from "../src/api/menu";
 import type { ItemType } from "antd/es/menu/interface";
-import { getIcon } from "../src/utils/iconMap";
+import { getIcon } from "../src/utils/renderIcon";
 
 // 菜单转换函数
 const transformMenuItems = (routes: AppRouteRecord[]): ItemType[] => {

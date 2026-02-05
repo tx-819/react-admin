@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router";
-import { loadPageComponent } from "../utils/pageLoader";
+import renderComponent from "../utils/renderComponent";
 import NProgressFallback from "../components/NProgressFallback";
 import { staticRoutes } from "./staticRoutes";
 import type { AppRouteRecord } from "../api/menu";
@@ -23,7 +23,7 @@ const transformRoutes = (menuList: AppRouteRecord[]): RouteObject[] => {
       const componentPath = menu.component.startsWith("/")
         ? menu.component.slice(1)
         : menu.component;
-      const Component = loadPageComponent(componentPath);
+      const Component = renderComponent(componentPath);
       if (Component) {
         routeItem.element = (
           <Suspense fallback={<NProgressFallback />}>
