@@ -1,8 +1,38 @@
-import type {
-  ProFormItemConfig,
-  ProFormProps,
-  ProFormRef,
-} from "../ProForm/types";
+import type { FormProps, FormInstance } from "antd/es/form";
+import type { FormItemProps } from "antd/es/form";
+import type { ReactNode } from "react";
+
+/** 表单项类型 */
+export type SearchFormItemType =
+  | "input"
+  | "password"
+  | "textarea"
+  | "number"
+  | "select"
+  | "datePicker"
+  | "dateRangePicker"
+  | "timePicker"
+  | "switch"
+  | "checkbox"
+  | "radio"
+  | "upload"
+  | "custom";
+
+/** 表单项配置 */
+export interface SearchFormItemConfig extends FormItemProps {
+  /** 表单项类型 */
+  type?: SearchFormItemType;
+  /** 表单项宽度（栅格布局） */
+  span?: number;
+  /** 输入组件额外属性 */
+  fieldProps?: Record<string, unknown>;
+  /** 自定义渲染函数 */
+  render?: (form: FormInstance) => ReactNode;
+  /** Select/Radio/Checkbox 的选项 */
+  options?: Array<{ label: string; value: unknown; disabled?: boolean }>;
+  /** 是否隐藏 */
+  hidden?: boolean;
+}
 
 /** SearchForm 配置选项 */
 export interface SearchFormOptions {
@@ -24,17 +54,21 @@ export interface SearchFormOptions {
 
 /** SearchForm 属性 */
 export interface SearchFormProps
-  extends Omit<ProFormProps, "layout" | "options" | "onSubmit"> {
+  extends Omit<FormProps, "layout" | "onFinish"> {
   /** 表单项配置数组 */
-  items: ProFormItemConfig[];
+  items: SearchFormItemConfig[];
   /** 搜索表单选项配置 */
   options?: SearchFormOptions;
   /** 搜索回调 */
   onSearch?: (values: Record<string, unknown>) => void | Promise<void>;
+  /** 重置回调 */
+  onReset?: () => void | Promise<void>;
 }
 
 /** SearchForm 引用方法 */
-export interface SearchFormRef extends ProFormRef {
+export interface SearchFormRef extends FormInstance {
   /** 搜索 */
   onSearch: () => Promise<void>;
+  /** 重置 */
+  onReset: () => Promise<void>;
 }

@@ -1,6 +1,5 @@
 import type { ColumnType, TableProps } from "antd/es/table";
-import type { SearchFormOptions } from "../SearchForm";
-import type { ProFormItemConfig } from "../ProForm/types";
+import type { SearchFormOptions, SearchFormItemConfig } from "../SearchForm";
 
 export interface ProTableOptions {
   /** 是否显示刷新按钮 */
@@ -18,7 +17,7 @@ export interface ProTableOptions {
 export interface ProColumnType<RecordType = unknown>
   extends ColumnType<RecordType> {
   /** 搜索表单项配置 */
-  formItem?: Omit<ProFormItemConfig, "name" | "label">;
+  formItem?: Omit<SearchFormItemConfig, "name" | "label">;
 }
 
 export interface ProTableProps<T = unknown>

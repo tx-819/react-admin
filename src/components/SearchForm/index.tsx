@@ -1,145 +1,42 @@
-import {
-  useImperativeHandle,
-  forwardRef,
-  useState,
-  useMemo,
-  useRef,
-} from "react";
-import { Button, Space, theme } from "antd";
-import { DownOutlined, UpOutlined } from "@ant-design/icons";
-import { useTranslation } from "react-i18next";
-import ProForm, { type ProFormRef } from "../ProForm";
-import type {
-  SearchFormProps,
-  SearchFormRef,
-  SearchFormOptions,
-} from "./types";
-import type { ProFormItemConfig, ProFormOptions } from "../ProForm/types";
+import { useImperativeHandle, forwardRef } from "react";
+import { Form, Row, Col, theme } from "antd";
+import type { SearchFormProps, SearchFormRef } from "./types";
+import FormItemRenderer from "./_components/FormItemRenderer";
+import ActionButtons from "./_components/ActionButtons";
+import useSearchFormOptions from "./_hooks/useSearchFormOptions";
+import useSearchFormItems from "./_hooks/useSearchFormItems";
+import useSearchFormActions from "./_hooks/useSearchFormActions";
 
 function SearchFormInner(
   props: SearchFormProps,
   ref: React.ForwardedRef<SearchFormRef>
 ) {
-  const { t } = useTranslation();
-  const { items, options, ...formProps } = props;
+  const { items, options, onSearch, onReset, ...formProps } = props;
 
-  const proFormRef = useRef<ProFormRef>(null);
-  const [collapsed, setCollapsed] = useState(options?.defaultCollapsed ?? true);
-  const [searchLoading, setSearchLoading] = useState(false);
-
+  const [form] = Form.useForm();
   const { token: { colorBgContainer } } = theme.useToken();
 
-  // 合并搜索表单选项
-  const searchOptions: SearchFormOptions = useMemo(() => {
-    const defaultOptions = {
-      showSearchButton: true,
-      searchText: t("search"),
-      showResetButton: true,
-      resetText: t("reset"),
-      showCollapseButton: true,
-      defaultCollapsed: true,
-      defaultShowItems: 3,
-    };
-
-    return {
-      ...defaultOptions,
-      ...options,
-    };
-  }, [options, t]);
-
-  // 过滤掉隐藏的表单项
-  const visibleItems = useMemo(
-    () => items.filter((item) => !item.hidden),
-    [items]
-  );
-
-  // 处理表单项，为搜索场景添加默认配置
-  const processedItems = useMemo(() => {
-    return items.map((item) => {
-      const processedItem: ProFormItemConfig = { ...item };
-
-      // 为搜索场景的组件添加 allowClear 默认配置
-      if (
-        (item.type === "select" ||
-          item.type === "datePicker" ||
-          item.type === "dateRangePicker" ||
-          item.type === "timePicker") &&
-        !item.fieldProps?.allowClear &&
-        item.fieldProps?.allowClear !== false
-      ) {
-        processedItem.fieldProps = {
-          ...item.fieldProps,
-          allowClear: true,
-        };
-      }
-
-      return processedItem;
-    });
-  }, [items]);
-
-  // 计算需要显示的表单项
-  const displayItems = useMemo(() => {
-    const defaultShowItems = searchOptions.defaultShowItems ?? 3;
-    if (
-      !searchOptions.showCollapseButton ||
-      visibleItems.length <= defaultShowItems
-    ) {
-      return processedItems;
-    }
-    const visibleProcessedItems = processedItems.filter((item) => !item.hidden);
-    return collapsed
-      ? visibleProcessedItems.slice(0, defaultShowItems)
-      : visibleProcessedItems;
-  }, [
-    searchOptions.showCollapseButton,
-    searchOptions.defaultShowItems,
-    visibleItems.length,
-    processedItems,
+  const searchOptions = useSearchFormOptions(options);
+  const {
+    displayItems,
+    showCollapseButton,
     collapsed,
-  ]);
-
-  // 是否需要显示展开/收起按钮
-  const showCollapseButton =
-    searchOptions.showCollapseButton &&
-    visibleItems.length > (searchOptions.defaultShowItems ?? 3);
-
-  // 处理搜索
-  const handleSearch = async () => {
-    try {
-      const values = await proFormRef.current?.validateFields();
-      setSearchLoading(true);
-      await formProps.onSearch?.(values);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
-  // 处理重置
-  const handleReset = async () => {
-    // 重置表单字段
-    proFormRef.current?.resetFields();
-    // 调用外部的重置回调（来自 ProTable）
-    await formProps.onReset?.();
-  };
+    toggleCollapse,
+  } = useSearchFormItems(items, searchOptions);
+  const { searchLoading, handleSearch, handleReset } = useSearchFormActions({
+    form,
+    onSearch,
+    onReset,
+  });
 
   // 暴露给外部的方法
   useImperativeHandle(ref, () => {
     return {
-      ...proFormRef.current!,
+      ...form,
       onSearch: handleSearch,
       onReset: handleReset,
     };
   });
-
-  // 转换为 ProForm 的 options
-  const proFormOptions: ProFormOptions = useMemo(() => {
-    return {
-      showSubmitButton: false, // SearchForm 自己处理所有按钮
-      submitText: searchOptions.searchText,
-      showResetButton: false,
-      resetText: searchOptions.resetText,
-    };
-  }, [searchOptions]);
 
   return (
     <div className="rounded-lg shadow-md p-4 mb-4" style={{ background: colorBgContainer }}>
@@ -152,45 +49,34 @@ function SearchFormInner(
         }}
       >
         <div style={{ flex: 1, minWidth: 0, display: "inline-block" }}>
-          <ProForm
-            ref={proFormRef}
-            items={displayItems}
-            {...formProps}
-            onReset={undefined}
-            layout="inline"
-            options={proFormOptions}
-          />
+          <Form form={form} layout="inline" {...formProps}>
+            <Row gutter={[16, 16]} style={{ width: "100%" }}>
+              {displayItems.map((item) => {
+                return (
+                  <Col
+                    key={Array.isArray(item.name) ? item.name.join(".") : item.name}
+                    span={item.span ?? 8}
+                  >
+                    <FormItemRenderer item={item} form={form} />
+                  </Col>
+                );
+              })}
+            </Row>
+          </Form>
         </div>
         {/* 自定义按钮区域 */}
-        {(searchOptions.showSearchButton ||
-          searchOptions.showResetButton ||
-          showCollapseButton) && (
-            <div style={{ flexShrink: 0 }}>
-              <Space>
-                {searchOptions.showResetButton && (
-                  <Button onClick={handleReset}>{searchOptions.resetText}</Button>
-                )}
-                {searchOptions.showSearchButton && (
-                  <Button
-                    type="primary"
-                    onClick={handleSearch}
-                    loading={searchLoading}
-                  >
-                    {searchOptions.searchText}
-                  </Button>
-                )}
-                {showCollapseButton && (
-                  <Button
-                    type="link"
-                    onClick={() => setCollapsed(!collapsed)}
-                    icon={collapsed ? <DownOutlined /> : <UpOutlined />}
-                  >
-                    {collapsed ? t("expand") : t("collapse")}
-                  </Button>
-                )}
-              </Space>
-            </div>
-          )}
+        <ActionButtons
+          showSearchButton={searchOptions.showSearchButton}
+          searchText={searchOptions.searchText}
+          showResetButton={searchOptions.showResetButton}
+          resetText={searchOptions.resetText}
+          showCollapseButton={showCollapseButton}
+          collapsed={collapsed}
+          searchLoading={searchLoading}
+          onSearch={handleSearch}
+          onReset={handleReset}
+          onToggleCollapse={toggleCollapse}
+        />
       </div>
     </div>
   );
@@ -208,4 +94,5 @@ export type {
   SearchFormProps,
   SearchFormRef,
   SearchFormOptions,
+  SearchFormItemConfig,
 } from "./types";
