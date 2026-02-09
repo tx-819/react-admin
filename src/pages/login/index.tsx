@@ -3,7 +3,7 @@ import { Form, Input, Button, message } from "antd";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { login } from "../../api/auth";
-import { setAccessToken, setUserInfo } from "../../utils/storage";
+import { setUser } from "../../../store/userStore";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const Login = () => {
@@ -21,8 +21,7 @@ const Login = () => {
       });
 
       // 保存token和用户信息
-      setAccessToken(response.accessToken);
-      setUserInfo(response.user);
+      setUser({ ...response.user, token: response.accessToken, isLogin: true });
 
       message.success(t("login.loginSuccess"));
       // 登录成功后跳转到首页

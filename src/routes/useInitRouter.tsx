@@ -4,6 +4,7 @@ import buildRoutes from "./buildRoutes";
 import { createBrowserRouter } from "react-router-dom";
 import { setMenuList } from "../../store/menuStore";
 import { staticRoutes } from "./staticRoutes";
+import { getIsLogin } from "../../store/userStore";
 
 const useInitRouter = () => {
   const [router, setRouter] = useState<ReturnType<
@@ -13,6 +14,12 @@ const useInitRouter = () => {
 
   const initRouter = async () => {
     try {
+      const isLogin = getIsLogin();
+      if (!isLogin) {
+        const routerInstance = createBrowserRouter(staticRoutes);
+        setRouter(routerInstance);
+        return;
+      }
       // 获取当前用户有权限的菜单列表
       const userMenus = await getUserMenus();
       // 转换为路由格式
@@ -20,11 +27,11 @@ const useInitRouter = () => {
       const routes = buildRoutes(userMenus);
       const routerInstance = createBrowserRouter(routes);
       setRouter(routerInstance);
-      setLoading(false);
     } catch (error) {
-      console.error("Failed to load user menus:", error);
+      // todo 跳转到错误页,临时加下面两行逻辑方便调试
       const routerInstance = createBrowserRouter(staticRoutes);
       setRouter(routerInstance);
+    } finally {
       setLoading(false);
     }
   };
