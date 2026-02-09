@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Layout,
-  theme,
+  theme as antdTheme,
   Avatar,
   Dropdown,
   Space,
@@ -22,14 +21,10 @@ import BreadcrumbNav from "./BreadcrumbNav";
 import { getUserInfo, clearAuth } from "@/utils/storage";
 import type { UserInfo } from "@/api/auth";
 import SelectLang from "@/components/SelectLang";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
-
-const iconStyle: CSSProperties = {
-  fontSize: 18,
-  cursor: "pointer",
-};
 
 interface HeaderProps {
   collapsed: boolean;
@@ -42,8 +37,7 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
   const navigate = useNavigate();
   const {
     token: { colorBgContainer },
-  } = theme.useToken();
-
+  } = antdTheme.useToken();
   useEffect(() => {
     // 获取用户信息
     const user = getUserInfo();
@@ -60,11 +54,11 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
     {
       key: "user-info",
       label: (
-        <div style={{ padding: "4px 0" }}>
-          <div style={{ fontWeight: 500 }}>
+        <div className="py-1">
+          <div className="font-medium">
             {userInfo?.nickname || userInfo?.username}
           </div>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className="text-xs">
             {userInfo?.username}
           </Text>
         </div>
@@ -82,37 +76,31 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
     },
   ];
 
-  const headerStyle: CSSProperties = {
-    padding: "0 16px",
-    background: colorBgContainer,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  };
-
   return (
-    <AntHeader style={headerStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+    <AntHeader
+      className="px-4 flex items-center justify-between"
+      style={{ background: colorBgContainer }}
+    >
+      <div className="flex items-center gap-4">
         {collapsed ? (
           <MenuUnfoldOutlined
-            className="trigger"
+            className="trigger text-lg cursor-pointer"
             onClick={onToggle}
-            style={iconStyle}
           />
         ) : (
           <MenuFoldOutlined
-            className="trigger"
+            className="trigger text-lg cursor-pointer"
             onClick={onToggle}
-            style={iconStyle}
           />
         )}
         <BreadcrumbNav />
       </div>
-      <div style={{ display: "flex", alignItems: "center" }}>
+      <div className="flex items-center gap-2">
+        <ThemeSwitcher />
         <SelectLang />
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space
-            style={{ cursor: "pointer", padding: "0 8px" }}
+            className="cursor-pointer px-2"
             onClick={(e) => e.preventDefault()}
           >
             <Avatar

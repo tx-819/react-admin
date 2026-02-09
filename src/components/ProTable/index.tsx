@@ -5,6 +5,7 @@ import useNormalizedProps from "./_hooks/useNormalizedProps";
 import type { ProTableProps, ProTableRef } from "./types";
 import SearchForm from "../SearchForm";
 import type { SearchFormOptions } from "../SearchForm";
+import { theme } from "antd";
 
 function ProTableInner<T = unknown>(
   props: ProTableProps<T>,
@@ -25,6 +26,8 @@ function ProTableInner<T = unknown>(
   const { showRefresh, showSizeChanger, showColumnFilter } = settingsOptions;
 
   useImperativeHandle(ref, () => refMethods);
+
+  const { token: { colorBgContainer } } = theme.useToken();
 
   const renderTitle = () => {
     const titleContent =
@@ -121,7 +124,7 @@ function ProTableInner<T = unknown>(
           onReset={onReset}
         />
       )}
-      <div className="bg-white rounded-lg shadow-md p-4">
+      <div className="rounded-lg shadow-md p-4" style={{ background: colorBgContainer }}>
         <Table
           {...tableProps}
           columns={columns}

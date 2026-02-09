@@ -5,7 +5,7 @@ import {
   useMemo,
   useRef,
 } from "react";
-import { Button, Space } from "antd";
+import { Button, Space, theme } from "antd";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import ProForm, { type ProFormRef } from "../ProForm";
@@ -26,6 +26,8 @@ function SearchFormInner(
   const proFormRef = useRef<ProFormRef>(null);
   const [collapsed, setCollapsed] = useState(options?.defaultCollapsed ?? true);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  const { token: { colorBgContainer } } = theme.useToken();
 
   // 合并搜索表单选项
   const searchOptions: SearchFormOptions = useMemo(() => {
@@ -140,7 +142,7 @@ function SearchFormInner(
   }, [searchOptions]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+    <div className="rounded-lg shadow-md p-4 mb-4" style={{ background: colorBgContainer }}>
       <div
         style={{
           display: "flex",
@@ -163,32 +165,32 @@ function SearchFormInner(
         {(searchOptions.showSearchButton ||
           searchOptions.showResetButton ||
           showCollapseButton) && (
-          <div style={{ flexShrink: 0 }}>
-            <Space>
-              {searchOptions.showResetButton && (
-                <Button onClick={handleReset}>{searchOptions.resetText}</Button>
-              )}
-              {searchOptions.showSearchButton && (
-                <Button
-                  type="primary"
-                  onClick={handleSearch}
-                  loading={searchLoading}
-                >
-                  {searchOptions.searchText}
-                </Button>
-              )}
-              {showCollapseButton && (
-                <Button
-                  type="link"
-                  onClick={() => setCollapsed(!collapsed)}
-                  icon={collapsed ? <DownOutlined /> : <UpOutlined />}
-                >
-                  {collapsed ? t("expand") : t("collapse")}
-                </Button>
-              )}
-            </Space>
-          </div>
-        )}
+            <div style={{ flexShrink: 0 }}>
+              <Space>
+                {searchOptions.showResetButton && (
+                  <Button onClick={handleReset}>{searchOptions.resetText}</Button>
+                )}
+                {searchOptions.showSearchButton && (
+                  <Button
+                    type="primary"
+                    onClick={handleSearch}
+                    loading={searchLoading}
+                  >
+                    {searchOptions.searchText}
+                  </Button>
+                )}
+                {showCollapseButton && (
+                  <Button
+                    type="link"
+                    onClick={() => setCollapsed(!collapsed)}
+                    icon={collapsed ? <DownOutlined /> : <UpOutlined />}
+                  >
+                    {collapsed ? t("expand") : t("collapse")}
+                  </Button>
+                )}
+              </Space>
+            </div>
+          )}
       </div>
     </div>
   );
