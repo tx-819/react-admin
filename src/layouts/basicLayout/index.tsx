@@ -29,7 +29,7 @@ const BasicLayout = () => {
         collapsible
         collapsed={collapsed}
       >
-        <div className="text-xl font-bold p-4 text-center">
+        <div className="text-xl font-bold p-4 text-center dark:text-white">
           {collapsed ? "A" : "Admin"}
         </div>
         <SideMenu />
