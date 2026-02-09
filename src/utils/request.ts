@@ -1,14 +1,15 @@
 /**
- * 统一的API请求封装
+ * 统一的API请求封装（axios 双 token + HttpOnly RefreshToken 版）
  */
 
-import { clearAuth, getAccessToken } from "../../store/userStore";
+import axios from "axios";
+import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+
+import { clearAuth, getAccessToken, setAccessToken } from "../../store/userStore";
 import { message } from "antd";
 import i18n from "./i18n";
 
-// Base URL，可通过环境变量配置
-// 开发环境：使用相对路径，通过 Vite 代理转发（解决跨域问题）
-// 生产环境：使用完整的 API 地址
+// Base URL
 const BASE_URL = import.meta.env.PROD
   ? import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
   : "/api";
@@ -23,138 +24,223 @@ export interface ApiResponse<T> {
 }
 
 /**
- * 请求配置
+ * 请求配置扩展
  */
-interface RequestConfig extends RequestInit {
+export interface RequestConfig extends AxiosRequestConfig {
   skipAuth?: boolean; // 是否跳过认证（用于登录等接口）
 }
 
-/**
- * 发起请求
- */
-export const request = async <T>(
-  url: string,
-  config: RequestConfig = {}
-): Promise<T> => {
-  const { skipAuth = false, headers = {}, ...restConfig } = config;
-
-  // 构建完整URL
-  const fullUrl = url.startsWith("http") ? url : `${BASE_URL}${url}`;
-
-  // 构建请求头
-  const requestHeaders: HeadersInit = {
+const client: AxiosInstance = axios.create({
+  baseURL: BASE_URL,
+  timeout: 30000,
+  // 关键点 1: 允许携带 Cookie
+  // 这样浏览器才会自动把 HttpOnly 的 RefreshToken 发给后端，也能接收后端设置的新 Cookie
+  withCredentials: true,
+  headers: {
     "Content-Type": "application/json",
-    ...headers,
-  };
+  },
+});
 
-  // 添加认证token
-  if (!skipAuth) {
-    const token = getAccessToken();
-    if (token) {
-      (requestHeaders as Record<string, string>)[
-        "Authorization"
-      ] = `Bearer ${token}`;
+/* ==================== 双 token + 并发刷新逻辑 ==================== */
+
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }> = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
     }
-  }
+  });
+  failedQueue = [];
+};
+
+const refreshAccessToken = async (): Promise<string> => {
+  // 关键点 2: 不需要前端读取 RefreshToken
+  // 浏览器会自动在请求头里带上 Cookie: refreshToken=xxx
+  // 也不需要在 body 里传任何东西（除非后端有特殊要求）
 
   try {
-    const response = await fetch(fullUrl, {
-      ...restConfig,
-      headers: requestHeaders,
-    });
+    // 注意：这里不需要传 data，后端从 Cookie 读取
+    const res = await axios.post<ApiResponse<{ accessToken: string }>>(
+      `${BASE_URL}/auth/refresh`,
+      {}, // 空对象，或者根据后端要求完全不传 body
+      { withCredentials: true } // 确保这次请求也带上凭证
+    );
 
-    // 解析响应
-    const result: ApiResponse<T> = await response.json();
+    const { data } = res.data;
+    const newAccessToken = data.accessToken;
 
-    // 处理HTTP状态码
-    if (!response.ok) {
-      // 401 未认证，清除本地token并跳转登录
-      if (response.status === 401) {
-        clearAuth();
-        // 如果不在登录页，跳转到登录页
+    // 关键点 3: 手动更新 Access Token（存到内存或 localStorage）
+    setAccessToken(newAccessToken);
+
+    // 关键点 4: 不需要更新 RefreshToken！
+    // 后端会通过 Set-Cookie 响应头自动更新 HttpOnly 的 RefreshToken
+
+    return newAccessToken;
+  } catch (error) {
+    // 刷新接口报错（比如 RefreshToken 也过期了）
+    throw error;
+  }
+};
+
+/* ==================== 请求拦截器 ==================== */
+
+client.interceptors.request.use(
+  (config: InternalAxiosRequestConfig & { skipAuth?: boolean }) => {
+    if (!config.skipAuth) {
+      const token = getAccessToken();
+      if (token) {
+        // 只有 Access Token 需要手动塞到 Header 里
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* ==================== 响应拦截器 ==================== */
+
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { config, response } = error;
+
+    if (!config || !response) {
+      return Promise.reject(error);
+    }
+
+    const isRefreshApi = (config as any)._isRefresh;
+    const is401 = response.status === 401;
+
+    // 非 401 或是刷新接口自身的 401，直接处理业务错误
+    if (!is401 || isRefreshApi) {
+      handleBusinessError(error);
+      return Promise.reject(error);
+    }
+
+    if (is401) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (typeof token === "string") {
+              (config as any).headers.Authorization = `Bearer ${token}`;
+            }
+            return client.request(config);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      isRefreshing = true;
+
+      try {
+        const newAccessToken = await refreshAccessToken();
+        processQueue(null, newAccessToken);
+
+        (config as any).headers.Authorization = `Bearer ${newAccessToken}`;
+        return await client.request(config);
+      } catch (refreshError) {
+        // 刷新失败：清空本地 Access Token
+        processQueue(refreshError as Error, null);
+        clearAuth(); // 这里只会清掉内存/LocalStorage 里的 accessToken
+
+        // HttpOnly 的 RefreshToken 我们无法在 JS 删除，
+        // 通常由后端的 /logout 接口在服务端清除 Cookie。
+        // 这里直接跳转登录页即可。
         if (!window.location.pathname.includes("/login")) {
           window.location.href = "/login";
         }
         message.error(i18n.t("error.loginExpired"));
-        throw new Error(i18n.t("error.unauthorized"));
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
-
-      // 403 权限不足
-      if (response.status === 403) {
-        message.error(result.message || i18n.t("error.forbidden"));
-        throw new Error(result.message || i18n.t("error.forbiddenShort"));
-      }
-
-      // 其他错误
-      message.error(result.message || i18n.t("error.requestFailed"));
-      throw new Error(
-        result.message || `${i18n.t("error.requestFailed")}: ${response.status}`
-      );
     }
 
-    // 处理业务状态码
+    return Promise.reject(error);
+  }
+);
+
+/* ==================== 业务错误处理 ==================== */
+
+function handleBusinessError(error: any) {
+  const { response, code } = error;
+  const isNetworkError = code === "ECONNABORTED" || !response;
+
+  if (isNetworkError) {
+    message.error(i18n.t("error.networkError"));
+    return;
+  }
+
+  const { status, data } = response;
+  const result: ApiResponse<unknown> = data || {};
+
+  if (status === 401) {
+    clearAuth();
+    if (!window.location.pathname.includes("/login")) {
+      window.location.href = "/login";
+    }
+    message.error(i18n.t("error.loginExpired"));
+    throw new Error(i18n.t("error.unauthorized"));
+  }
+
+  if (status === 403) {
+    message.error(result.message || i18n.t("error.forbidden"));
+    throw new Error(result.message || i18n.t("error.forbiddenShort"));
+  }
+
+  message.error(result.message || i18n.t("error.requestFailed"));
+  throw new Error(result.message || `${i18n.t("error.requestFailed")}: ${status}`);
+}
+
+/* ==================== 封装方法 ==================== */
+
+export const request = async <T>(
+  url: string,
+  config: RequestConfig = {}
+): Promise<T> => {
+  try {
+    const response = await client(url, config);
+    const result: ApiResponse<T> = response.data;
+
     if (result.code !== 200 && result.code !== 201) {
       message.error(result.message || i18n.t("error.operationFailed"));
       throw new Error(result.message || i18n.t("error.operationFailed"));
     }
 
     return result.data;
-  } catch (error) {
-    // 网络错误或其他错误
-    if (error instanceof TypeError && error.message.includes("fetch")) {
-      message.error(i18n.t("error.networkError"));
-      throw new Error(i18n.t("error.networkErrorShort"));
-    }
+  } catch (error: any) {
     throw error;
   }
 };
 
-/**
- * GET请求
- */
 export const get = <T>(url: string, config?: RequestConfig): Promise<T> => {
-  return request<T>(url, {
-    ...config,
-    method: "GET",
-  });
+  return request(url, { ...config, method: "GET" });
 };
 
-/**
- * POST请求
- */
 export const post = <T>(
   url: string,
   data?: unknown,
   config?: RequestConfig
 ): Promise<T> => {
-  return request<T>(url, {
-    ...config,
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+  return request(url, { ...config, method: "POST", data });
 };
 
-/**
- * PUT请求
- */
 export const put = <T>(
   url: string,
   data?: unknown,
   config?: RequestConfig
 ): Promise<T> => {
-  return request<T>(url, {
-    ...config,
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
+  return request(url, { ...config, method: "PUT", data });
 };
 
-/**
- * DELETE请求
- */
 export const del = <T>(url: string, config?: RequestConfig): Promise<T> => {
-  return request<T>(url, {
-    ...config,
-    method: "DELETE",
-  });
+  return request(url, { ...config, method: "DELETE" });
 };
