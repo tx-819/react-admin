@@ -74,4 +74,10 @@ export default {
     networkError: "Network error, please check your connection",
     networkErrorShort: "Network error",
   },
+  // Theme switcher
+  theme: {
+    light: "Light Mode",
+    dark: "Dark Mode",
+    system: "Follow System",
+  },
 };

@@ -5,30 +5,30 @@ import {
     DesktopOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
+import { useTranslation } from "react-i18next";
 import { useThemeStore } from "../../../store/themeStore";
 
-const themeMenuItems: MenuProps["items"] = [
-    {
-        key: "light",
-        label: "亮色模式",
-        icon: <SunOutlined />,
-    },
-    {
-        key: "dark",
-        label: "暗色模式",
-        icon: <MoonOutlined />,
-    },
-    {
-        key: "system",
-        label: "跟随系统",
-        icon: <DesktopOutlined />,
-    },
-];
-
 const ThemeSwitcher = () => {
+    const { t } = useTranslation();
     const { theme, followSystem, setTheme, setFollowSystem } = useThemeStore();
 
-    console.log('followSystem', followSystem);
+    const themeMenuItems: MenuProps["items"] = [
+        {
+            key: "light",
+            label: t("theme.light"),
+            icon: <SunOutlined />,
+        },
+        {
+            key: "dark",
+            label: t("theme.dark"),
+            icon: <MoonOutlined />,
+        },
+        {
+            key: "system",
+            label: t("theme.system"),
+            icon: <DesktopOutlined />,
+        },
+    ];
 
     // 获取主题图标
     const getThemeIcon = () => {

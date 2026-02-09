@@ -74,4 +74,10 @@ export default {
     networkError: "网络错误，请检查网络连接",
     networkErrorShort: "网络错误",
   },
+  // 主题切换
+  theme: {
+    light: "亮色模式",
+    dark: "暗色模式",
+    system: "跟随系统",
+  },
 };
