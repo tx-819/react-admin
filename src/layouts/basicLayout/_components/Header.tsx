@@ -19,7 +19,7 @@ import {
 import type { MenuProps } from "antd";
 import { useTranslation } from "react-i18next";
 import BreadcrumbNav from "./BreadcrumbNav";
-import { getUserInfo, clearAuth } from "@/utils/storage";
+import { getUser, clearAuth } from "../../../../store/userStore";
 import type { UserInfo } from "@/api/auth";
 import SelectLang from "@/components/SelectLang";
 
@@ -46,7 +46,7 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
 
   useEffect(() => {
     // 获取用户信息
-    const user = getUserInfo();
+    const user = getUser();
     setUserInfo(user);
   }, []);
 

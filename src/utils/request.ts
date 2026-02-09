@@ -2,7 +2,7 @@
  * 统一的API请求封装
  */
 
-import { getAccessToken, clearAuth } from "./storage";
+import { clearAuth, getAccessToken } from "../../store/userStore";
 import { message } from "antd";
 import i18n from "./i18n";
 
