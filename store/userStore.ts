@@ -1,5 +1,6 @@
-import { create } from "zustand";
 import type { UserInfo } from "../src/api/auth";
+import { createStore } from 'zustand/vanilla';
+import { persist } from 'zustand/middleware';
 
 interface userStore {
   user: UserInfo | null;
@@ -7,13 +8,18 @@ interface userStore {
   getUser: () => UserInfo | null;
 }
 
-export const useUserStore = create<userStore>((set, get) => ({
-  user: null,
-  setUser: (user: UserInfo | null) => {
-    set({ user: user });
-  },
-  getUser: () => get().user,
-}));
+export const useUserStore = createStore<userStore>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      setUser: (user: UserInfo | null) => {
+        set({ user: user });
+      },
+      getUser: () => get().user,
+    }),
+    { name: 'user-storage' },
+  ),
+)
 
 // 为了保持 API 兼容性，导出这些函数
 // 它们内部使用 Zustand store
