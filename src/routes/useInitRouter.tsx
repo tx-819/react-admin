@@ -27,7 +27,7 @@ const useInitRouter = () => {
       const routes = buildRoutes(userMenus);
       const routerInstance = createBrowserRouter(routes);
       setRouter(routerInstance);
-    } catch (error) {
+    } catch {
       // todo 跳转到错误页,临时加下面两行逻辑方便调试
       const routerInstance = createBrowserRouter(staticRoutes);
       setRouter(routerInstance);

@@ -13,8 +13,6 @@ export interface UserInfo {
   nickname: string;
   avatar?: string;
   isSuper: boolean;
-  token: string;
-  isLogin: boolean;
 }
 
 /**
