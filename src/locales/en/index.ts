@@ -32,6 +32,8 @@ export default {
   createSuccess: "Created successfully",
   updateSuccess: "Updated successfully",
   deleteSuccess: "Deleted successfully",
+  operationSuccess: "Operation successful",
+  unsavedData: "Unsaved data",
   confirmDelete: "Confirm Delete",
   okText: "Confirm",
   cancelText: "Cancel",

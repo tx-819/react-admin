@@ -2,6 +2,7 @@ import { RouterProvider } from "react-router-dom";
 import { useInitRouter } from "./routes";
 import FullScreenLoading from "./components/FullScreenLoading";
 import AntdConfigProvider from "./components/AntdConfigProvider";
+import QueryClientProvider from "./components/QueryClientProvider";
 
 function App() {
   const { router, loading } = useInitRouter();
@@ -11,9 +12,11 @@ function App() {
   }
 
   return (
-    <AntdConfigProvider>
-      <RouterProvider router={router} />
-    </AntdConfigProvider>
+    <QueryClientProvider>
+      <AntdConfigProvider>
+        <RouterProvider router={router} />
+      </AntdConfigProvider>
+    </QueryClientProvider>
   );
 }
 

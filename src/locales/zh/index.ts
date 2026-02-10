@@ -32,6 +32,8 @@ export default {
   createSuccess: "创建成功",
   updateSuccess: "更新成功",
   deleteSuccess: "删除成功",
+  operationSuccess: "操作成功",
+  unsavedData: "数据未保存",
   confirmDelete: "确认删除",
   okText: "确定",
   cancelText: "取消",
