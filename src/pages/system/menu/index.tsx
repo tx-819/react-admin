@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useMemo } from "react";
-import { Tag, Space, Button, Modal, message, Form, Input, Tooltip } from "antd";
+import { useRef, useCallback, useMemo } from "react";
+import { Tag, Space, Button, Modal, message, Form, Input, Select, Switch, InputNumber, Row, Col, Tooltip } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -10,8 +10,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useTranslation } from "react-i18next";
 import ProTable from "@/components/ProTable";
 import type { ProTableRef } from "@/components/ProTable/types";
-import ProForm from "@/components/ProForm";
-import type { ProFormRef, ProFormItemConfig } from "@/components/ProForm/types";
+import DMForm from "@/components/DMForm";
 import {
   getMenuListApi,
   createMenuApi,
@@ -23,28 +22,11 @@ import {
 } from "@/api/menu";
 import Access from "@/components/Access";
 
+const { TextArea } = Input;
+
 const Menu = () => {
   const { t } = useTranslation();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
-  const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null);
   const tableRef = useRef<ProTableRef>(null);
-  const formRef = useRef<ProFormRef>(null);
-
-  // 打开新增弹窗
-  const handleOpenModal = useCallback((parentId?: string | null) => {
-    // 如果传入了 parentId，设置为默认父菜单
-    setDefaultParentId(parentId ?? null);
-    setEditingMenu(null);
-    setModalOpen(true);
-  }, []);
-
-  // 打开编辑弹窗
-  const handleEdit = useCallback((record: MenuItem) => {
-    setEditingMenu(record);
-    setDefaultParentId(null);
-    setModalOpen(true);
-  }, []);
 
   // 处理删除菜单
   const handleDelete = useCallback(
@@ -68,6 +50,171 @@ const Menu = () => {
         },
       });
     },
+    [t]
+  );
+
+  // 渲染表单内容
+  const renderFormItems = useCallback(
+    (isEdit = false) => (
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="name"
+            label={t("menu.name")}
+            labelCol={{ span: 6 }}
+            rules={[{ required: true, message: t("menu.rules.nameRequired") }]}
+          >
+            <Input placeholder={t("menu.placeholder.name")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="path"
+            label={t("menu.path")}
+            labelCol={{ span: 6 }}
+            rules={[{ required: true, message: t("menu.rules.pathRequired") }]}
+          >
+            <Input placeholder={t("menu.placeholder.path")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="component"
+            label={t("menu.componentPath")}
+            labelCol={{ span: 6 }}
+          >
+            <Input placeholder={t("menu.placeholder.componentPath")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="icon"
+            label={t("menu.icon")}
+            labelCol={{ span: 6 }}
+          >
+            <Input placeholder={t("menu.placeholder.icon")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="keepAlive"
+            label={t("menu.isKeepAlive")}
+            labelCol={{ span: 6 }}
+            valuePropName="checked"
+            {...(!isEdit && { initialValue: false })}
+          >
+            <Switch />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="sort"
+            label={t("menu.sort")}
+            labelCol={{ span: 6 }}
+            {...(!isEdit && { initialValue: 0 })}
+          >
+            <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="status"
+            label={t("status")}
+            labelCol={{ span: 6 }}
+            {...(!isEdit && { initialValue: 1 })}
+          >
+            <Select
+              placeholder={t("statusPlaceholder")}
+              options={[
+                { label: t("enabled"), value: 1 },
+                { label: t("disabled"), value: 0 },
+              ]}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={24}>
+          <Form.Item
+            name="remark"
+            label={t("remark")}
+            labelCol={{ span: 3 }}
+          >
+            <TextArea
+              placeholder={t("remarkPlaceholder")}
+              rows={3}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={24}>
+          <Form.Item
+            label={t("menu.authList")}
+            labelCol={{ span: 3 }}
+          >
+            <Form.List name={["meta", "authList"]}>
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <Space
+                      key={key}
+                      style={{ display: "flex", marginBottom: 8 }}
+                      align="baseline"
+                    >
+                      <Form.Item
+                        {...restField}
+                        name={[name, "title"]}
+                        rules={[
+                          {
+                            required: true,
+                            message: t("menu.rules.authTitleRequired"),
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder={t("menu.placeholder.authTitle")}
+                          style={{ width: 150 }}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "authMark"]}
+                        rules={[
+                          {
+                            required: true,
+                            message: t("menu.rules.authMarkRequired"),
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder={t("menu.placeholder.authMark")}
+                          style={{ width: 200 }}
+                        />
+                      </Form.Item>
+                      <Button
+                        type="link"
+                        danger
+                        icon={<MinusCircleOutlined />}
+                        onClick={() => remove(name)}
+                      >
+                        {t("delete")}
+                      </Button>
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
+                    >
+                      {t("menu.addAuth")}
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          </Form.Item>
+        </Col>
+      </Row>
+    ),
     [t]
   );
 
@@ -139,29 +286,105 @@ const Menu = () => {
           <Space>
             {!record.component && (
               <Access code="create">
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    handleOpenModal(record.id);
+                <DMForm<CreateMenuParams>
+                  name={`menuForm_create_child_${record.id}`}
+                  type="Modal"
+                  title={t("menu.createChild")}
+                  width={1060}
+                  trigger={
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<PlusOutlined />}
+                    >
+                      {t("menu.createChild")}
+                    </Button>
+                  }
+                  initialValues={{
+                    parentId: record.id,
+                  }}
+                  onSubmit={async (values, { success }) => {
+                    try {
+                      const meta = values.meta as Record<string, unknown> | undefined;
+                      const params: CreateMenuParams = {
+                        path: values.path as string,
+                        name: values.name as string,
+                        component: values.component as string | undefined,
+                        parentId: record.id,
+                        icon: values.icon as string | undefined,
+                        keepAlive: values.keepAlive as boolean | undefined,
+                        sort: (values.sort as number) ?? 0,
+                        status: (values.status as number) ?? 1,
+                        remark: values.remark as string | undefined,
+                        meta: meta?.authList
+                          ? {
+                            authList: meta.authList as Array<{
+                              title: string;
+                              authMark: string;
+                            }>,
+                          }
+                          : undefined,
+                      };
+                      await createMenuApi(params);
+                      success();
+                      // 刷新表格
+                      if (tableRef.current) {
+                        await tableRef.current.refresh();
+                      }
+                    } catch (error) {
+                      console.error(t("menu.message.createError"), error);
+                      throw error;
+                    }
                   }}
                 >
-                  {t("menu.createChild")}
-                </Button>
+                  {renderFormItems(false)}
+                </DMForm>
               </Access>
             )}
             <Access code="update">
-              <Button
-                type="link"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => {
-                  handleEdit(record);
+              <DMForm<UpdateMenuParams>
+                name={`menuForm_edit_${record.id}`}
+                type="Modal"
+                title={t("menu.edit")}
+                width={1060}
+                trigger={
+                  <Button
+                    type="link"
+                    size="small"
+                    icon={<EditOutlined />}
+                  >
+                    {t("edit")}
+                  </Button>
+                }
+                initialValues={{
+                  name: record.name,
+                  path: record.path,
+                  component: record.component || "",
+                  icon: record.meta?.icon || "",
+                  keepAlive: record.keepAlive || false,
+                  sort: record.sort || 0,
+                  status: record.status || 1,
+                  remark: record.remark || "",
+                  meta: {
+                    authList: record.meta?.authList || [],
+                  },
+                }}
+                onSubmit={async (values, { success }) => {
+                  try {
+                    await updateMenuApi(record.id, values);
+                    success();
+                    // 刷新表格
+                    if (tableRef.current) {
+                      await tableRef.current.refresh();
+                    }
+                  } catch (error) {
+                    console.error(t("menu.message.updateError"), error);
+                    throw error;
+                  }
                 }}
               >
-                {t("edit")}
-              </Button>
+                {renderFormItems(true)}
+              </DMForm>
             </Access>
             <Access code="delete">
               <Button
@@ -180,270 +403,43 @@ const Menu = () => {
         ),
       },
     ],
-    [t, handleOpenModal, handleEdit, handleDelete]
+    [t, handleDelete, renderFormItems]
   );
-
-  const formItems: ProFormItemConfig[] = useMemo(
-    () => [
-      {
-        name: "name",
-        label: t("menu.name"),
-        type: "input",
-        required: true,
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingMenu?.name,
-        fieldProps: {
-          placeholder: t("menu.placeholder.name"),
-        },
-      },
-      {
-        name: "path",
-        label: t("menu.path"),
-        type: "input",
-        required: true,
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingMenu?.path,
-        fieldProps: {
-          placeholder: t("menu.placeholder.path"),
-        },
-      },
-      {
-        name: "component",
-        label: t("menu.componentPath"),
-        type: "input",
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingMenu?.component,
-        fieldProps: {
-          placeholder: t("menu.placeholder.componentPath"),
-        },
-      },
-      {
-        name: "icon",
-        label: t("menu.icon"),
-        type: "input",
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingMenu?.meta?.icon,
-        fieldProps: {
-          placeholder: t("menu.placeholder.icon"),
-        },
-      },
-      {
-        name: "keepAlive",
-        label: t("menu.isKeepAlive"),
-        type: "switch",
-        span: 12,
-        labelCol: { span: 6 },
-        initialValue: editingMenu?.keepAlive,
-        fieldProps: {
-          min: 0,
-        },
-      },
-      {
-        name: "sort",
-        label: t("menu.sort"),
-        type: "number",
-        labelCol: { span: 6 },
-        initialValue: editingMenu?.sort || 0,
-        fieldProps: {
-          min: 0,
-        },
-        span: 12,
-      },
-      {
-        name: "status",
-        label: t("status"),
-        type: "select",
-        initialValue: editingMenu?.status || 1,
-        options: [
-          { label: t("enabled"), value: 1 },
-          { label: t("disabled"), value: 0 },
-        ],
-        span: 12,
-        labelCol: { span: 6 },
-        fieldProps: {
-          placeholder: t("statusPlaceholder"),
-        },
-      },
-      {
-        name: "remark",
-        label: t("remark"),
-        type: "textarea",
-        initialValue: editingMenu?.remark || "",
-        fieldProps: {
-          placeholder: t("remarkPlaceholder"),
-        },
-        span: 24,
-        labelCol: { span: 3 },
-      },
-      {
-        name: ["meta", "authList"],
-        label: t("menu.authList"),
-        type: "custom",
-        span: 24,
-        labelCol: { span: 3 },
-        render: () => (
-          <Form.List
-            name={["meta", "authList"]}
-            initialValue={editingMenu?.meta?.authList || []}
-          >
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space
-                    key={key}
-                    style={{ display: "flex", marginBottom: 8 }}
-                    align="baseline"
-                  >
-                    <Form.Item
-                      {...restField}
-                      name={[name, "title"]}
-                      rules={[
-                        {
-                          required: true,
-                          message: t("menu.rules.authTitleRequired"),
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder={t("menu.placeholder.authTitle")}
-                        style={{ width: 150 }}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "authMark"]}
-                      rules={[
-                        {
-                          required: true,
-                          message: t("menu.rules.authMarkRequired"),
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder={t("menu.placeholder.authMark")}
-                        style={{ width: 200 }}
-                      />
-                    </Form.Item>
-                    <Button
-                      type="link"
-                      danger
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(name)}
-                    >
-                      {t("delete")}
-                    </Button>
-                  </Space>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    {t("menu.addAuth")}
-                  </Button>
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
-        ),
-      },
-    ],
-    [editingMenu, t]
-  );
-
-  // 处理新增菜单
-  const handleCreate = async (values: Record<string, unknown>) => {
-    try {
-      const meta = values.meta as Record<string, unknown> | undefined;
-      const params: CreateMenuParams = {
-        path: values.path as string,
-        name: values.name as string,
-        component: values.component as string | undefined,
-        // 如果有 defaultParentId，使用它；否则为 null（顶级菜单）
-        parentId: defaultParentId ?? null,
-        icon: values.icon as string | undefined,
-        keepAlive: values.keepAlive as boolean | undefined,
-        sort: (values.sort as number) ?? 0,
-        status: (values.status as number) ?? 1,
-        remark: values.remark as string | undefined,
-        meta: meta?.authList
-          ? {
-              authList: meta.authList as Array<{
-                title: string;
-                authMark: string;
-              }>,
-            }
-          : undefined,
-      };
-      await createMenuApi(params);
-      message.success(t("createSuccess"));
-      setModalOpen(false);
-      setDefaultParentId(null);
-      formRef.current?.onReset();
-      // 刷新表格
-      if (tableRef.current) {
-        await tableRef.current.refresh();
-      }
-    } catch (error) {
-      console.error(t("menu.message.createError"), error);
-    }
-  };
-
-  // 处理更新菜单
-  const handleUpdate = async (values: Record<string, unknown>) => {
-    if (!editingMenu) return;
-    try {
-      const meta = values.meta as Record<string, unknown> | undefined;
-      const params: UpdateMenuParams = {
-        path: values.path as string,
-        name: values.name as string,
-        component: values.component as string | undefined,
-        icon: values.icon as string | undefined,
-        keepAlive: values.keepAlive as boolean | undefined,
-        sort: (values.sort as number) ?? 0,
-        status: (values.status as number) ?? 1,
-        remark: values.remark as string | undefined,
-        meta: meta?.authList
-          ? {
-              authList: meta.authList as Array<{
-                title: string;
-                authMark: string;
-              }>,
-            }
-          : undefined,
-      };
-      await updateMenuApi(editingMenu.id, params);
-      message.success(t("updateSuccess"));
-      setModalOpen(false);
-      setEditingMenu(null);
-      formRef.current?.onReset();
-      // 刷新表格
-      if (tableRef.current) {
-        await tableRef.current.refresh();
-      }
-    } catch (error) {
-      console.error(t("menu.message.updateError"), error);
-    }
-  };
 
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">{t("menu.title")}</h2>
         <Access code="create">
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => handleOpenModal()}
+          <DMForm<CreateMenuParams>
+            name="menuForm_create"
+            type="Modal"
+            title={t("menu.create")}
+            width={1060}
+            trigger={
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+              >
+                {t("menu.create")}
+              </Button>
+            }
+            onSubmit={async (values, { success }) => {
+              try {
+                await createMenuApi(values);
+                success();
+                // 刷新表格
+                if (tableRef.current) {
+                  await tableRef.current.refresh();
+                }
+              } catch (error) {
+                console.error(t("menu.message.createError"), error);
+                throw error;
+              }
+            }}
           >
-            {t("menu.create")}
-          </Button>
+            {renderFormItems(false)}
+          </DMForm>
         </Access>
       </div>
       <ProTable<MenuItem>
@@ -466,32 +462,6 @@ const Menu = () => {
         }}
       />
 
-      {/* 新增/编辑菜单弹窗 */}
-      <Modal
-        title={
-          editingMenu
-            ? t("menu.edit")
-            : defaultParentId
-            ? t("menu.createChild")
-            : t("menu.create")
-        }
-        open={modalOpen}
-        onCancel={() => {
-          setModalOpen(false);
-          setDefaultParentId(null);
-          setEditingMenu(null);
-          formRef.current?.onReset();
-        }}
-        footer={null}
-        width={1060}
-        destroyOnHidden
-      >
-        <ProForm
-          ref={formRef}
-          items={formItems}
-          onSubmit={editingMenu ? handleUpdate : handleCreate}
-        />
-      </Modal>
     </>
   );
 };

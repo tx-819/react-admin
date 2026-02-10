@@ -30,15 +30,11 @@ export interface DMFormRunConfig {
   resetParams?: Record<string, unknown>;
 }
 
-export interface DMFormProps extends Omit<FormProps, 'onFinish' | 'title'> {
+export interface DMFormProps<T> extends Omit<FormProps, 'onFinish' | 'title'> {
   /** 表单名称 */
   name?: string;
   /** 表单实例 */
   form?: FormInstance;
-  /** 提交异步函数 */
-  submitAsync?: (submitParams?: Record<string, unknown>) => Promise<void>;
-  /** 重置函数 */
-  reset?: (newInitialValues?: Record<string, unknown>) => void;
   /** 子元素 */
   children?: ReactNode;
   /** 渲染子元素函数 */
@@ -66,10 +62,36 @@ export interface DMFormProps extends Omit<FormProps, 'onFinish' | 'title'> {
   /** 未保存警告 */
   unsavedWarning?: boolean;
   /** 初始值 */
-  initialValues?: Record<string, unknown>;
+  initialValues?: Partial<T>;
   /** 请求初始值函数 */
   requestInitialValues?: (props: { resolve: (values: Record<string, unknown>) => void; reject: () => void }) => void;
   /** 请求依赖 */
   requestDeps?: unknown[];
+  /** 提交回调 */
+  onSubmit?: (
+    values: T,
+    helpers: {
+      success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void;
+      error: (content?: string | null) => void;
+      form: FormInstance;
+    },
+    submitParams?: Record<string, unknown>
+  ) => void;
+  /** 确认回调 */
+  onOk?: (
+    values: T,
+    helpers: {
+      success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void;
+      error: (content?: string | null) => void;
+      form: FormInstance;
+    },
+    submitParams?: Record<string, unknown>
+  ) => void;
+  /** 提交失败回调 */
+  onFailed?: (errorInfo: {
+    errorFields?: Array<{ name: string[] }>;
+    outOfDate?: boolean;
+    values?: Partial<T>;
+  }) => void;
 }
 

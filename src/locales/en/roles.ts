@@ -12,6 +12,8 @@ export default {
     status: "Please select status",
   },
   rules: {
+    nameRequired: "Please enter role name",
+    codeRequired: "Please enter role code",
     codePattern:
       "Role code can only contain lowercase letters, numbers, and underscores",
   },

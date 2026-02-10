@@ -21,7 +21,9 @@ export default {
     passwordEdit: "留空则不修改密码",
   },
   rules: {
+    usernameRequired: "请输入用户名",
     usernameLength: "用户名长度必须在3-50个字符之间",
+    passwordRequired: "请输入密码",
   },
   message: {
     loadRolesError: "加载角色列表失败",

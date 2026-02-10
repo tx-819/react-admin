@@ -12,7 +12,7 @@ import type {
   DMFormBeforeShowCloseProps,
 } from './types';
 
-export default function DMForm(props: DMFormProps) {
+export default function DMForm<T = Record<string, unknown>>(props: DMFormProps<T>) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
@@ -49,37 +49,28 @@ export default function DMForm(props: DMFormProps) {
         </Button>
       </Space>
     ),
-
     name,
-
     form,
-
     submitAsync,
     reset,
-
     children,
-
     renderChildren,
-
     type = 'Drawer', // Drawer 或 Modal
     trigger,
-    beforeShow = ({ resolve }: DMFormBeforeShowCloseProps) => {
+    beforeShow = ({ resolve }: DMFormBeforeShowCloseProps): void => {
       resolve();
     },
-    beforeClose = ({ resolve }: DMFormBeforeShowCloseProps) => {
+    beforeClose = ({ resolve }: DMFormBeforeShowCloseProps): void => {
       resolve();
     },
     title,
     width = 416,
     closable = true,
     onClose,
-
     dmConfig = {},
-
     unsavedWarning = true,
-
     ...rest
-  } = useNormalizedProps(props as Omit<DMFormProps, 'onReset'> & { onReset?: () => void });
+  } = useNormalizedProps<T>(props as Omit<DMFormProps<T>, 'onReset'> & { onReset?: () => void });
 
   const [open, setOpen] = useState(false);
 
@@ -108,10 +99,8 @@ export default function DMForm(props: DMFormProps) {
 
   const contextConfig: DMFormContextConfig = {
     form,
-
     submit: newSubmit,
     reset: newReset,
-
     loading,
   };
 
@@ -193,87 +182,65 @@ export default function DMForm(props: DMFormProps) {
     }
   };
 
+  const formContent = (
+    <Form {...rest} name={name} form={form}>
+      {open && (
+        <ChildrenWrapper
+          form={form}
+          initialValues={props.initialValues}
+          requestInitialValues={props.requestInitialValues}
+          requestDeps={props.requestDeps}
+        >
+          {renderChildren ? (
+            renderChildren(contextConfig)
+          ) : (
+            <>
+              {children}
+              {renderFooter && (
+                <Form.Item shouldUpdate noStyle>
+                  {() => (
+                    <>
+                      <div style={{ position: 'relative', height: 30, width: '100%' }}></div>
+                      <div className="absolute bottom-0 left-0 z-999 w-full px-4 py-2.5 text-right bg-white border-t border-[#e8e8e8] rounded-b">{renderFooter(contextConfig)}</div>
+                    </>
+                  )}
+                </Form.Item>
+              )}
+            </>
+          )}
+        </ChildrenWrapper>
+      )}
+    </Form>
+  );
+
   return (
     <>
       {renderTrigger()}
-
       {type === 'Modal' ? (
         <Modal
-          title={title}
-          width={typeof width === 'string' ? parseInt(width, 10) || width : width}
-          closable={closable}
-          open={open}
-          onCancel={handleClose}
-          footer={null}
-          {...(dmConfig as ModalProps)}
-        >
-          <Form {...rest} name={name} form={form}>
-            {open && (
-              <ChildrenWrapper
-                form={form}
-                initialValues={props.initialValues}
-                requestInitialValues={props.requestInitialValues}
-                requestDeps={props.requestDeps}
-              >
-                {renderChildren ? (
-                  renderChildren(contextConfig)
-                ) : (
-                  <>
-                    {children}
-                    {renderFooter && (
-                      <Form.Item shouldUpdate noStyle>
-                        {() => (
-                          <>
-                            <div style={{ position: 'relative', height: 30, width: '100%' }}></div>
-                            <div className="absolute bottom-0 left-0 z-999 w-full px-4 py-2.5 text-right bg-white border-t border-[#e8e8e8] rounded-b">{renderFooter(contextConfig)}</div>
-                          </>
-                        )}
-                      </Form.Item>
-                    )}
-                  </>
-                )}
-              </ChildrenWrapper>
-            )}
-          </Form>
-        </Modal>
-      ) : (
-        <Drawer
           title={title}
           width={width}
           closable={closable}
           open={open}
+          onCancel={handleClose}
+          footer={null}
+          destroyOnHidden
+          {...(dmConfig as Partial<ModalProps>)}
+        >
+          {formContent}
+        </Modal>
+      ) : (
+        <Drawer
+          title={title}
+          defaultSize={width as number}
+          closable={closable}
+          open={open}
           onClose={handleClose}
           footer={null}
-          {...(dmConfig as DrawerProps)}
+          destroyOnHidden
+          {...(dmConfig as Partial<DrawerProps>)}
         >
-          <Form {...rest} name={name} form={form}>
-            {open && (
-              <ChildrenWrapper
-                form={form}
-                initialValues={props.initialValues}
-                requestInitialValues={props.requestInitialValues}
-                requestDeps={props.requestDeps}
-              >
-                {renderChildren ? (
-                  renderChildren(contextConfig)
-                ) : (
-                  <>
-                    {children}
-                    {renderFooter && (
-                      <Form.Item shouldUpdate noStyle>
-                        {() => (
-                          <>
-                            <div style={{ position: 'relative', height: 30, width: '100%' }}></div>
-                            <div className="absolute bottom-0 left-0 z-999 w-full px-4 py-2.5 text-right bg-white border-t border-[#e8e8e8] rounded-b">{renderFooter(contextConfig)}</div>
-                          </>
-                        )}
-                      </Form.Item>
-                    )}
-                  </>
-                )}
-              </ChildrenWrapper>
-            )}
-          </Form>
+          {formContent}
         </Drawer>
       )}
     </>

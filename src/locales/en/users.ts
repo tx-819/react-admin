@@ -21,7 +21,9 @@ export default {
     passwordEdit: "Leave blank to keep current password",
   },
   rules: {
+    usernameRequired: "Please enter username",
     usernameLength: "Username must be between 3-50 characters",
+    passwordRequired: "Please enter password",
   },
   message: {
     loadRolesError: "Failed to load roles",

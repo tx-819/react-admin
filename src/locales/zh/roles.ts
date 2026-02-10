@@ -12,6 +12,8 @@ export default {
     status: "请选择状态",
   },
   rules: {
+    nameRequired: "请输入角色名称",
+    codeRequired: "请输入角色代码",
     codePattern: "角色代码只能包含小写字母、数字和下划线",
   },
   message: {

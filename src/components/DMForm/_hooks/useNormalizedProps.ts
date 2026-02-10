@@ -1,6 +1,7 @@
 import { Form, message } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import { useTranslation } from 'react-i18next';
+import { useRef, useMemo, useCallback } from 'react';
 import type { DMFormProps } from '../types';
 
 interface ValidateErrorEntity {
@@ -15,9 +16,9 @@ interface ExtendedFormInstance extends FormInstance {
   resetInitialValues?: () => void;
 }
 
-interface UseNormalizedPropsInput extends Omit<DMFormProps, 'submitAsync' | 'reset' | 'onReset'> {
+interface UseNormalizedPropsInput<T = Record<string, unknown>> extends Omit<DMFormProps<T>, 'submitAsync' | 'reset' | 'onReset'> {
   onSubmit?: (
-    values: Record<string, unknown>,
+    values: T,
     helpers: {
       success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void;
       error: (content?: string | null) => void;
@@ -26,7 +27,7 @@ interface UseNormalizedPropsInput extends Omit<DMFormProps, 'submitAsync' | 'res
     submitParams?: Record<string, unknown>
   ) => void;
   onOk?: (
-    values: Record<string, unknown>,
+    values: T,
     helpers: {
       success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void;
       error: (content?: string | null) => void;
@@ -34,7 +35,11 @@ interface UseNormalizedPropsInput extends Omit<DMFormProps, 'submitAsync' | 'res
     },
     submitParams?: Record<string, unknown>
   ) => void;
-  onFailed?: (errorInfo: ValidateErrorEntity) => void;
+  onFailed?: (errorInfo: {
+    errorFields?: Array<{ name: string[] }>;
+    outOfDate?: boolean;
+    values?: Partial<T>;
+  }) => void;
   onReset?: () => void;
   scrollToFieldOptions?: {
     block?: 'start' | 'center' | 'end';
@@ -42,7 +47,7 @@ interface UseNormalizedPropsInput extends Omit<DMFormProps, 'submitAsync' | 'res
   };
 }
 
-export default (props: UseNormalizedPropsInput) => {
+export default function useNormalizedProps<T = Record<string, unknown>>(props: UseNormalizedPropsInput<T>) {
   const { t } = useTranslation();
   const {
     form: outerForm,
@@ -55,9 +60,12 @@ export default (props: UseNormalizedPropsInput) => {
   } = props;
 
   const [innerForm] = Form.useForm();
-  const form = (outerForm || innerForm) as ExtendedFormInstance;
+  const form = outerForm || innerForm;
 
-  const setInitialValues = (newInitialValues: Record<string, unknown>) => {
+  // 使用 ref 存储扩展属性，避免直接修改 form 对象
+  const currentInitialValuesRef = useRef<Record<string, unknown> | undefined>(undefined);
+
+  const setInitialValues = useCallback((newInitialValues: Record<string, unknown>) => {
     if (newInitialValues) {
       const fields = Object.entries(newInitialValues).map(([k, v]) => ({
         name: k,
@@ -67,12 +75,12 @@ export default (props: UseNormalizedPropsInput) => {
 
       form.setFields(fields);
 
-      form.currentInitialValues = newInitialValues;
+      currentInitialValuesRef.current = newInitialValues;
     }
-  };
+  }, [form]);
 
-  const resetInitialValues = () => {
-    const currentInitialValues = form.currentInitialValues || {};
+  const resetInitialValues = useCallback(() => {
+    const currentInitialValues = currentInitialValuesRef.current || {};
 
     const keys = Object.keys(form.getFieldsValue(true) || {});
     if (keys.length) {
@@ -84,16 +92,27 @@ export default (props: UseNormalizedPropsInput) => {
 
       form.setFields(fields);
     }
-  };
+  }, [form]);
 
-  form.setInitialValues = setInitialValues;
-  form.resetInitialValues = resetInitialValues;
+  // 使用 useMemo 创建扩展的 form 对象，使用 getter/setter 访问 ref，避免在渲染期间直接访问 ref
+  const extendedForm = useMemo(() => {
+    return Object.assign(form, {
+      get currentInitialValues() {
+        return currentInitialValuesRef.current;
+      },
+      set currentInitialValues(value: Record<string, unknown> | undefined) {
+        currentInitialValuesRef.current = value;
+      },
+      setInitialValues,
+      resetInitialValues,
+    }) as ExtendedFormInstance;
+  }, [form, setInitialValues, resetInitialValues]);
 
   return {
     labelWrap: true,
-    form,
+    form: extendedForm,
     submitAsync: (submitParams = {}) => {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         form
           .validateFields()
           .then((newRecord: Record<string, unknown>) => {
@@ -102,13 +121,13 @@ export default (props: UseNormalizedPropsInput) => {
             const push =
               onSubmit ||
               onOk ||
-              ((newValue: Record<string, unknown>, { success }: { success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void }) => {
+              ((newValue: T, { success }: { success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void }) => {
                 console.log('Submit:', newValue);
                 success();
               });
 
             push(
-              newRecord,
+              newRecord as T,
               {
                 success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => {
                   if (content !== null) {
@@ -139,18 +158,24 @@ export default (props: UseNormalizedPropsInput) => {
               submitParams,
             );
           })
-          .catch((rejectedReason: ValidateErrorEntity) => {
+          .catch((rejectedReason: unknown) => {
+            const errorInfo = rejectedReason as ValidateErrorEntity;
             if (onFailed) {
-              onFailed(rejectedReason);
+              onFailed({
+                errorFields: errorInfo.errorFields,
+                outOfDate: errorInfo.outOfDate,
+                values: errorInfo.values as Partial<T> | undefined,
+              });
             }
-            if (rejectedReason.errorFields) {
-              form.scrollToField(rejectedReason.errorFields[0]?.name, {
+            if (errorInfo.errorFields) {
+              form.scrollToField(errorInfo.errorFields[0]?.name, {
                 block: 'center',
                 ...scrollToFieldOptions,
               });
             } else {
               console.log(rejectedReason);
             }
+            reject();
           });
       });
     },

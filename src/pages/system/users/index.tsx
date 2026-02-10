@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Tag, Space, Button, Modal, message, Avatar } from "antd";
+import { Tag, Space, Button, Modal, message, Avatar, Form, Input, Select, Switch, Row, Col } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -9,8 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import ProTable from "@/components/ProTable";
 import type { ProTableRef, ProColumnType } from "@/components/ProTable/types";
-import ProForm from "@/components/ProForm";
-import type { ProFormRef, ProFormItemConfig } from "@/components/ProForm/types";
+import DMForm from "@/components/DMForm";
 import {
   getUserListApi,
   createUserApi,
@@ -26,11 +25,8 @@ import Access from "@/components/Access";
 
 const Users = () => {
   const { t } = useTranslation();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const tableRef = useRef<ProTableRef>(null);
-  const formRef = useRef<ProFormRef>(null);
 
   // 加载角色列表
   useEffect(() => {
@@ -45,11 +41,6 @@ const Users = () => {
     loadRoles();
   }, [t]);
 
-  // 打开编辑弹窗
-  const handleEdit = useCallback((record: UserItem) => {
-    setEditingUser(record);
-    setModalOpen(true);
-  }, []);
 
   // 处理删除用户
   const handleDelete = useCallback(
@@ -180,16 +171,44 @@ const Users = () => {
       render: (_: unknown, record: UserItem) => (
         <Space>
           <Access code="update">
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                handleEdit(record);
+            <DMForm<UpdateUserParams>
+              name="userForm_edit"
+              type="Modal"
+              title={t("users.edit")}
+              width={960}
+              trigger={
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EditOutlined />}
+                >
+                  {t("edit")}
+                </Button>
+              }
+              initialValues={{
+                username: record.username,
+                nickname: record.nickname || "",
+                avatar: record.avatar || "",
+                status: record.status,
+                isSuper: record.isSuper,
+                roleIds: record.roles?.map((r) => r.id) || [],
+              }}
+              onSubmit={async (values, { success }) => {
+                try {
+                  await updateUserApi(record.id, values);
+                  success();
+                  // 刷新表格
+                  if (tableRef.current) {
+                    await tableRef.current.refresh();
+                  }
+                } catch (error) {
+                  console.error(t("users.message.updateError"), error);
+                  throw error;
+                }
               }}
             >
-              {t("edit")}
-            </Button>
+              {renderForm(true)}
+            </DMForm>
           </Access>
           <Access code="delete">
             <Button
@@ -209,164 +228,103 @@ const Users = () => {
     },
   ];
 
-  // 表单配置
-  const formItems: ProFormItemConfig[] = [
-    {
-      name: "username",
-      label: t("users.username"),
-      type: "input",
-      required: true,
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingUser?.username,
-      fieldProps: {
-        placeholder: t("users.placeholder.usernameWithRule"),
-      },
-      rules: [
-        {
-          min: 3,
-          max: 50,
-          message: t("users.rules.usernameLength"),
-        },
-      ],
-    },
-    {
-      name: "password",
-      label: editingUser ? t("newPassword") : t("password"),
-      type: "password",
-      required: !editingUser, // 编辑时密码可选
-      span: 12,
-      labelCol: { span: 6 },
-      fieldProps: {
-        placeholder: editingUser
-          ? t("users.placeholder.passwordEdit")
-          : t("users.placeholder.password"),
-      },
-    },
-    {
-      name: "nickname",
-      label: t("users.nickname"),
-      type: "input",
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingUser?.nickname,
-      fieldProps: {
-        placeholder: t("users.placeholder.nickname"),
-      },
-    },
-    {
-      name: "avatar",
-      label: t("users.avatarUrl"),
-      type: "input",
-      span: 12,
-      labelCol: { span: 6 },
-      initialValue: editingUser?.avatar || "",
-      fieldProps: {
-        placeholder: t("users.placeholder.avatarUrl"),
-      },
-    },
-    {
-      name: "status",
-      label: t("users.status"),
-      type: "select",
-      initialValue: editingUser?.status ?? 1,
-      options: [
-        { label: t("enabled"), value: 1 },
-        { label: t("disabled"), value: 0 },
-      ],
-      span: 12,
-      labelCol: { span: 6 },
-      fieldProps: {
-        placeholder: t("users.placeholder.status"),
-      },
-    },
-    {
-      name: "isSuper",
-      label: t("users.isSuper"),
-      type: "switch",
-      initialValue: editingUser?.isSuper ?? false,
-      span: 12,
-      labelCol: { span: 6 },
-    },
-    {
-      name: "roleIds",
-      label: t("users.roles"),
-      type: "select",
-      initialValue: editingUser?.roles?.map((r) => r.id) || [],
-      options: roles.map((role) => ({
-        label: role.name,
-        value: role.id,
-      })),
-      span: 24,
-      labelCol: { span: 3 },
-      fieldProps: {
-        mode: "multiple",
-        placeholder: t("users.placeholder.roles"),
-        allowClear: true,
-      },
-    },
-  ];
-
-  // 处理新增用户
-  const handleCreate = async (values: Record<string, unknown>) => {
-    try {
-      const params: CreateUserParams = {
-        username: values.username as string,
-        password: values.password as string,
-        nickname: values.nickname as string | undefined,
-        avatar: values.avatar as string | undefined,
-        status: (values.status as number) ?? 1,
-        isSuper: (values.isSuper as boolean) ?? false,
-        roleIds: values.roleIds as string[] | undefined,
-      };
-      await createUserApi(params);
-      message.success(t("createSuccess"));
-      setModalOpen(false);
-      formRef.current?.onReset();
-      // 刷新表格
-      if (tableRef.current) {
-        await tableRef.current.refresh();
-      }
-    } catch (error) {
-      console.error(t("users.message.createError"), error);
-    }
-  };
-
-  // 处理更新用户
-  const handleUpdate = async (values: Record<string, unknown>) => {
-    if (!editingUser) return;
-    try {
-      const params: UpdateUserParams = {
-        username: values.username as string,
-        nickname: values.nickname as string | undefined,
-        avatar: values.avatar as string | undefined,
-        status: values.status as number | undefined,
-        isSuper: values.isSuper as boolean | undefined,
-        roleIds: values.roleIds as string[] | undefined,
-      };
-      // 如果提供了新密码，才添加到参数中
-      if (values.password) {
-        params.password = values.password as string;
-      }
-      await updateUserApi(editingUser.id, params);
-      message.success(t("updateSuccess"));
-      setModalOpen(false);
-      setEditingUser(null);
-      formRef.current?.onReset();
-      // 刷新表格
-      if (tableRef.current) {
-        await tableRef.current.refresh();
-      }
-    } catch (error) {
-      console.error(t("users.message.updateError"), error);
-    }
-  };
-
-  // 打开新增弹窗
-  const handleOpenModal = () => {
-    setEditingUser(null);
-    setModalOpen(true);
-  };
+  // 渲染表单内容
+  const renderForm = useCallback(
+    (isEdit = false) => (
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="username"
+            label={t("users.username")}
+            labelCol={{ span: 6 }}
+            rules={[
+              { required: true, message: t("users.rules.usernameRequired") },
+              {
+                min: 3,
+                max: 50,
+                message: t("users.rules.usernameLength"),
+              },
+            ]}
+          >
+            <Input placeholder={t("users.placeholder.usernameWithRule")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="password"
+            label={isEdit ? t("newPassword") : t("password")}
+            labelCol={{ span: 6 }}
+            rules={isEdit ? undefined : [{ required: true, message: t("users.rules.passwordRequired") }]}
+          >
+            <Input.Password placeholder={isEdit ? t("users.placeholder.passwordEdit") : t("users.placeholder.password")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="nickname"
+            label={t("users.nickname")}
+            labelCol={{ span: 6 }}
+          >
+            <Input placeholder={t("users.placeholder.nickname")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="avatar"
+            label={t("users.avatarUrl")}
+            labelCol={{ span: 6 }}
+          >
+            <Input placeholder={t("users.placeholder.avatarUrl")} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="status"
+            label={t("users.status")}
+            labelCol={{ span: 6 }}
+            {...(!isEdit && { initialValue: 1 })}
+          >
+            <Select
+              placeholder={t("users.placeholder.status")}
+              options={[
+                { label: t("enabled"), value: 1 },
+                { label: t("disabled"), value: 0 },
+              ]}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="isSuper"
+            label={t("users.isSuper")}
+            labelCol={{ span: 6 }}
+            valuePropName="checked"
+            {...(!isEdit && { initialValue: false })}
+          >
+            <Switch />
+          </Form.Item>
+        </Col>
+        <Col span={24}>
+          <Form.Item
+            name="roleIds"
+            label={t("users.roles")}
+            labelCol={{ span: 3 }}
+          >
+            <Select
+              mode="multiple"
+              placeholder={t("users.placeholder.roles")}
+              allowClear
+              options={roles.map((role) => ({
+                label: role.name,
+                value: role.id,
+              }))}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
+    ),
+    [t, roles]
+  );
 
   // 使用 useCallback 包装 request 函数，避免每次渲染都重新创建
   const handleRequest = useCallback(
@@ -408,13 +366,36 @@ const Users = () => {
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">{t("users.title")}</h2>
         <Access code="create">
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleOpenModal}
+          <DMForm<CreateUserParams>
+            name="userForm_create"
+            type="Modal"
+            title={t("users.create")}
+            width={960}
+            trigger={
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+              >
+                {t("users.create")}
+              </Button>
+            }
+            onSubmit={async (values, { success }) => {
+              try {
+                await createUserApi(values);
+                success();
+                // 刷新表格
+                if (tableRef.current) {
+                  await tableRef.current.refresh();
+                }
+
+              } catch (error) {
+                console.error(t("users.message.createError"), error);
+                throw error;
+              }
+            }}
           >
-            {t("users.create")}
-          </Button>
+            {renderForm(false)}
+          </DMForm>
         </Access>
       </div>
       <ProTable<UserItem>
@@ -429,43 +410,6 @@ const Users = () => {
         }}
       />
 
-      {/* 新增/编辑用户弹窗 */}
-      <Modal
-        title={editingUser ? t("users.edit") : t("users.create")}
-        open={modalOpen}
-        onCancel={() => {
-          setModalOpen(false);
-          setEditingUser(null);
-          formRef.current?.onReset();
-        }}
-        afterOpenChange={(open) => {
-          if (open && formRef.current) {
-            if (editingUser) {
-              // 编辑模式：填充当前用户数据
-              formRef.current.setFieldsValue({
-                username: editingUser.username,
-                nickname: editingUser.nickname || "",
-                avatar: editingUser.avatar || "",
-                status: editingUser.status,
-                isSuper: editingUser.isSuper,
-                roleIds: editingUser.roles?.map((r) => r.id) || [],
-              });
-            } else {
-              // 新增模式：重置表单
-              formRef.current.resetFields();
-            }
-          }
-        }}
-        footer={null}
-        width={960}
-        destroyOnHidden
-      >
-        <ProForm
-          ref={formRef}
-          items={formItems}
-          onSubmit={editingUser ? handleUpdate : handleCreate}
-        />
-      </Modal>
     </>
   );
 };
