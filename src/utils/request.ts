@@ -3,7 +3,7 @@
  */
 
 import axios from "axios";
-import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
 
 import { clearAuth, getAccessToken, setAccessToken } from "../../store/userStore";
 import { message } from "antd";
@@ -28,6 +28,7 @@ export interface ApiResponse<T> {
  */
 export interface RequestConfig extends AxiosRequestConfig {
   skipAuth?: boolean; // 是否跳过认证（用于登录等接口）
+  _isRefresh?: boolean; // 标记是否为刷新 token 的请求
 }
 
 const client: AxiosInstance = axios.create({
@@ -62,28 +63,23 @@ const refreshAccessToken = async (): Promise<string> => {
   // 浏览器会自动在请求头里带上 Cookie: refreshToken=xxx
   // 也不需要在 body 里传任何东西（除非后端有特殊要求）
 
-  try {
-    // 注意：这里不需要传 data，后端从 Cookie 读取
-    const res = await axios.post<ApiResponse<{ accessToken: string }>>(
-      `${BASE_URL}/auth/refresh`,
-      {}, // 空对象，或者根据后端要求完全不传 body
-      { withCredentials: true } // 确保这次请求也带上凭证
-    );
+  // 注意：这里不需要传 data，后端从 Cookie 读取
+  const res = await axios.post<ApiResponse<{ accessToken: string }>>(
+    `${BASE_URL}/auth/refresh`,
+    {}, // 空对象，或者根据后端要求完全不传 body
+    { withCredentials: true } // 确保这次请求也带上凭证
+  );
 
-    const { data } = res.data;
-    const newAccessToken = data.accessToken;
+  const { data } = res.data;
+  const newAccessToken = data.accessToken;
 
-    // 关键点 3: 手动更新 Access Token（存到内存或 localStorage）
-    setAccessToken(newAccessToken);
+  // 关键点 3: 手动更新 Access Token（存到内存或 localStorage）
+  setAccessToken(newAccessToken);
 
-    // 关键点 4: 不需要更新 RefreshToken！
-    // 后端会通过 Set-Cookie 响应头自动更新 HttpOnly 的 RefreshToken
+  // 关键点 4: 不需要更新 RefreshToken！
+  // 后端会通过 Set-Cookie 响应头自动更新 HttpOnly 的 RefreshToken
 
-    return newAccessToken;
-  } catch (error) {
-    // 刷新接口报错（比如 RefreshToken 也过期了）
-    throw error;
-  }
+  return newAccessToken;
 };
 
 /* ==================== 请求拦截器 ==================== */
@@ -106,14 +102,15 @@ client.interceptors.request.use(
 
 client.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  async (error: AxiosError) => {
     const { config, response } = error;
 
     if (!config || !response) {
       return Promise.reject(error);
     }
 
-    const isRefreshApi = (config as any)._isRefresh;
+    const requestConfig = config as InternalAxiosRequestConfig & RequestConfig;
+    const isRefreshApi = requestConfig._isRefresh ?? false;
     const is401 = response.status === 401;
 
     // 非 401 或是刷新接口自身的 401，直接处理业务错误
@@ -129,9 +126,9 @@ client.interceptors.response.use(
         })
           .then((token) => {
             if (typeof token === "string") {
-              (config as any).headers.Authorization = `Bearer ${token}`;
+              requestConfig.headers.Authorization = `Bearer ${token}`;
             }
-            return client.request(config);
+            return client.request(requestConfig);
           })
           .catch((err) => {
             return Promise.reject(err);
@@ -144,8 +141,8 @@ client.interceptors.response.use(
         const newAccessToken = await refreshAccessToken();
         processQueue(null, newAccessToken);
 
-        (config as any).headers.Authorization = `Bearer ${newAccessToken}`;
-        return await client.request(config);
+        requestConfig.headers.Authorization = `Bearer ${newAccessToken}`;
+        return await client.request(requestConfig);
       } catch (refreshError) {
         // 刷新失败：清空本地 Access Token
         processQueue(refreshError as Error, null);
@@ -170,7 +167,7 @@ client.interceptors.response.use(
 
 /* ==================== 业务错误处理 ==================== */
 
-function handleBusinessError(error: any) {
+function handleBusinessError(error: AxiosError) {
   const { response, code } = error;
   const isNetworkError = code === "ECONNABORTED" || !response;
 
@@ -179,8 +176,12 @@ function handleBusinessError(error: any) {
     return;
   }
 
+  if (!response) {
+    return;
+  }
+
   const { status, data } = response;
-  const result: ApiResponse<unknown> = data || {};
+  const result: ApiResponse<unknown> = (data as ApiResponse<unknown>) || {};
 
   if (status === 401) {
     clearAuth();
@@ -206,19 +207,15 @@ export const request = async <T>(
   url: string,
   config: RequestConfig = {}
 ): Promise<T> => {
-  try {
-    const response = await client(url, config);
-    const result: ApiResponse<T> = response.data;
+  const response: AxiosResponse<ApiResponse<T>> = await client(url, config);
+  const result: ApiResponse<T> = response.data;
 
-    if (result.code !== 200 && result.code !== 201) {
-      message.error(result.message || i18n.t("error.operationFailed"));
-      throw new Error(result.message || i18n.t("error.operationFailed"));
-    }
-
-    return result.data;
-  } catch (error: any) {
-    throw error;
+  if (result.code !== 200 && result.code !== 201) {
+    message.error(result.message || i18n.t("error.operationFailed"));
+    throw new Error(result.message || i18n.t("error.operationFailed"));
   }
+
+  return result.data;
 };
 
 export const get = <T>(url: string, config?: RequestConfig): Promise<T> => {
