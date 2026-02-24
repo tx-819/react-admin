@@ -109,7 +109,7 @@ const Menu = () => {
         <Col span={12}>
           <Form.Item
             name="sort"
-            label={t("menu.sort")}
+            label={t("menu.orderNo")}
             labelCol={{ span: 6 }}
             {...(!isEdit && { initialValue: 0 })}
           >
@@ -242,14 +242,14 @@ const Menu = () => {
       },
       {
         title: t("menu.icon"),
-        dataIndex: ["meta", "icon"],
+        dataIndex: "icon",
         key: "icon",
         width: 100,
         render: (icon: string) => icon || "-",
       },
       {
         title: t("menu.keepAlive"),
-        dataIndex: ["meta", "keepAlive"],
+        dataIndex: "keepAlive",
         key: "keepAlive",
         width: 80,
         render: (keepAlive: boolean) => (
@@ -260,7 +260,7 @@ const Menu = () => {
       },
       {
         title: t("permissions"),
-        dataIndex: ["meta", "authList"],
+        dataIndex: "authList",
         key: "authList",
         width: 200,
         render: (authList: Array<{ title: string; authMark: string }>) => {
@@ -284,7 +284,7 @@ const Menu = () => {
         fixed: "right",
         render: (_: unknown, record: MenuItem) => (
           <Space>
-            {!record.component && (
+            {record.authList?.length && (
               <Access code="create">
                 <DMForm<CreateMenuParams>
                   name={`menuForm_create_child_${record.id}`}
@@ -305,7 +305,7 @@ const Menu = () => {
                   }}
                   onSubmit={async (values, { success }) => {
                     try {
-                      const meta = values.meta as Record<string, unknown> | undefined;
+                      const authList = values.authList;
                       const params: CreateMenuParams = {
                         path: values.path as string,
                         name: values.name as string,
@@ -313,17 +313,10 @@ const Menu = () => {
                         parentId: record.id,
                         icon: values.icon as string | undefined,
                         keepAlive: values.keepAlive as boolean | undefined,
-                        sort: (values.sort as number) ?? 0,
+                        orderNo: (values.orderNo as number) ?? 0,
                         status: (values.status as number) ?? 1,
                         remark: values.remark as string | undefined,
-                        meta: meta?.authList
-                          ? {
-                            authList: meta.authList as Array<{
-                              title: string;
-                              authMark: string;
-                            }>,
-                          }
-                          : undefined,
+                        authList: authList
                       };
                       await createMenuApi(params);
                       success();
@@ -360,14 +353,13 @@ const Menu = () => {
                   name: record.name,
                   path: record.path,
                   component: record.component || "",
-                  icon: record.meta?.icon || "",
+                  icon: record?.icon || "",
                   keepAlive: record.keepAlive || false,
                   sort: record.sort || 0,
                   status: record.status || 1,
                   remark: record.remark || "",
-                  meta: {
-                    authList: record.meta?.authList || [],
-                  },
+                  authList: record.authList || [],
+
                 }}
                 onSubmit={async (values, { success }) => {
                   try {

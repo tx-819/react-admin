@@ -1,4 +1,4 @@
-import type { RouteMeta } from "@/api/menu";
+import type { AuthType } from "@/api/menu";
 import { useLoaderData } from "react-router-dom";
 
 interface AccessProps {
@@ -8,9 +8,10 @@ interface AccessProps {
 
 const Access = (props: AccessProps) => {
   const { children, code } = props;
-  const loaderData = useLoaderData<{ meta: RouteMeta }>();
-  const { authList } = loaderData?.meta ?? {};
-  const hasAccess = authList?.some((item) => item.authMark === code);
+  const loaderData = useLoaderData<{ authList: AuthType[] }>();
+  debugger
+  const authList = loaderData?.authList ?? [];
+  const hasAccess = authList?.map((item) => item.authMark === code);
   if (!hasAccess) {
     return null;
   }

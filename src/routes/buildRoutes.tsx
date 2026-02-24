@@ -13,7 +13,7 @@ const transformRoutes = (menuList: AppRouteRecord[]): RouteObject[] => {
       path: menu.path,
       loader: () => {
         return {
-          meta: menu.meta,
+          authList: menu.authList,
         };
       },
     };

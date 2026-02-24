@@ -5,14 +5,10 @@ export type PermissionType = "menu" | "route" | "action";
 
 export interface AppRouteRecord {
   id: string;
-  meta?: RouteMeta;
   name: string;
   children?: AppRouteRecord[];
   component?: string;
   path: string;
-}
-
-export interface RouteMeta extends Record<string | number | symbol, unknown> {
   /** 路由图标 */
   icon?: string;
   /** 是否在菜单中隐藏 */
@@ -22,10 +18,13 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
   /** 是否缓存 */
   keepAlive?: boolean;
   /** 操作权限 */
-  authList?: Array<{
-    title: string;
-    authMark: string;
-  }>;
+  authList?: AuthType[];
+}
+
+
+export interface AuthType {
+  title: string;
+  authMark: string;
 }
 
 /**
@@ -42,14 +41,13 @@ export interface MenuItem {
   sort?: number;
   status?: number;
   remark?: string;
-  meta?: {
-    icon?: string;
-    keepAlive?: boolean;
-    authList?: Array<{
-      title: string;
-      authMark: string;
-    }>;
-  };
+  title?: string;
+  authMark?: string;
+  authList?: Array<{
+    title: string;
+    authMark: string;
+  }>;
+
   children?: MenuItem[];
   key?: string; // 用于表格的 key
 }
@@ -81,15 +79,15 @@ export interface CreateMenuParams {
   parentId?: string | null;
   icon?: string;
   keepAlive?: boolean;
-  sort?: number;
+  orderNo?: number;
   status?: number;
   remark?: string;
-  meta?: {
-    authList?: Array<{
-      title: string;
-      authMark: string;
-    }>;
-  };
+
+  authList?: Array<{
+    title: string;
+    authMark: string;
+  }>;
+
 }
 
 /**
@@ -143,12 +141,12 @@ export interface UpdateMenuParams {
   sort?: number;
   status?: number;
   remark?: string;
-  meta?: {
-    authList?: Array<{
-      title: string;
-      authMark: string;
-    }>;
-  };
+
+  authList?: Array<{
+    title: string;
+    authMark: string;
+  }>;
+
 }
 
 /**
@@ -207,92 +205,4 @@ export const deleteMenuApi = async (
   id: string
 ): Promise<DeleteMenuResponse> => {
   return del<DeleteMenuResponse>(`/menus/${id}`);
-};
-
-// 获取权限树（从后端API）
-export const getMenuList = async (): Promise<AppRouteRecord[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: "1",
-          path: "dashboard",
-          meta: {
-            icon: "CircleGauge",
-          },
-          name: "仪表盘",
-          children: [
-            {
-              id: "2",
-              path: "console",
-              component: "/dashboard/console",
-              name: "控制台",
-            },
-          ],
-        },
-        {
-          id: "3",
-          path: "system",
-          name: "系统管理",
-          meta: {
-            icon: "UserRound",
-          },
-          children: [
-            {
-              id: "4",
-              path: "users",
-              component: "/system/users",
-              name: "用户管理",
-              meta: {
-                icon: "UserRound",
-                authList: [
-                  {
-                    title: "新增用户",
-                    authMark: "system:users:create",
-                  },
-                  {
-                    title: "编辑用户",
-                    authMark: "system:users:update",
-                  },
-                  {
-                    title: "删除用户",
-                    authMark: "system:users:delete",
-                  },
-                ],
-              },
-            },
-            {
-              id: "5",
-              path: "roles",
-              name: "角色管理",
-              component: "/system/roles",
-              meta: {
-                icon: "UserRoundCog",
-                keepAlive: true,
-                authList: [
-                  {
-                    title: "新增角色",
-                    authMark: "system:roles:create",
-                  },
-                  {
-                    title: "编辑角色",
-                    authMark: "system:roles:update",
-                  },
-                ],
-              },
-            },
-            {
-              id: "6",
-              path: "menu",
-              name: "菜单管理",
-              component: "/system/menu",
-              meta: {
-                icon: "Menu",
-              },
-            },
-          ],
-        },
-      ]);
-    }, 100);
-  });
 };
