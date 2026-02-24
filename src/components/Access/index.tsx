@@ -9,7 +9,6 @@ interface AccessProps {
 const Access = (props: AccessProps) => {
   const { children, code } = props;
   const loaderData = useLoaderData<{ authList: AuthType[] }>();
-  debugger
   const authList = loaderData?.authList ?? [];
   const hasAccess = authList?.map((item) => item.authMark === code);
   if (!hasAccess) {

@@ -65,7 +65,7 @@ const refreshAccessToken = async (): Promise<string> => {
 
   // 注意：这里不需要传 data，后端从 Cookie 读取
   const res = await axios.post<ApiResponse<{ accessToken: string }>>(
-    `${BASE_URL}/auth/refresh`,
+    `${BASE_URL}/auth/refreshToken`,
     {}, // 空对象，或者根据后端要求完全不传 body
     { withCredentials: true } // 确保这次请求也带上凭证
   );
