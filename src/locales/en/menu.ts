@@ -12,6 +12,7 @@ export default {
   keepAlive: "Cache",
   isKeepAlive: "Keep Alive",
   sort: "Sort",
+  orderNo: "Sort",
   authList: "Operation Permissions",
   authTitle: "Permission Title",
   authMark: "Permission Mark",
@@ -26,6 +27,8 @@ export default {
     authMark: "Permission Mark",
   },
   rules: {
+    nameRequired: "Please enter menu name",
+    pathRequired: "Please enter menu path",
     authTitleRequired: "Please enter permission title",
     authMarkRequired: "Please enter permission mark",
   },

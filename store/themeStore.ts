@@ -24,11 +24,33 @@ export const getSystemTheme = (): ThemeMode => {
  * 设置 Tailwind 主题
  * @param theme 主题模式
  */
-const setTailwindTheme = (theme: ThemeMode) => {
+export const setTailwindTheme = (theme: ThemeMode) => {
+    if (typeof document === "undefined") return;
     if (theme === "dark") {
         document.documentElement.classList.add("dark");
     } else {
         document.documentElement.classList.remove("dark");
+    }
+};
+
+const STORAGE_KEY = "app_theme";
+
+/**
+ * 从 localStorage 读取持久化的主题并应用到 html，避免刷新后 dark 类丢失/闪烁。
+ * 必须在 React 挂载前（如 main.tsx 最顶部）同步调用。
+ */
+export const applyThemeFromStorage = () => {
+    if (typeof window === "undefined") return;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as { state?: { theme?: ThemeMode; followSystem?: boolean } };
+        const state = parsed?.state;
+        if (!state) return;
+        const theme: ThemeMode = state.followSystem ? getSystemTheme() : (state.theme ?? "light");
+        setTailwindTheme(theme);
+    } catch {
+        // 忽略解析错误，使用默认亮色
     }
 };
 
@@ -61,25 +83,7 @@ export const useThemeStore = create<ThemeStore>()(
             };
         },
         {
-            name: "app_theme",
-            // 从 localStorage 恢复数据后执行初始化
-            onRehydrateStorage: () => {
-                return (state: ThemeStore | undefined) => {
-                    console.log("onRehydrateStorage", state);
-                    if (!state) return;
-                    // 如果跟随系统，根据当前时间更新主题
-                    if (state.followSystem) {
-                        const systemTheme = getSystemTheme();
-                        // 直接使用 set，但需要通过 store 实例
-                        useThemeStore.setState({ theme: systemTheme, followSystem: true });
-                        setTailwindTheme(systemTheme);
-                    } else {
-                        // 不跟随系统时，直接恢复保存的主题，不调用 setTheme 避免重置 followSystem
-                        useThemeStore.setState({ theme: state.theme, followSystem: false });
-                        setTailwindTheme(state.theme);
-                    }
-                };
-            },
+            name: STORAGE_KEY,
         }
     )
 );

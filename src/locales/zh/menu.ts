@@ -12,6 +12,7 @@ export default {
   keepAlive: "缓存",
   isKeepAlive: "是否缓存",
   sort: "排序",
+  orderNo: "排序",
   authList: "操作权限",
   authTitle: "权限标题",
   authMark: "权限标识",
@@ -26,6 +27,8 @@ export default {
     authMark: "权限标识",
   },
   rules: {
+    nameRequired: "请输入菜单名称",
+    pathRequired: "请输入菜单路径",
     authTitleRequired: "请输入权限标题",
     authMarkRequired: "请输入权限标识",
   },

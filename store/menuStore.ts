@@ -6,10 +6,10 @@ import { getIcon } from "../src/utils/renderIcon";
 // 菜单转换函数
 const transformMenuItems = (routes: AppRouteRecord[]): ItemType[] => {
   return routes
-    .filter((r) => !r.meta?.isHide)
+    .filter((r) => !r.isHide)
     .map((r) => ({
       key: r.path,
-      icon: r.meta?.icon ? getIcon(r.meta?.icon, { size: 16 }) : undefined,
+      icon: r.icon ? getIcon(r.icon, { size: 16 }) : undefined,
       label: r.name,
       children: r.children ? transformMenuItems(r.children) : undefined,
     }));

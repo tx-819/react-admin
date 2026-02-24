@@ -5,6 +5,7 @@ import SideMenu from "./_components/SideMenu";
 import RouteTransition from "./_components/RouteTransition";
 import Header from "./_components/Header";
 import { useThemeStore } from "../../../store/themeStore";
+import { theme as antdTheme } from "antd";
 
 const { Sider, Content } = Layout;
 
@@ -12,7 +13,9 @@ const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const outlet = useOutlet();
   const { theme } = useThemeStore();
-
+  const {
+    token: { colorBgContainer },
+  } = antdTheme.useToken();
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider
@@ -23,6 +26,7 @@ const BasicLayout = () => {
           insetInlineStart: 0,
           top: 0,
           scrollbarWidth: "thin",
+          background: colorBgContainer,
         }}
         trigger={null}
         theme={theme}
