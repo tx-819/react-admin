@@ -149,7 +149,7 @@ const Menu = () => {
             label={t("menu.authList")}
             labelCol={{ span: 3 }}
           >
-            <Form.List name={["meta", "authList"]}>
+            <Form.List name={["authList"]}>
               {(fields, { add, remove }) => (
                 <>
                   {fields.map(({ key, name, ...restField }) => (
@@ -361,18 +361,16 @@ const Menu = () => {
                   authList: record.authList || [],
 
                 }}
-                onSubmit={async (values, { success }) => {
-                  try {
-                    await updateMenuApi(record.id, values);
+                onSubmit={(values, { success, error }) => {
+                  updateMenuApi(record.id, values).then(() => {
                     success();
                     // 刷新表格
                     if (tableRef.current) {
-                      await tableRef.current.refresh();
+                      tableRef.current.refresh();
                     }
-                  } catch (error) {
-                    console.error(t("menu.message.updateError"), error);
-                    throw error;
-                  }
+                  }).catch(() => {
+                    error(t("menu.message.updateError"));
+                  });
                 }}
               >
                 {renderFormItems(true)}
