@@ -155,7 +155,7 @@ export default function DMForm<T = Record<string, unknown>>(props: DMFormProps<T
     return null;
   };
 
-  const handleClose = (e?: React.MouseEvent | React.KeyboardEvent) => {
+  const handleClose: DrawerProps['onClose'] = (e) => {
     if (
       unsavedWarning &&
       form.isFieldsTouched() &&
