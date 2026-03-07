@@ -16,6 +16,22 @@ const hasChildren = (
   );
 };
 
+// children 为 null 或空数组时不渲染为 submenu
+const normalizeMenuItems = (items: ItemType[]): ItemType[] => {
+  return items.map((item) => {
+    if (!item || typeof item !== "object") return item;
+    const next = { ...item };
+    if ("children" in next) {
+      if (next.children == null || (Array.isArray(next.children) && next.children.length === 0)) {
+        delete next.children;
+      } else if (Array.isArray(next.children)) {
+        next.children = normalizeMenuItems(next.children);
+      }
+    }
+    return next;
+  });
+};
+
 const getFullPath = (
   menuList: ItemType[],
   key: string,
@@ -116,11 +132,16 @@ const SideMenu = () => {
     setOpenKeys(keys);
   };
 
+  const normalizedItems = useMemo(
+    () => normalizeMenuItems(menuList),
+    [menuList]
+  );
+
   return (
     <Menu
       theme="light"
       mode="inline"
-      items={menuList}
+      items={normalizedItems}
       selectedKeys={menuKeys.selectedKey ? [menuKeys.selectedKey] : []}
       openKeys={openKeys}
       onOpenChange={handleOpenChange}
