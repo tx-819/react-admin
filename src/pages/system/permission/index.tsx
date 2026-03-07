@@ -319,24 +319,25 @@ const Permission = () => {
                 {t("permission.create")}
               </Button>
             }
-            onSubmit={async (values, { success }) => {
-              try {
-                await createPermissionApi(values);
+            initialValues={{
+              permissionType: "menu"
+            }}
+            onSubmit={(values, { success, error }) => {
+              createPermissionApi(values).then(() => {
                 success();
                 // 刷新表格
                 if (tableRef.current) {
-                  await tableRef.current.refresh();
+                  tableRef.current.refresh();
                 }
-              } catch (error) {
-                console.error(t("permission.message.createError"), error);
-                throw error;
-              }
+              }).catch(() => {
+                error(t("permission.message.createError"))
+              });
             }}
           >
             {renderFormItems(false)}
           </DMForm>
         </Access>
-      </div>
+      </div >
       <ProTable<Permission>
         ref={tableRef}
         columns={columns}
