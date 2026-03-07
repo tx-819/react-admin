@@ -1,5 +1,5 @@
 import { Form, message, Space, Button, Modal, Drawer, type ModalProps, type DrawerProps } from 'antd';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import usePubSubListener from '../../hooks/usePubSubListener';
 import ChildrenWrapper from './_components/ChildrenWrapper';
@@ -69,10 +69,18 @@ export default function DMForm<T = Record<string, unknown>>(props: DMFormProps<T
     onClose,
     dmConfig = {},
     unsavedWarning = true,
+    requestInitialValues,
+    requestDeps,
     ...rest
   } = useNormalizedProps<T>(props as Omit<DMFormProps<T>, 'onReset'> & { onReset?: () => void });
 
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      form.resetFields();
+    }
+  }, [open, form]);
 
   const newSubmit = (submitParams?: Record<string, unknown>) => {
     setLoading(true);
@@ -140,7 +148,6 @@ export default function DMForm<T = Record<string, unknown>>(props: DMFormProps<T
             reject: () => reject()
           });
         }).then(() => {
-          form.resetFields();
           setOpen(true);
         });
       };
@@ -188,8 +195,8 @@ export default function DMForm<T = Record<string, unknown>>(props: DMFormProps<T
         <ChildrenWrapper
           form={form}
           initialValues={props.initialValues}
-          requestInitialValues={props.requestInitialValues}
-          requestDeps={props.requestDeps}
+          requestInitialValues={requestInitialValues}
+          requestDeps={requestDeps}
         >
           {renderChildren ? (
             renderChildren(contextConfig)
@@ -245,4 +252,4 @@ export default function DMForm<T = Record<string, unknown>>(props: DMFormProps<T
       )}
     </>
   );
-};
+}

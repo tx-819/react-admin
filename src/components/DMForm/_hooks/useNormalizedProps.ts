@@ -1,8 +1,8 @@
-import { Form, message } from 'antd';
-import type { FormInstance } from 'antd/es/form';
-import { useTranslation } from 'react-i18next';
-import { useRef, useMemo, useCallback } from 'react';
-import type { DMFormProps } from '../types';
+import { Form, message } from "antd";
+import type { FormInstance } from "antd/es/form";
+import { useTranslation } from "react-i18next";
+import { useRef, useMemo, useCallback } from "react";
+import type { DMFormProps } from "../types";
 
 interface ValidateErrorEntity {
   errorFields?: Array<{ name: string[] }>;
@@ -16,24 +16,33 @@ interface ExtendedFormInstance extends FormInstance {
   resetInitialValues?: () => void;
 }
 
-interface UseNormalizedPropsInput<T = Record<string, unknown>> extends Omit<DMFormProps<T>, 'submitAsync' | 'reset' | 'onReset'> {
+interface UseNormalizedPropsInput<T = Record<string, unknown>> extends Omit<
+  DMFormProps<T>,
+  "submitAsync" | "reset" | "onReset"
+> {
   onSubmit?: (
     values: T,
     helpers: {
-      success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void;
+      success: (
+        content?: string | null,
+        options?: { initialValues?: Record<string, unknown> },
+      ) => void;
       error: (content?: string | null) => void;
       form: FormInstance;
     },
-    submitParams?: Record<string, unknown>
+    submitParams?: Record<string, unknown>,
   ) => void;
   onOk?: (
     values: T,
     helpers: {
-      success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void;
+      success: (
+        content?: string | null,
+        options?: { initialValues?: Record<string, unknown> },
+      ) => void;
       error: (content?: string | null) => void;
       form: FormInstance;
     },
-    submitParams?: Record<string, unknown>
+    submitParams?: Record<string, unknown>,
   ) => void;
   onFailed?: (errorInfo: {
     errorFields?: Array<{ name: string[] }>;
@@ -42,12 +51,14 @@ interface UseNormalizedPropsInput<T = Record<string, unknown>> extends Omit<DMFo
   }) => void;
   onReset?: () => void;
   scrollToFieldOptions?: {
-    block?: 'start' | 'center' | 'end';
-    behavior?: 'auto' | 'smooth';
+    block?: "start" | "center" | "end";
+    behavior?: "auto" | "smooth";
   };
 }
 
-export default function useNormalizedProps<T = Record<string, unknown>>(props: UseNormalizedPropsInput<T>) {
+export default function useNormalizedProps<T = Record<string, unknown>>(
+  props: UseNormalizedPropsInput<T>,
+) {
   const { t } = useTranslation();
   const {
     form: outerForm,
@@ -63,21 +74,26 @@ export default function useNormalizedProps<T = Record<string, unknown>>(props: U
   const form = outerForm || innerForm;
 
   // 使用 ref 存储扩展属性，避免直接修改 form 对象
-  const currentInitialValuesRef = useRef<Record<string, unknown> | undefined>(undefined);
+  const currentInitialValuesRef = useRef<Record<string, unknown> | undefined>(
+    undefined,
+  );
 
-  const setInitialValues = useCallback((newInitialValues: Record<string, unknown>) => {
-    if (newInitialValues) {
-      const fields = Object.entries(newInitialValues).map(([k, v]) => ({
-        name: k,
-        value: v,
-        touched: false,
-      }));
+  const setInitialValues = useCallback(
+    (newInitialValues: Record<string, unknown>) => {
+      if (newInitialValues) {
+        const fields = Object.entries(newInitialValues).map(([k, v]) => ({
+          name: k,
+          value: v,
+          touched: false,
+        }));
 
-      form.setFields(fields);
+        form.setFields(fields);
 
-      currentInitialValuesRef.current = newInitialValues;
-    }
-  }, [form]);
+        currentInitialValuesRef.current = newInitialValues;
+      }
+    },
+    [form],
+  );
 
   const resetInitialValues = useCallback(() => {
     const currentInitialValues = currentInitialValuesRef.current || {};
@@ -86,7 +102,10 @@ export default function useNormalizedProps<T = Record<string, unknown>>(props: U
     if (keys.length) {
       const fields = keys.map((item) => ({
         name: item,
-        value: currentInitialValues[item] != null ? currentInitialValues[item] : undefined,
+        value:
+          currentInitialValues[item] != null
+            ? currentInitialValues[item]
+            : undefined,
         touched: false,
       }));
 
@@ -121,19 +140,32 @@ export default function useNormalizedProps<T = Record<string, unknown>>(props: U
             const push =
               onSubmit ||
               onOk ||
-              ((newValue: T, { success }: { success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => void }) => {
-                console.log('Submit:', newValue);
+              ((
+                newValue: T,
+                {
+                  success,
+                }: {
+                  success: (
+                    content?: string | null,
+                    options?: { initialValues?: Record<string, unknown> },
+                  ) => void;
+                },
+              ) => {
+                console.log("Submit:", newValue);
                 success();
               });
 
             push(
               newRecord as T,
               {
-                success: (content?: string | null, options?: { initialValues?: Record<string, unknown> }) => {
+                success: (
+                  content?: string | null,
+                  options?: { initialValues?: Record<string, unknown> },
+                ) => {
                   if (content !== null) {
                     message.success({
-                      key: 'KEY_FORM',
-                      content: content || t('operationSuccess'),
+                      key: "KEY_FORM",
+                      content: content || t("operationSuccess"),
                       duration: 3,
                     });
                   }
@@ -145,8 +177,8 @@ export default function useNormalizedProps<T = Record<string, unknown>>(props: U
                 error: (content?: string | null) => {
                   if (content !== null) {
                     message.error({
-                      key: 'KEY_FORM',
-                      content: content || t('error.operationFailed'),
+                      key: "KEY_FORM",
+                      content: content || t("error.operationFailed"),
                       duration: 5,
                     });
                   }
@@ -169,7 +201,7 @@ export default function useNormalizedProps<T = Record<string, unknown>>(props: U
             }
             if (errorInfo.errorFields) {
               form.scrollToField(errorInfo.errorFields[0]?.name, {
-                block: 'center',
+                block: "center",
                 ...scrollToFieldOptions,
               });
             } else {
@@ -193,4 +225,4 @@ export default function useNormalizedProps<T = Record<string, unknown>>(props: U
     },
     ...rest,
   };
-};
+}

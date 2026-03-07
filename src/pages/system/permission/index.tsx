@@ -66,7 +66,7 @@ const Permission = () => {
             label={t("permission.permissionType")}
             labelCol={{ span: 3 }}
           >
-            <Radio.Group disabled={permissionType === "action"} defaultValue="menu">
+            <Radio.Group disabled={permissionType === "action"}>
               <Radio.Button value="menu">{t("permission.typeMenu")}</Radio.Button>
               <Radio.Button value="action">{t("permission.typeAction")}</Radio.Button>
             </Radio.Group>
@@ -82,7 +82,7 @@ const Permission = () => {
             <Input placeholder={t("permission.placeholder.name")} />
           </Form.Item>
         </Col>
-        <Form.Item shouldUpdate noStyle dependencies={["permissionType"]}>
+        <Form.Item shouldUpdate={(prev, current) => prev?.permissionType !== current?.permissionType} noStyle>
           {({ getFieldValue }) => {
             const permissionType = getFieldValue("permissionType");
             if (permissionType === "menu") {
