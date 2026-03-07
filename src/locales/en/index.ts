@@ -1,12 +1,12 @@
 import users from "./users";
 import roles from "./roles";
-import menu from "./menu";
+import permission from "./permission";
 import login from "./login";
 
 const modules = {
   users,
   roles,
-  menu,
+  permission,
   login,
 };
 

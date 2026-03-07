@@ -30,25 +30,8 @@ export interface UserItem {
 export interface GetUserListParams {
   page?: number;
   pageSize?: number;
-  keyword?: string;
-  status?: number;
-}
-
-/**
- * 获取用户列表响应
- */
-export interface GetUserListResponse {
-  code: number;
-  message: string;
-  data: {
-    list: UserItem[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
-  };
+  username?: string;
+  nickname?: string;
 }
 
 /**
@@ -57,27 +40,36 @@ export interface GetUserListResponse {
  * @returns 用户列表数据
  */
 export const getUserListApi = async (
-  params?: GetUserListParams
-): Promise<{ list: UserItem[]; pagination: GetUserListResponse["data"]["pagination"] }> => {
-  const queryParams = new URLSearchParams();
-  
-  if (params?.page) {
-    queryParams.append("page", String(params.page));
+  params?: GetUserListParams,
+): Promise<{
+  data: UserItem[];
+  total: number;
+  success: boolean;
+}> => {
+  try {
+    const response = await get<{
+      items: UserItem[];
+      metadata: {
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+      };
+    }>("/user", {
+      params,
+    });
+    return {
+      data: response.items,
+      total: response.metadata.total,
+      success: true,
+    };
+  } catch {
+    return {
+      data: [],
+      total: 0,
+      success: false,
+    };
   }
-  if (params?.pageSize) {
-    queryParams.append("pageSize", String(params.pageSize));
-  }
-  if (params?.keyword) {
-    queryParams.append("keyword", params.keyword);
-  }
-  if (params?.status !== undefined) {
-    queryParams.append("status", String(params.status));
-  }
-
-  const url = `/users${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-  const response = await get<GetUserListResponse["data"]>(url);
-  
-  return response;
 };
 
 /**
@@ -95,7 +87,7 @@ export interface GetUserDetailResponse {
  * @returns 用户详情数据
  */
 export const getUserDetailApi = async (id: string): Promise<UserItem> => {
-  return get<UserItem>(`/users/${id}`);
+  return get<UserItem>(`/user/${id}`);
 };
 
 /**
@@ -132,9 +124,9 @@ export interface CreateUserResponse {
  * @returns 创建的用户数据
  */
 export const createUserApi = async (
-  params: CreateUserParams
+  params: CreateUserParams,
 ): Promise<CreateUserResponse> => {
-  return post<CreateUserResponse>("/users", params);
+  return post<CreateUserResponse>("/user", params);
 };
 
 /**
@@ -173,9 +165,9 @@ export interface UpdateUserResponse {
  */
 export const updateUserApi = async (
   id: string,
-  params: UpdateUserParams
+  params: UpdateUserParams,
 ): Promise<UpdateUserResponse> => {
-  return put<UpdateUserResponse>(`/users/${id}`, params);
+  return put<UpdateUserResponse>(`/user/${id}`, params);
 };
 
 /**
@@ -191,9 +183,9 @@ export interface DeleteUserResponse {
  * @returns 删除结果
  */
 export const deleteUserApi = async (
-  id: string
+  id: string,
 ): Promise<DeleteUserResponse> => {
-  return del<DeleteUserResponse>(`/users/${id}`);
+  return del<DeleteUserResponse>(`/user/${id}`);
 };
 
 /**
@@ -212,23 +204,22 @@ export interface RoleOption {
 export const getAllRolesApi = async (): Promise<RoleOption[]> => {
   // 调用角色列表接口，获取所有角色（不分页）
   const response = await get<{
-    list: Array<{
+    items: Array<{
       id: string;
       name: string;
       code: string;
     }>;
-    pagination: {
+    metadata: {
       page: number;
       pageSize: number;
       total: number;
       totalPages: number;
     };
-  }>("/roles?page=1&pageSize=1000");
-  
-  return response.list.map((role) => ({
+  }>("/role?page=1&pageSize=1000");
+
+  return response.items.map((role) => ({
     id: role.id,
     name: role.name,
     code: role.code,
   }));
 };
-

@@ -3,9 +3,18 @@
  */
 
 import axios from "axios";
-import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
+import type {
+  AxiosInstance,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+  AxiosError,
+} from "axios";
 
-import { clearAuth, getAccessToken, setAccessToken } from "../../store/userStore";
+import {
+  clearAuth,
+  getAccessToken,
+  setAccessToken,
+} from "../../store/userStore";
 import { message } from "antd";
 import i18n from "./i18n";
 
@@ -45,7 +54,10 @@ const client: AxiosInstance = axios.create({
 /* ==================== 双 token + 并发刷新逻辑 ==================== */
 
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }> = [];
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -67,7 +79,7 @@ const refreshAccessToken = async (): Promise<string> => {
   const res = await axios.post<ApiResponse<{ accessToken: string }>>(
     `${BASE_URL}/auth/refreshToken`,
     {}, // 空对象，或者根据后端要求完全不传 body
-    { withCredentials: true } // 确保这次请求也带上凭证
+    { withCredentials: true }, // 确保这次请求也带上凭证
   );
 
   const { data } = res.data;
@@ -95,16 +107,15 @@ client.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 /* ==================== 响应拦截器 ==================== */
 
 client.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   async (error: AxiosError) => {
     const { config, response } = error;
-
     if (!config || !response) {
       return Promise.reject(error);
     }
@@ -162,7 +173,7 @@ client.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 /* ==================== 业务错误处理 ==================== */
@@ -198,24 +209,19 @@ function handleBusinessError(error: AxiosError) {
   }
 
   message.error(result.message || i18n.t("error.requestFailed"));
-  throw new Error(result.message || `${i18n.t("error.requestFailed")}: ${status}`);
+  throw new Error(
+    result.message || `${i18n.t("error.requestFailed")}: ${status}`,
+  );
 }
 
 /* ==================== 封装方法 ==================== */
 
 export const request = async <T>(
   url: string,
-  config: RequestConfig = {}
+  config: RequestConfig = {},
 ): Promise<T> => {
-  const response: AxiosResponse<ApiResponse<T>> = await client(url, config);
-  const result: ApiResponse<T> = response.data;
-
-  if (result.code !== 200 && result.code !== 201) {
-    message.error(result.message || i18n.t("error.operationFailed"));
-    throw new Error(result.message || i18n.t("error.operationFailed"));
-  }
-
-  return result.data;
+  const { data } = await client(url, config);
+  return data;
 };
 
 export const get = <T>(url: string, config?: RequestConfig): Promise<T> => {
@@ -225,7 +231,7 @@ export const get = <T>(url: string, config?: RequestConfig): Promise<T> => {
 export const post = <T>(
   url: string,
   data?: unknown,
-  config?: RequestConfig
+  config?: RequestConfig,
 ): Promise<T> => {
   return request(url, { ...config, method: "POST", data });
 };
@@ -233,7 +239,7 @@ export const post = <T>(
 export const put = <T>(
   url: string,
   data?: unknown,
-  config?: RequestConfig
+  config?: RequestConfig,
 ): Promise<T> => {
   return request(url, { ...config, method: "PUT", data });
 };

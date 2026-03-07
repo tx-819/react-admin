@@ -2,14 +2,13 @@ import { Button, Dropdown } from "antd";
 import { ColumnHeightOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { useTranslation } from "react-i18next";
-
-type TableSize = "small" | "middle" | "large";
+import type { TableProps } from "antd";
 
 interface SizeChangerProps {
   /** 当前表格大小 */
-  tableSize?: TableSize;
+  tableSize?: TableProps["size"];
   /** 表格大小变化回调 */
-  onSizeChange?: (size: TableSize) => void;
+  onSizeChange?: (size: TableProps["size"]) => void;
 }
 
 const SizeChanger = ({

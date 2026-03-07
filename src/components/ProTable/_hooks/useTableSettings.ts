@@ -1,7 +1,6 @@
 import type { ProColumnType } from "../types";
 import { useEffect, useMemo, useState } from "react";
-
-type TableSize = "small" | "middle" | "large";
+import type { TableProps } from "antd";
 
 interface UseTableSettingsOptions {
   /** 是否显示刷新按钮 */
@@ -16,13 +15,13 @@ interface UseTableSettingsProps<T = unknown> {
   /** 表格列配置 */
   columns?: ProColumnType<T>[];
   /** 初始表格大小 */
-  initialSize?: TableSize;
+  initialSize?: TableProps["size"];
   /** Settings 选项配置 */
   options?: UseTableSettingsOptions;
 }
 
 // 获取初始表格大小
-const getInitialSize = (size?: TableSize): TableSize => {
+const getInitialSize = (size?: TableProps["size"]): TableProps["size"] => {
   if (size) {
     return size;
   }
@@ -57,7 +56,7 @@ export function getColumnIdentifier<T>(col: ProColumnType<T>): string | null {
 }
 
 export function getInitialVisibleColumns<T>(
-  columns?: ProColumnType<T>[]
+  columns?: ProColumnType<T>[],
 ): string[] {
   if (!columns) return [];
   return columns
@@ -77,11 +76,11 @@ const useTableSettings = <T = unknown>({
   } = options;
 
   const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>(() =>
-    getInitialVisibleColumns(columns)
+    getInitialVisibleColumns(columns),
   );
 
-  const [tableSize, setTableSize] = useState<TableSize>(
-    getInitialSize(initialSize)
+  const [tableSize, setTableSize] = useState<TableProps["size"]>(
+    getInitialSize(initialSize),
   );
 
   // 当 columns 变化时，更新可见列
@@ -132,11 +131,10 @@ const useTableSettings = <T = unknown>({
       tableSize,
       visibleColumnKeys,
       columns,
-      onSizeChange: (size: TableSize) => setTableSize(size),
+      onSizeChange: (size: TableProps["size"]) => setTableSize(size),
       onColumnVisibilityChange: (keys: string[]) => setVisibleColumnKeys(keys),
     },
   };
 };
 
 export default useTableSettings;
-export type { TableSize };

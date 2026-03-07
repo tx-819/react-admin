@@ -20,6 +20,7 @@ import {
   type CreateUserParams,
   type UpdateUserParams,
   type RoleOption,
+  type GetUserListParams,
 } from "@/api/user";
 import Access from "@/components/Access";
 
@@ -246,17 +247,7 @@ const Users = () => {
               },
             ]}
           >
-            <Input placeholder={t("users.placeholder.usernameWithRule")} />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            name="password"
-            label={isEdit ? t("newPassword") : t("password")}
-            labelCol={{ span: 6 }}
-            rules={isEdit ? undefined : [{ required: true, message: t("users.rules.passwordRequired") }]}
-          >
-            <Input.Password placeholder={isEdit ? t("users.placeholder.passwordEdit") : t("users.placeholder.password")} />
+            <Input placeholder={t("users.placeholder.usernameWithRule")} autoComplete="off" />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -279,18 +270,30 @@ const Users = () => {
         </Col>
         <Col span={12}>
           <Form.Item
-            name="status"
-            label={t("users.status")}
+            name="roleIds"
+            label={t("users.roles")}
             labelCol={{ span: 6 }}
-            {...(!isEdit && { initialValue: 1 })}
           >
             <Select
-              placeholder={t("users.placeholder.status")}
-              options={[
-                { label: t("enabled"), value: 1 },
-                { label: t("disabled"), value: 0 },
-              ]}
+              mode="multiple"
+              placeholder={t("users.placeholder.roles")}
+              allowClear
+              options={roles.map((role) => ({
+                label: role.name,
+                value: role.id,
+              }))}
             />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="status"
+            label={t("status")}
+            labelCol={{ span: 6 }}
+            valuePropName="checked"
+            {...(!isEdit && { initialValue: true })}
+          >
+            <Switch />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -304,61 +307,9 @@ const Users = () => {
             <Switch />
           </Form.Item>
         </Col>
-        <Col span={24}>
-          <Form.Item
-            name="roleIds"
-            label={t("users.roles")}
-            labelCol={{ span: 3 }}
-          >
-            <Select
-              mode="multiple"
-              placeholder={t("users.placeholder.roles")}
-              allowClear
-              options={roles.map((role) => ({
-                label: role.name,
-                value: role.id,
-              }))}
-            />
-          </Form.Item>
-        </Col>
       </Row>
     ),
     [t, roles]
-  );
-
-  // 使用 useCallback 包装 request 函数，避免每次渲染都重新创建
-  const handleRequest = useCallback(
-    async (params?: Record<string, unknown>) => {
-      // ProTable 传递的是 current，接口需要的是 page
-      // 搜索参数：username 和 nickname 都映射到 keyword
-      const keyword = params?.username || params?.nickname || params?.keyword;
-
-      const requestParams: {
-        page: number;
-        pageSize: number;
-        keyword?: string;
-        status?: number;
-      } = {
-        page: (params?.current as number) || 1,
-        pageSize: (params?.pageSize as number) || 10,
-      };
-
-      if (keyword) {
-        requestParams.keyword = String(keyword);
-      }
-      if (params?.status !== undefined && params?.status !== null) {
-        requestParams.status = Number(params.status);
-      }
-
-      const result = await getUserListApi(requestParams);
-
-      // 返回 ProTable 期望的格式
-      return {
-        data: result.list,
-        total: result.pagination.total,
-      };
-    },
-    []
   );
 
   return (
@@ -387,7 +338,6 @@ const Users = () => {
                 if (tableRef.current) {
                   await tableRef.current.refresh();
                 }
-
               } catch (error) {
                 console.error(t("users.message.createError"), error);
                 throw error;
@@ -398,18 +348,12 @@ const Users = () => {
           </DMForm>
         </Access>
       </div>
-      <ProTable<UserItem>
+      <ProTable<UserItem, GetUserListParams>
         ref={tableRef}
         columns={columns}
-        request={handleRequest}
-        size="middle"
+        request={getUserListApi}
         title={t("users.list")}
-        options={{
-          showRefresh: true,
-          showSizeChanger: true,
-        }}
       />
-
     </>
   );
 };

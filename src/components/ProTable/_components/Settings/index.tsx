@@ -3,8 +3,7 @@ import type { ColumnsType } from "antd/es/table";
 import RefreshButton from "./RefreshButton";
 import SizeChanger from "./SizeChanger";
 import ColumnFilter from "./ColumnFilter";
-
-type TableSize = "small" | "middle" | "large";
+import type { TableProps } from "antd";
 
 interface SettingsProps {
   /** 是否显示刷新按钮 */
@@ -16,7 +15,7 @@ interface SettingsProps {
   /** 加载状态 */
   loading?: boolean;
   /** 当前表格大小 */
-  tableSize?: TableSize;
+  tableSize?: TableProps["size"];
   /** 表格列配置 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns?: ColumnsType<any>;
@@ -25,7 +24,7 @@ interface SettingsProps {
   /** 刷新回调 */
   onRefresh?: () => void;
   /** 表格大小变化回调 */
-  onSizeChange?: (size: TableSize) => void;
+  onSizeChange?: (size: TableProps["size"]) => void;
   /** 列可见性变化回调 */
   onColumnVisibilityChange?: (keys: string[]) => void;
 }

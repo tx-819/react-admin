@@ -158,7 +158,7 @@ const mockOrders: TableDataItem[] = [
  * @returns 订单列表和总数
  */
 export const getOrderList = async (
-  params?: GetOrderListParams
+  params?: GetOrderListParams,
 ): Promise<GetOrderListResponse> => {
   // 模拟网络延迟
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -169,21 +169,21 @@ export const getOrderList = async (
   // 按订单ID过滤
   if (params?.id) {
     filteredData = filteredData.filter((order) =>
-      order.id.toLowerCase().includes(params.id!.toLowerCase())
+      order.id.toLowerCase().includes(params.id!.toLowerCase()),
     );
   }
 
   // 按客户名称过滤
   if (params?.name) {
     filteredData = filteredData.filter((order) =>
-      order.name.includes(params.name!)
+      order.name.includes(params.name!),
     );
   }
 
   // 按状态过滤
   if (params?.status) {
     filteredData = filteredData.filter(
-      (order) => order.status === params.status
+      (order) => order.status === params.status,
     );
   }
 
@@ -195,7 +195,7 @@ export const getOrderList = async (
         : params.amount;
     if (!isNaN(amountValue)) {
       filteredData = filteredData.filter(
-        (order) => order.amount === amountValue
+        (order) => order.amount === amountValue,
       );
     }
   }
@@ -225,7 +225,7 @@ export const getOrderList = async (
  * 当有真实后端时，可以使用此函数替换 mock 版本
  */
 export const getOrderListApi = async (
-  params?: GetOrderListParams
+  params?: GetOrderListParams,
 ): Promise<GetOrderListResponse> => {
   const queryParams = new URLSearchParams();
 
@@ -238,7 +238,7 @@ export const getOrderListApi = async (
     `/orders?${queryParams.toString()}`,
     {
       method: "GET",
-    }
+    },
   );
 
   return response;

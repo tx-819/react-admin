@@ -2,13 +2,13 @@ import { useImperativeHandle, forwardRef, useMemo } from "react";
 import { Table } from "antd";
 import Settings from "./_components/Settings";
 import useNormalizedProps from "./_hooks/useNormalizedProps";
-import type { ProTableProps, ProTableRef } from "./types";
+import type { ProTableProps, ProTableRef, ProTableRequestParams } from "./types";
 import SearchForm from "../SearchForm";
 import type { SearchFormOptions } from "../SearchForm";
 import { theme } from "antd";
 
-function ProTableInner<T = unknown>(
-  props: ProTableProps<T>,
+function ProTableInner<T = unknown, P extends ProTableRequestParams = ProTableRequestParams>(
+  props: ProTableProps<T, P>,
   ref: React.ForwardedRef<ProTableRef>
 ) {
   const {
@@ -120,7 +120,7 @@ function ProTableInner<T = unknown>(
               ? undefined
               : (searchOptions as SearchFormOptions)
           }
-          onSearch={onSearch}
+          onSearch={(values) => onSearch?.(values as P)}
           onReset={onReset}
         />
       )}
@@ -137,8 +137,8 @@ function ProTableInner<T = unknown>(
   );
 }
 
-const ProTable = forwardRef(ProTableInner) as <T = unknown>(
-  props: ProTableProps<T> & { ref?: React.ForwardedRef<ProTableRef> }
+const ProTable = forwardRef(ProTableInner) as <T = unknown, P extends ProTableRequestParams = ProTableRequestParams>(
+  props: ProTableProps<T, P> & { ref?: React.ForwardedRef<ProTableRef> }
 ) => React.ReactElement;
 
 (ProTable as typeof ProTable & { displayName: string }).displayName =

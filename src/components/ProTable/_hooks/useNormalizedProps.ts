@@ -1,10 +1,16 @@
-import type { ProTableProps } from "../types";
+import type { ProTableProps, ProTableRequestParams } from "../types";
 import type { TablePaginationConfig } from "antd/es/table";
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useTableSettings from "./useTableSettings";
+import type { ProTablePaginationConfig } from "../types";
 
-const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
+const useNormalizedProps = <
+  T = unknown,
+  P extends ProTableRequestParams = ProTableRequestParams,
+>(
+  props: ProTableProps<T, P>,
+) => {
   const { t } = useTranslation();
   const {
     request,
@@ -22,7 +28,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
   const [dataSource, setDataSource] = useState<T[]>(props.dataSource || []);
   const [loading, setLoading] = useState(false);
   // 搜索参数状态
-  const [searchParams, setSearchParams] = useState<Record<string, unknown>>({});
+  const [searchParams, setSearchParams] = useState<Partial<P>>({});
 
   // 使用 ref 存储 request 和 params，避免因引用变化导致不必要的重新加载
   const requestRef = useRef(request);
@@ -37,11 +43,10 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
   // 分页状态管理
   const [paginationState, setPaginationState] = useState(() => {
     if (externalPagination === false) {
-      return { current: 1, pageSize: 10, total: 0 };
+      return { page: 1, pageSize: 10, total: 0 };
     }
     return {
-      current:
-        externalPagination?.current || externalPagination?.defaultCurrent || 1,
+      page: externalPagination?.page || externalPagination?.defaultPage || 1,
       pageSize:
         externalPagination?.pageSize ||
         externalPagination?.defaultPageSize ||
@@ -71,11 +76,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
 
   // 加载数据，自动支持分页
   const loadData = useCallback(
-    async (
-      page?: number,
-      pageSize?: number,
-      overrideSearchParams?: Record<string, unknown>
-    ) => {
+    async (page?: number, pageSize?: number, overrideSearchParams?: P) => {
       // 使用 ref 获取最新的 request 和 params，避免依赖项变化
       const currentRequest = requestRef.current;
       const currentParams = paramsRef.current;
@@ -89,7 +90,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
       }
 
       // 使用传入的分页参数或从 ref 中获取最新状态
-      const currentPage = page ?? paginationStateRef.current.current;
+      const currentPage = page ?? paginationStateRef.current.page;
       const currentPageSize = pageSize ?? paginationStateRef.current.pageSize;
 
       try {
@@ -101,17 +102,17 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
           ...(overrideSearchParams !== undefined
             ? overrideSearchParams
             : searchParams),
-          current: currentPage,
+          page: currentPage,
           pageSize: currentPageSize,
         };
 
-        const result = await currentRequest(requestParams);
+        const result = await currentRequest(requestParams as P);
 
         setDataSource(result.data || []);
 
         // 更新分页状态，使用计算好的值而不是再次使用 ?? 操作符
         setPaginationState((prev) => ({
-          current: currentPage,
+          page: currentPage,
           pageSize: currentPageSize,
           total: result.total !== undefined ? result.total : prev.total,
         }));
@@ -121,7 +122,7 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
         setLoading(false);
       }
     },
-    [searchParams, externalDataSource]
+    [searchParams, externalDataSource],
   );
 
   const handleRefresh = async () => {
@@ -136,11 +137,11 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     (newPagination: TablePaginationConfig) => {
       const { current, pageSize } = newPagination;
       const prevState = paginationStateRef.current;
-      const targetPage = current ?? prevState.current;
+      const targetPage = current ?? prevState.page;
       const targetPageSize = pageSize ?? prevState.pageSize;
       loadData(targetPage, targetPageSize);
     },
-    [loadData]
+    [loadData],
   );
 
   // 合并分页配置
@@ -150,14 +151,15 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     }
 
     // 使用外部传入的分页配置或空对象
-    const basePagination = externalPagination || {};
+    const basePagination =
+      (externalPagination as ProTablePaginationConfig) || {};
 
     return {
       showSizeChanger: true,
       showQuickJumper: true,
       showTotal: (total: number) => t("pagination.total", { total }),
       ...basePagination,
-      current: paginationState.current,
+      page: paginationState.page,
       pageSize: paginationState.pageSize,
       total: paginationState.total,
       onChange: (page: number, size: number) => {
@@ -182,19 +184,19 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
 
   // 处理搜索
   const handleSearch = useCallback(
-    async (values: Record<string, unknown>) => {
+    async (values: P) => {
       const currentPageSize = paginationStateRef.current.pageSize;
       // 搜索时重置到第一页
       setPaginationState((prev) => ({
         ...prev,
-        current: 1,
+        page: 1,
       }));
       // 更新搜索参数
       setSearchParams(values);
       // 直接使用新的搜索参数加载数据
       await loadData(1, currentPageSize, values);
     },
-    [loadData]
+    [loadData],
   );
 
   // 处理重置
@@ -203,12 +205,12 @@ const useNormalizedProps = <T = unknown>(props: ProTableProps<T>) => {
     // 重置时重置到第一页
     setPaginationState((prev) => ({
       ...prev,
-      current: 1,
+      page: 1,
     }));
     // 清空搜索参数
     setSearchParams({});
     // 直接使用空的搜索参数加载数据
-    await loadData(1, currentPageSize, {});
+    await loadData(1, currentPageSize, {} as P);
   }, [loadData]);
 
   return {
