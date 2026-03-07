@@ -44,6 +44,11 @@ export default {
   permissions: "Permissions",
   loading: "Loading...",
   noPermissions: "No permission data",
+  notFound: {
+    title: "Page Not Found",
+    description: "The page you are looking for may have been removed or is temporarily unavailable.",
+    backHome: "Back to Home",
+  },
   // Search form
   search: "Search",
   reset: "Reset",

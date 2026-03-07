@@ -2,6 +2,7 @@ import { Navigate } from "react-router";
 import BasicLayout from "../layouts/basicLayout";
 import Login from "../pages/login";
 import Register from "../pages/register";
+import NotFound from "../pages/not-found";
 import type { RouteObject } from "react-router-dom";
 
 /**
@@ -24,6 +25,10 @@ export const staticRoutes: RouteObject[] = [
       {
         index: true,
         element: <Navigate to="/system/users" replace />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
       },
     ],
   },

@@ -49,7 +49,7 @@ const transformRoutes = (menuList: MenuRecord[]): RouteObject[] => {
 export default function buildRoutes(menuList: MenuRecord[]): RouteObject[] {
   const children = transformRoutes(menuList);
 
-  // 将动态路由添加到 BasicLayout 的 children 中
+  // 将动态路由添加到 BasicLayout 的 children 中，末尾添加 404 兜底
   const routes = staticRoutes.map((route) => {
     if (route.path === "/" && route.children) {
       return {

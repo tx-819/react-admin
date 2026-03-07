@@ -44,6 +44,11 @@ export default {
   permissions: "权限",
   loading: "加载中...",
   noPermissions: "暂无权限数据",
+  notFound: {
+    title: "页面不存在",
+    description: "您访问的页面可能已被移除或暂时不可用。",
+    backHome: "返回首页",
+  },
   // 搜索表单
   search: "搜索",
   reset: "重置",
