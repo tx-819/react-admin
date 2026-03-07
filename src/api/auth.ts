@@ -3,7 +3,7 @@
  */
 
 import { post, get } from "../utils/request";
-import type { AppRouteRecord } from "./menu";
+import type { MenuRecord } from "./permission";
 /**
  * 用户信息
  */
@@ -79,7 +79,7 @@ export interface RegisterResponse {
  * @returns 注册响应数据
  */
 export const register = async (
-  params: RegisterParams
+  params: RegisterParams,
 ): Promise<RegisterResponse> => {
   return post<RegisterResponse>("/auth/register", params, {
     skipAuth: true, // 注册接口不需要认证
@@ -96,23 +96,14 @@ export const verifyToken = async (): Promise<UserInfo> => {
     {},
     {
       skipAuth: true, // 验证接口不需要认证
-    }
+    },
   );
 };
-
-/**
- * 获取当前用户有权限的菜单列表响应
- */
-export interface GetUserMenusResponse {
-  code: number;
-  message: string;
-  data: AppRouteRecord[];
-}
 
 /**
  * 获取当前用户有权限的菜单列表
  * @returns 用户菜单列表（树形结构）
  */
-export const getUserMenus = async (): Promise<AppRouteRecord[]> => {
-  return get<AppRouteRecord[]>("/auth/menus");
+export const getUserMenus = async (): Promise<MenuRecord[]> => {
+  return get<MenuRecord[]>("/auth/menus");
 };

@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo } from "react";
-import { Tag, Space, Button, Modal, message, Form, Input, Select, Row, Col } from "antd";
+import { Tag, Space, Button, Modal, message, Form, Input, Row, Col, Switch } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -15,9 +15,10 @@ import {
   createRoleApi,
   updateRoleApi,
   deleteRoleApi,
-  type RoleItem,
+  type Role,
   type CreateRoleParams,
   type UpdateRoleParams,
+  type GetRolePageParams,
 } from "@/api/role";
 import Access from "@/components/Access";
 import PermissionConfig from "./_components/PermissionConfig";
@@ -28,7 +29,7 @@ const Roles = () => {
 
   // 处理删除角色
   const handleDelete = useCallback(
-    (record: RoleItem) => {
+    (record: Role) => {
       Modal.confirm({
         title: t("confirmDelete"),
         okText: t("okText"),
@@ -86,15 +87,10 @@ const Roles = () => {
             name="status"
             label={t("status")}
             labelCol={{ span: 6 }}
-            {...(!isEdit && { initialValue: 1 })}
+            valuePropName="checked"
+            {...(!isEdit && { initialValue: true })}
           >
-            <Select
-              placeholder={t("statusPlaceholder")}
-              options={[
-                { label: t("enabled"), value: 1 },
-                { label: t("disabled"), value: 0 },
-              ]}
-            />
+            <Switch />
           </Form.Item>
         </Col>
         <Col span={24}>
@@ -115,7 +111,7 @@ const Roles = () => {
   );
 
   // 表格列定义
-  const columns: ProColumnType<RoleItem>[] = useMemo(
+  const columns: ProColumnType<Role>[] = useMemo(
     () => [
       {
         title: t("roles.name"),
@@ -151,17 +147,6 @@ const Roles = () => {
             {status ? t("enabled") : t("disabled")}
           </Tag>
         ),
-        formItem: {
-          type: "select",
-          options: [
-            { label: t("enabled"), value: 1 },
-            { label: t("disabled"), value: 0 },
-          ],
-          fieldProps: {
-            placeholder: t("statusPlaceholder"),
-            allowClear: true,
-          },
-        },
       },
       {
         title: t("remark"),
@@ -185,7 +170,7 @@ const Roles = () => {
         key: "action",
         width: 150,
         fixed: "right",
-        render: (_: unknown, record: RoleItem) => (
+        render: (_: unknown, record: Role) => (
           <Space>
             <Access code="update">
               <DMForm<UpdateRoleParams>
@@ -205,7 +190,7 @@ const Roles = () => {
                 initialValues={{
                   name: record.name,
                   code: record.code,
-                  status: record.status || 1,
+                  status: record.status,
                   remark: record.remark || "",
                 }}
                 onSubmit={(values, { success, error }) => {
@@ -255,42 +240,6 @@ const Roles = () => {
     [t, handleDelete, renderFormItems]
   );
 
-
-  // 使用 useCallback 包装 request 函数，避免每次渲染都重新创建
-  const handleRequest = useCallback(
-    async (params?: Record<string, unknown>) => {
-      const requestParams: {
-        page: number;
-        pageSize: number;
-        name?: string;
-        code?: string;
-        status?: number;
-      } = {
-        page: (params?.current as number) || 1,
-        pageSize: (params?.pageSize as number) || 10,
-      };
-
-      if (params?.name) {
-        requestParams.name = String(params?.name);
-      }
-      if (params?.code) {
-        requestParams.code = String(params?.code);
-      }
-      if (params?.status !== undefined && params?.status !== null) {
-        requestParams.status = Number(params.status);
-      }
-
-      const result = await getRoleListApi(requestParams);
-
-      // 返回 ProTable 期望的格式
-      return {
-        data: result.data,
-        total: result.total,
-      };
-    },
-    []
-  );
-
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
@@ -325,10 +274,10 @@ const Roles = () => {
           </DMForm>
         </Access>
       </div>
-      <ProTable<RoleItem>
+      <ProTable<Role, GetRolePageParams>
         ref={tableRef}
         columns={columns}
-        request={handleRequest}
+        request={getRoleListApi}
         size="middle"
         title={t("roles.list")}
         options={{

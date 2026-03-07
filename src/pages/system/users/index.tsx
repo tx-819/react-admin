@@ -15,14 +15,13 @@ import {
   createUserApi,
   updateUserApi,
   deleteUserApi,
-  getAllRolesApi,
   type CreateUserParams,
   type UpdateUserParams,
-  type GetUserListParams,
+  type GetUserPageParams,
   type User,
 } from "@/api/user";
 import Access from "@/components/Access";
-import type { Role } from "@/api/role";
+import { getRoleListApi, type Role } from "@/api/role";
 
 const Users = () => {
   const { t } = useTranslation();
@@ -33,8 +32,8 @@ const Users = () => {
   useEffect(() => {
     const loadRoles = async () => {
       try {
-        const roleList = await getAllRolesApi();
-        setRoles(roleList);
+        const { data } = await getRoleListApi({ page: 1, pageSize: 1000 });
+        setRoles(data);
       } catch (error) {
         console.error(t("users.message.loadRolesError"), error);
       }
@@ -364,7 +363,7 @@ const Users = () => {
           </DMForm>
         </Access>
       </div>
-      <ProTable<User, GetUserListParams>
+      <ProTable<User, GetUserPageParams>
         ref={tableRef}
         columns={columns}
         request={getUserListApi}

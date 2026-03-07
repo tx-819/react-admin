@@ -11,7 +11,7 @@ import ProTable from "@/components/ProTable";
 import type { ProTableRef } from "@/components/ProTable/types";
 import DMForm from "@/components/DMForm";
 import {
-  getPermissionListApi,
+  getPermissionTreeApi,
   createPermissionApi,
   updatePermissionApi,
   deletePermissionApi,
@@ -27,8 +27,8 @@ const Permission = () => {
   const tableRef = useRef<ProTableRef>(null);
   const queryClient = useQueryClient();
   const { data, isPending, isFetching } = useQuery({
-    queryKey: ["permissionList"],
-    queryFn: getPermissionListApi,
+    queryKey: ["permissionTree"],
+    queryFn: getPermissionTreeApi,
   });
 
   // 处理删除权限
@@ -348,7 +348,7 @@ const Permission = () => {
         title={t("permission.list")}
         options={{
           onRefresh: () => {
-            queryClient.invalidateQueries({ queryKey: ["permissionList"] });
+            queryClient.invalidateQueries({ queryKey: ["permissionTree"] });
           },
         }}
       />

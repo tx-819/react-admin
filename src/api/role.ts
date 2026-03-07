@@ -1,4 +1,6 @@
 import { get, post, put, del } from "../utils/request";
+import { paginationResponse } from "../utils/tools";
+import type { Permission } from "./permission";
 
 /**
  * 角色项接口
@@ -8,7 +10,7 @@ export interface Role {
   name: string;
   code: string;
   remark?: string;
-  status: number;
+  status: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,28 +18,11 @@ export interface Role {
 /**
  * 获取角色列表请求参数
  */
-export interface GetRoleListParams {
+export interface GetRolePageParams {
   page?: number;
   pageSize?: number;
-  keyword?: string;
-  status?: number;
-}
-
-/**
- * 获取角色列表响应
- */
-export interface GetRoleListResponse {
-  code: number;
-  message: string;
-  data: {
-    list: Role[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
-  };
+  name?: string;
+  code?: string;
 }
 
 /**
@@ -45,83 +30,28 @@ export interface GetRoleListResponse {
  * @param params 查询参数
  * @returns 角色列表数据
  */
-export const getRoleListApi = async (
-  params?: GetRoleListParams,
-): Promise<{ data: Role[]; total: number; success: boolean }> => {
-  try {
-    const response = await get<{ list: Role[]; total: number }>("/roles", {
-      params,
-    });
-    return {
-      data: response.list,
-      total: response.total,
-      success: true,
-    };
-  } catch {
-    return {
-      data: [],
-      total: 0,
-      success: false,
-    };
-  }
+export const getRoleListApi = (params?: GetRolePageParams) => {
+  return paginationResponse<Role>(
+    get<{ list: Role[]; total: number }>("/role/page", { params }),
+  );
 };
 
 /**
  * 创建角色请求参数
  */
-export interface CreateRoleParams {
-  name: string;
-  code: string;
-  remark?: string;
-  status?: number;
-}
+export type CreateRoleParams = Omit<Role, "id" | "createdAt" | "updatedAt">;
 
 /**
  * 创建角色响应
  */
-export interface CreateRoleResponse {
-  id: string;
-  name: string;
-  code: string;
-  remark?: string;
-  status: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * 创建角色
- * @param params 角色参数
- * @returns 创建的角色数据
- */
-export const createRoleApi = async (
-  params: CreateRoleParams,
-): Promise<CreateRoleResponse> => {
-  return post<CreateRoleResponse>("/roles", params);
+export const createRoleApi = (params: CreateRoleParams) => {
+  return post("/role", params);
 };
 
 /**
  * 更新角色请求参数
  */
-export interface UpdateRoleParams {
-  name?: string;
-  code?: string;
-  remark?: string;
-  status?: number;
-}
-
-/**
- * 更新角色响应
- */
-export interface UpdateRoleResponse {
-  id: string;
-  name: string;
-  code: string;
-  remark?: string;
-  status: number;
-  createdAt: string;
-  updatedAt: string;
-}
+export type UpdateRoleParams = Omit<Role, "createdAt" | "updatedAt">;
 
 /**
  * 更新角色
@@ -129,120 +59,34 @@ export interface UpdateRoleResponse {
  * @param params 角色参数
  * @returns 更新的角色数据
  */
-export const updateRoleApi = async (
-  id: string,
-  params: UpdateRoleParams,
-): Promise<UpdateRoleResponse> => {
-  return put<UpdateRoleResponse>(`/roles/${id}`, params);
+export const updateRoleApi = (id: string, params: UpdateRoleParams) => {
+  return put(`/role/${id}`, params);
 };
-
-/**
- * 删除角色响应
- */
-export interface DeleteRoleResponse {
-  message: string;
-}
 
 /**
  * 删除角色
  * @param id 角色 ID
  * @returns 删除结果
  */
-export const deleteRoleApi = async (
-  id: string,
-): Promise<DeleteRoleResponse> => {
-  return del<DeleteRoleResponse>(`/roles/${id}`);
+export const deleteRoleApi = (id: string) => {
+  return del(`/role/${id}`);
 };
-
-/**
- * 权限项接口
- */
-export interface PermissionItem {
-  id: number;
-  code: string;
-  name: string;
-  type: "menu" | "page" | "action";
-  remark?: string;
-  status: number;
-  children?: PermissionItem[];
-}
-
-/**
- * 获取所有权限响应
- */
-export interface GetPermissionsResponse {
-  code: number;
-  message: string;
-  data: PermissionItem[];
-}
-
-/**
- * 获取所有权限（树形结构）
- * @returns 权限树
- */
-export const getPermissionsApi = async (): Promise<PermissionItem[]> => {
-  return get<PermissionItem[]>("/permissions");
-};
-
-/**
- * 查询角色权限响应
- */
-export interface GetRolePermissionsResponse {
-  code: number;
-  message: string;
-  data: {
-    role: {
-      id: string;
-      name: string;
-      code: string;
-    };
-    permissions: Array<{
-      id: number;
-      code: string;
-      name: string;
-      type: "menu" | "page" | "action";
-      remark?: string;
-      status: number;
-    }>;
-  };
-}
 
 /**
  * 查询角色权限
  * @param id 角色 ID
  * @returns 角色权限数据
  */
-export const getRolePermissionsApi = async (
-  id: string,
-): Promise<GetRolePermissionsResponse["data"]> => {
-  return get<GetRolePermissionsResponse["data"]>(`/roles/${id}/permissions`);
+export const getRolePermissionsApi = (id: string) => {
+  return get<Permission[]>(`/role/${id}/permissions`);
 };
 
 /**
  * 给角色添加权限请求参数
  */
-export interface UpdateRolePermissionsParams {
-  permissionIds: number[];
-}
-
-/**
- * 给角色添加权限响应
- */
-export interface UpdateRolePermissionsResponse {
-  id: string;
-  name: string;
-  code: string;
-  remark?: string;
-  status: number;
-  createdAt: string;
-  updatedAt: string;
-  permissions: Array<{
-    id: number;
-    code: string;
-    name: string;
-    type: "menu" | "page" | "action";
-  }>;
-}
+export type UpdateRolePermissionsParams = {
+  permissionIds: string[];
+};
 
 /**
  * 给角色添加权限
@@ -250,9 +94,9 @@ export interface UpdateRolePermissionsResponse {
  * @param params 权限参数
  * @returns 更新后的角色数据
  */
-export const updateRolePermissionsApi = async (
+export const updateRolePermissionsApi = (
   id: string,
   params: UpdateRolePermissionsParams,
-): Promise<UpdateRolePermissionsResponse> => {
-  return put<UpdateRolePermissionsResponse>(`/roles/${id}/permissions`, params);
+) => {
+  return put(`/role/${id}/permissions`, params);
 };

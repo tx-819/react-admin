@@ -36,8 +36,8 @@ export interface Permission {
  * 获取权限列表
  * @returns 权限列表
  */
-export const getPermissionListApi = async (): Promise<Permission[]> => {
-  return get<Permission[]>("/permission");
+export const getPermissionTreeApi = async (): Promise<Permission[]> => {
+  return get<Permission[]>("/permission/tree");
 };
 
 /**
