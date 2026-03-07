@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { AppRouteRecord } from "../src/api/menu";
+import type { AppRouteRecord } from "../src/api/permission";
 import type { ItemType } from "antd/es/menu/interface";
 import { getIcon } from "../src/utils/renderIcon";
 

@@ -1,5 +1,6 @@
-import type { AuthType } from "@/api/menu";
+import type { AuthType } from "@/api/permission";
 import { useLoaderData } from "react-router-dom";
+import { useUserStore } from "../../../store/userStore";
 
 interface AccessProps {
   children: React.ReactNode;
@@ -8,9 +9,13 @@ interface AccessProps {
 
 const Access = (props: AccessProps) => {
   const { children, code } = props;
+  const user = useUserStore();
   const loaderData = useLoaderData<{ authList: AuthType[] }>();
   const authList = loaderData?.authList ?? [];
   const hasAccess = authList?.map((item) => item.authMark === code);
+  if (user.isSuper) {
+    return children;
+  }
   if (!hasAccess) {
     return null;
   }

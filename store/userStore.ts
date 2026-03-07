@@ -1,6 +1,6 @@
 import type { UserInfo } from "../src/api/auth";
-import { createStore } from 'zustand/vanilla';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface userStore extends UserInfo {
   token?: string;
@@ -9,16 +9,16 @@ interface userStore extends UserInfo {
 }
 
 const initialState = {
-  id: '',
-  username: '',
-  nickname: '',
-  avatar: '',
+  id: "",
+  username: "",
+  nickname: "",
+  avatar: "",
   isSuper: false,
-  token: '',
+  token: "",
   isLogin: false,
 };
 
-export const useUserStore = createStore<userStore>()(
+export const useUserStore = create<userStore>()(
   persist(
     (set) => ({
       ...initialState,
@@ -26,9 +26,9 @@ export const useUserStore = createStore<userStore>()(
         set({ ...user });
       },
     }),
-    { name: 'user-storage' },
+    { name: "user-storage" },
   ),
-)
+);
 
 // 为了保持 API 兼容性，导出这些函数
 // 它们内部使用 Zustand store
@@ -49,7 +49,7 @@ export const setAccessToken = (token: string): void => {
 };
 
 export const removeAccessToken = (): void => {
-  useUserStore.setState({ token: '', isLogin: false });
+  useUserStore.setState({ token: "", isLogin: false });
 };
 
 export const getIsLogin = (): boolean => {
