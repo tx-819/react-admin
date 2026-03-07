@@ -146,9 +146,9 @@ const Roles = () => {
         dataIndex: "status",
         key: "status",
         width: 100,
-        render: (status: number) => (
-          <Tag color={status === 1 ? "success" : "default"}>
-            {status === 1 ? t("enabled") : t("disabled")}
+        render: (status: boolean) => (
+          <Tag color={status ? "success" : "default"}>
+            {status ? t("enabled") : t("disabled")}
           </Tag>
         ),
         formItem: {
@@ -208,18 +208,16 @@ const Roles = () => {
                   status: record.status || 1,
                   remark: record.remark || "",
                 }}
-                onSubmit={async (values, { success }) => {
-                  try {
-                    await updateRoleApi(record.id, values);
+                onSubmit={(values, { success, error }) => {
+                  updateRoleApi(record.id, values).then(() => {
                     success();
                     // 刷新表格
                     if (tableRef.current) {
-                      await tableRef.current.refresh();
+                      tableRef.current.refresh();
                     }
-                  } catch (error) {
-                    console.error(t("roles.message.updateError"), error);
-                    throw error;
-                  }
+                  }).catch(() => {
+                    error(t("roles.message.updateError"));
+                  });
                 }}
               >
                 {renderFormItems(true)}
@@ -261,22 +259,22 @@ const Roles = () => {
   // 使用 useCallback 包装 request 函数，避免每次渲染都重新创建
   const handleRequest = useCallback(
     async (params?: Record<string, unknown>) => {
-      // ProTable 传递的是 current，接口需要的是 page
-      // 搜索参数：name 和 code 都映射到 keyword
-      const keyword = params?.name || params?.code || params?.keyword;
-
       const requestParams: {
         page: number;
         pageSize: number;
-        keyword?: string;
+        name?: string;
+        code?: string;
         status?: number;
       } = {
         page: (params?.current as number) || 1,
         pageSize: (params?.pageSize as number) || 10,
       };
 
-      if (keyword) {
-        requestParams.keyword = String(keyword);
+      if (params?.name) {
+        requestParams.name = String(params?.name);
+      }
+      if (params?.code) {
+        requestParams.code = String(params?.code);
       }
       if (params?.status !== undefined && params?.status !== null) {
         requestParams.status = Number(params.status);
@@ -286,8 +284,8 @@ const Roles = () => {
 
       // 返回 ProTable 期望的格式
       return {
-        data: result.list,
-        total: result.pagination.total,
+        data: result.data,
+        total: result.total,
       };
     },
     []
@@ -311,18 +309,16 @@ const Roles = () => {
                 {t("roles.create")}
               </Button>
             }
-            onSubmit={async (values, { success }) => {
-              try {
-                await createRoleApi(values);
+            onSubmit={(values, { success, error }) => {
+              createRoleApi(values).then(() => {
                 success();
                 // 刷新表格
                 if (tableRef.current) {
-                  await tableRef.current.refresh();
+                  tableRef.current.refresh();
                 }
-              } catch (error) {
-                console.error(t("roles.message.createError"), error);
-                throw error;
-              }
+              }).catch(() => {
+                error(t("roles.message.createError"));
+              });
             }}
           >
             {renderFormItems(false)}
