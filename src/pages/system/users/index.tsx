@@ -16,17 +16,17 @@ import {
   updateUserApi,
   deleteUserApi,
   getAllRolesApi,
-  type UserItem,
   type CreateUserParams,
   type UpdateUserParams,
-  type RoleOption,
   type GetUserListParams,
+  type User,
 } from "@/api/user";
 import Access from "@/components/Access";
+import type { Role } from "@/api/role";
 
 const Users = () => {
   const { t } = useTranslation();
-  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const tableRef = useRef<ProTableRef>(null);
 
   // 加载角色列表
@@ -45,7 +45,7 @@ const Users = () => {
 
   // 处理删除用户
   const handleDelete = useCallback(
-    (record: UserItem) => {
+    (record: User) => {
       Modal.confirm({
         title: t("confirmDelete"),
         okText: t("okText"),
@@ -69,7 +69,7 @@ const Users = () => {
   );
 
   // 表格列定义
-  const columns: ProColumnType<UserItem>[] = [
+  const columns: ProColumnType<User>[] = [
     {
       title: t("users.username"),
       dataIndex: "username",
@@ -169,7 +169,7 @@ const Users = () => {
       key: "action",
       width: 150,
       fixed: "right",
-      render: (_: unknown, record: UserItem) => (
+      render: (_: unknown, record: User) => (
         <Space>
           <Access code="update">
             <DMForm<UpdateUserParams>
@@ -248,6 +248,22 @@ const Users = () => {
             ]}
           >
             <Input placeholder={t("users.placeholder.usernameWithRule")} autoComplete="off" />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="email"
+            label={t("users.email")}
+            labelCol={{ span: 6 }}
+            rules={[
+              { required: true, message: t("users.rules.emailRequired") },
+              {
+                type: "email",
+                message: t("users.rules.emailInvalid"),
+              },
+            ]}
+          >
+            <Input placeholder={t("users.placeholder.email")} autoComplete="off" />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -348,7 +364,7 @@ const Users = () => {
           </DMForm>
         </Access>
       </div>
-      <ProTable<UserItem, GetUserListParams>
+      <ProTable<User, GetUserListParams>
         ref={tableRef}
         columns={columns}
         request={getUserListApi}

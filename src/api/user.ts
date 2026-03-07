@@ -1,27 +1,20 @@
 import { get, post, put, del } from "../utils/request";
+import type { Role } from "./role";
 
 /**
  * 角色项接口（用于用户角色）
  */
-export interface UserRole {
-  id: string;
-  name: string;
-  code: string;
-}
-
-/**
- * 用户项接口
- */
-export interface UserItem {
+export interface User {
   id: string;
   username: string;
+  email: string;
   nickname?: string;
   avatar?: string | null;
   status: number;
   isSuper: boolean;
   createdAt: string;
   updatedAt: string;
-  roles: UserRole[];
+  roles: Role[];
 }
 
 /**
@@ -42,25 +35,20 @@ export interface GetUserListParams {
 export const getUserListApi = async (
   params?: GetUserListParams,
 ): Promise<{
-  data: UserItem[];
+  data: User[];
   total: number;
   success: boolean;
 }> => {
   try {
     const response = await get<{
-      items: UserItem[];
-      metadata: {
-        page: number;
-        pageSize: number;
-        total: number;
-        totalPages: number;
-      };
+      list: User[];
+      total: number;
     }>("/user", {
       params,
     });
     return {
-      data: response.items,
-      total: response.metadata.total,
+      data: response.list,
+      total: response.total,
       success: true,
     };
   } catch {
@@ -70,24 +58,6 @@ export const getUserListApi = async (
       success: false,
     };
   }
-};
-
-/**
- * 获取用户详情响应
- */
-export interface GetUserDetailResponse {
-  code: number;
-  message: string;
-  data: UserItem;
-}
-
-/**
- * 获取用户详情
- * @param id 用户 ID
- * @returns 用户详情数据
- */
-export const getUserDetailApi = async (id: string): Promise<UserItem> => {
-  return get<UserItem>(`/user/${id}`);
 };
 
 /**
@@ -104,29 +74,12 @@ export interface CreateUserParams {
 }
 
 /**
- * 创建用户响应
- */
-export interface CreateUserResponse {
-  id: string;
-  username: string;
-  nickname?: string;
-  avatar?: string | null;
-  status: number;
-  isSuper: boolean;
-  createdAt: string;
-  updatedAt: string;
-  roles: UserRole[];
-}
-
-/**
  * 创建用户
  * @param params 用户参数
  * @returns 创建的用户数据
  */
-export const createUserApi = async (
-  params: CreateUserParams,
-): Promise<CreateUserResponse> => {
-  return post<CreateUserResponse>("/user", params);
+export const createUserApi = async (params: CreateUserParams) => {
+  return post("/user", params);
 };
 
 /**
@@ -143,83 +96,32 @@ export interface UpdateUserParams {
 }
 
 /**
- * 更新用户响应
- */
-export interface UpdateUserResponse {
-  id: string;
-  username: string;
-  nickname?: string;
-  avatar?: string | null;
-  status: number;
-  isSuper: boolean;
-  createdAt: string;
-  updatedAt: string;
-  roles: UserRole[];
-}
-
-/**
  * 更新用户
  * @param id 用户 ID
  * @param params 用户参数
  * @returns 更新的用户数据
  */
-export const updateUserApi = async (
-  id: string,
-  params: UpdateUserParams,
-): Promise<UpdateUserResponse> => {
-  return put<UpdateUserResponse>(`/user/${id}`, params);
+export const updateUserApi = async (id: string, params: UpdateUserParams) => {
+  return put(`/user/${id}`, params);
 };
-
-/**
- * 删除用户响应
- */
-export interface DeleteUserResponse {
-  message: string;
-}
 
 /**
  * 删除用户
  * @param id 用户 ID
  * @returns 删除结果
  */
-export const deleteUserApi = async (
-  id: string,
-): Promise<DeleteUserResponse> => {
-  return del<DeleteUserResponse>(`/user/${id}`);
+export const deleteUserApi = async (id: string) => {
+  return del(`/user/${id}`);
 };
 
 /**
  * 获取所有角色列表（用于用户角色选择）
  */
-export interface RoleOption {
-  id: string;
-  name: string;
-  code: string;
-}
-
-/**
- * 获取所有角色列表（用于用户角色选择）
- * @returns 角色列表
- */
-export const getAllRolesApi = async (): Promise<RoleOption[]> => {
+export const getAllRolesApi = async (): Promise<Role[]> => {
   // 调用角色列表接口，获取所有角色（不分页）
   const response = await get<{
-    items: Array<{
-      id: string;
-      name: string;
-      code: string;
-    }>;
-    metadata: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
+    list: Role[];
   }>("/role?page=1&pageSize=1000");
 
-  return response.items.map((role) => ({
-    id: role.id,
-    name: role.name,
-    code: role.code,
-  }));
+  return response.list;
 };

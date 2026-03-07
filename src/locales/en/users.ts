@@ -4,6 +4,7 @@ export default {
   create: "Create User",
   edit: "Edit User",
   username: "Username",
+  email: "Email",
   nickname: "Nickname",
   avatar: "Avatar",
   avatarUrl: "Avatar URL",
@@ -13,6 +14,7 @@ export default {
   placeholder: {
     username: "Please enter username",
     usernameWithRule: "Please enter username (3-50 characters)",
+    email: "Please enter email",
     nickname: "Please enter nickname",
     avatarUrl: "Please enter avatar URL",
     status: "Please select status",
@@ -24,6 +26,8 @@ export default {
     usernameRequired: "Please enter username",
     usernameLength: "Username must be between 3-50 characters",
     passwordRequired: "Please enter password",
+    emailRequired: "Please enter email",
+    emailInvalid: "Please enter a valid email address",
   },
   message: {
     loadRolesError: "Failed to load roles",

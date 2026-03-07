@@ -3,7 +3,7 @@ import { get, post, put, del } from "../utils/request";
 /**
  * 角色项接口
  */
-export interface RoleItem {
+export interface Role {
   id: string;
   name: string;
   code: string;
@@ -30,7 +30,7 @@ export interface GetRoleListResponse {
   code: number;
   message: string;
   data: {
-    list: RoleItem[];
+    list: Role[];
     pagination: {
       page: number;
       pageSize: number;
@@ -46,27 +46,24 @@ export interface GetRoleListResponse {
  * @returns 角色列表数据
  */
 export const getRoleListApi = async (
-  params?: GetRoleListParams
-): Promise<{ list: RoleItem[]; pagination: GetRoleListResponse["data"]["pagination"] }> => {
-  const queryParams = new URLSearchParams();
-  
-  if (params?.page) {
-    queryParams.append("page", String(params.page));
+  params?: GetRoleListParams,
+): Promise<{ data: Role[]; total: number; success: boolean }> => {
+  try {
+    const response = await get<{ list: Role[]; total: number }>("/roles", {
+      params,
+    });
+    return {
+      data: response.list,
+      total: response.total,
+      success: true,
+    };
+  } catch {
+    return {
+      data: [],
+      total: 0,
+      success: false,
+    };
   }
-  if (params?.pageSize) {
-    queryParams.append("pageSize", String(params.pageSize));
-  }
-  if (params?.keyword) {
-    queryParams.append("keyword", params.keyword);
-  }
-  if (params?.status !== undefined) {
-    queryParams.append("status", String(params.status));
-  }
-
-  const url = `/roles${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-  const response = await get<GetRoleListResponse["data"]>(url);
-  
-  return response;
 };
 
 /**
@@ -98,7 +95,7 @@ export interface CreateRoleResponse {
  * @returns 创建的角色数据
  */
 export const createRoleApi = async (
-  params: CreateRoleParams
+  params: CreateRoleParams,
 ): Promise<CreateRoleResponse> => {
   return post<CreateRoleResponse>("/roles", params);
 };
@@ -134,7 +131,7 @@ export interface UpdateRoleResponse {
  */
 export const updateRoleApi = async (
   id: string,
-  params: UpdateRoleParams
+  params: UpdateRoleParams,
 ): Promise<UpdateRoleResponse> => {
   return put<UpdateRoleResponse>(`/roles/${id}`, params);
 };
@@ -152,7 +149,7 @@ export interface DeleteRoleResponse {
  * @returns 删除结果
  */
 export const deleteRoleApi = async (
-  id: string
+  id: string,
 ): Promise<DeleteRoleResponse> => {
   return del<DeleteRoleResponse>(`/roles/${id}`);
 };
@@ -216,7 +213,7 @@ export interface GetRolePermissionsResponse {
  * @returns 角色权限数据
  */
 export const getRolePermissionsApi = async (
-  id: string
+  id: string,
 ): Promise<GetRolePermissionsResponse["data"]> => {
   return get<GetRolePermissionsResponse["data"]>(`/roles/${id}/permissions`);
 };
@@ -255,8 +252,7 @@ export interface UpdateRolePermissionsResponse {
  */
 export const updateRolePermissionsApi = async (
   id: string,
-  params: UpdateRolePermissionsParams
+  params: UpdateRolePermissionsParams,
 ): Promise<UpdateRolePermissionsResponse> => {
   return put<UpdateRolePermissionsResponse>(`/roles/${id}/permissions`, params);
 };
-
