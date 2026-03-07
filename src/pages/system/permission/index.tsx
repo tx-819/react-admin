@@ -21,12 +21,17 @@ import {
   type PermissionType,
 } from "@/api/permission";
 import Access from "@/components/Access";
-
 const { TextArea } = Input;
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Permission = () => {
   const { t } = useTranslation();
   const tableRef = useRef<ProTableRef>(null);
+  const queryClient = useQueryClient();
+  const { data, isPending, isFetching } = useQuery({
+    queryKey: ["permissionList"],
+    queryFn: getPermissionListApi,
+  });
 
   // 处理删除权限
   const handleDelete = useCallback(
@@ -337,20 +342,15 @@ const Permission = () => {
       <ProTable<PermissionItem>
         ref={tableRef}
         columns={columns}
-        request={async () => {
-          const data = await getPermissionListApi();
-          // 处理树形数据，添加 key 和完整路径
-          return {
-            data,
-            total: data.length,
-          };
-        }}
+        dataSource={data}
+        loading={isPending || isFetching}
         pagination={false}
         size="middle"
         title={t("permission.list")}
         options={{
-          showRefresh: true,
-          showSizeChanger: false,
+          onRefresh: () => {
+            queryClient.invalidateQueries({ queryKey: ["permissionList"] });
+          },
         }}
       />
 
