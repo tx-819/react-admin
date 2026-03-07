@@ -56,7 +56,7 @@ const Login = () => {
 
       {/* 登录表单区域 */}
       <div className="w-full p-8 mt-8 relative z-10 mx-auto flex flex-col items-center">
-        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10">
+        <div className="form-autofill-style w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
               {t("login.title")}
