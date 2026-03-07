@@ -15,9 +15,7 @@ import {
   createPermissionApi,
   updatePermissionApi,
   deletePermissionApi,
-  type PermissionItem,
-  type CreatePermissionParams,
-  type UpdatePermissionParams,
+  type Permission,
   type PermissionType,
 } from "@/api/permission";
 import Access from "@/components/Access";
@@ -35,7 +33,7 @@ const Permission = () => {
 
   // 处理删除权限
   const handleDelete = useCallback(
-    (record: PermissionItem) => {
+    (record: Permission) => {
       Modal.confirm({
         title: t("confirmDelete"),
         okText: t("okText"),
@@ -169,7 +167,7 @@ const Permission = () => {
   );
 
   // 表格列定义
-  const columns: ColumnsType<PermissionItem> = useMemo(
+  const columns: ColumnsType<Permission> = useMemo(
     () => [
       {
         title: t("permission.name"),
@@ -209,11 +207,11 @@ const Permission = () => {
         key: "action",
         width: 150,
         fixed: "right",
-        render: (_: unknown, record: PermissionItem) => (
+        render: (_: unknown, record: Permission) => (
           <Space>
             {record.permissionType === "menu" && (
               <Access code="create">
-                <DMForm<CreatePermissionParams>
+                <DMForm<Partial<Permission>>
                   name={`menuForm_create_child_${record.id}`}
                   type="Modal"
                   title={t("permission.createChild")}
@@ -253,7 +251,7 @@ const Permission = () => {
               </Access>
             )}
             <Access code="update">
-              <DMForm<UpdatePermissionParams>
+              <DMForm<Partial<Permission>>
                 name={`menuForm_edit_${record.id}`}
                 type="Modal"
                 title={t("permission.edit")}
@@ -308,7 +306,7 @@ const Permission = () => {
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">{t("permission.title")}</h2>
         <Access code="create">
-          <DMForm<CreatePermissionParams>
+          <DMForm<Partial<Permission>>
             name="menuForm_create"
             type="Modal"
             title={t("permission.create")}
@@ -339,7 +337,7 @@ const Permission = () => {
           </DMForm>
         </Access>
       </div>
-      <ProTable<PermissionItem>
+      <ProTable<Permission>
         ref={tableRef}
         columns={columns}
         dataSource={data}

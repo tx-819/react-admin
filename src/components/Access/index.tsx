@@ -12,7 +12,7 @@ const Access = (props: AccessProps) => {
   const user = useUserStore();
   const loaderData = useLoaderData<{ authList: AuthType[] }>();
   const authList = loaderData?.authList ?? [];
-  const hasAccess = authList?.map((item) => item.authMark === code);
+  const hasAccess = authList?.map((item) => item.code === code);
   if (user.isSuper) {
     return children;
   }

@@ -3,12 +3,12 @@ import { Outlet } from "react-router";
 import renderComponent from "../utils/renderComponent";
 import NProgressFallback from "../components/NProgressFallback";
 import { staticRoutes } from "./staticRoutes";
-import type { AppRouteRecord } from "../api/menu";
+import type { MenuRecord } from "../api/permission";
 import type { RouteObject } from "react-router-dom";
 
 // 将菜单数据转换为路由配置
-const transformRoutes = (menuList: AppRouteRecord[]): RouteObject[] => {
-  return menuList.map((menu: AppRouteRecord): RouteObject => {
+const transformRoutes = (menuList: MenuRecord[]): RouteObject[] => {
+  return menuList.map((menu: MenuRecord): RouteObject => {
     const routeItem: RouteObject = {
       path: menu.path,
       loader: () => {
@@ -46,7 +46,7 @@ const transformRoutes = (menuList: AppRouteRecord[]): RouteObject[] => {
 };
 
 // 生成完整路由结构
-export default function buildRoutes(menuList: AppRouteRecord[]): RouteObject[] {
+export default function buildRoutes(menuList: MenuRecord[]): RouteObject[] {
   const children = transformRoutes(menuList);
 
   // 将动态路由添加到 BasicLayout 的 children 中
