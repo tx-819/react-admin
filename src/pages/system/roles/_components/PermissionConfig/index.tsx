@@ -90,20 +90,18 @@ const PermissionConfig = ({ role, trigger, onSuccess }: PermissionConfigProps) =
           });
       }}
       requestDeps={[role.id]}
-      onSubmit={async (values, { success }) => {
-        try {
-          const permissionIds = values.permissionIds || [];
-          await updateRolePermissionsApi(role.id, {
-            permissionIds,
-          });
+      onSubmit={(values, { success, error }) => {
+        const permissionIds = values.permissionIds || [];
+        updateRolePermissionsApi(role.id, {
+          permissionIds,
+        }).then(() => {
           success();
           if (onSuccess) {
             onSuccess();
           }
-        } catch (error) {
-          console.error(t("roles.message.updatePermissionsError"), error);
-          throw error;
-        }
+        }).catch(() => {
+          error(t("roles.message.updatePermissionsError"))
+        })
       }}
     >
       <Form.Item name="permissionIds">
