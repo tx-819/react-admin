@@ -107,9 +107,9 @@ const Users = () => {
       dataIndex: "status",
       key: "status",
       width: 100,
-      render: (status: number) => (
-        <Tag color={status === 1 ? "success" : "default"}>
-          {status === 1 ? t("enabled") : t("disabled")}
+      render: (status: boolean) => (
+        <Tag color={status ? "success" : "default"}>
+          {status ? t("enabled") : t("disabled")}
         </Tag>
       ),
       formItem: {
