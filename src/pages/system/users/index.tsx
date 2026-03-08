@@ -345,18 +345,18 @@ const Users = () => {
                 {t("users.create")}
               </Button>
             }
-            onSubmit={async (values, { success }) => {
-              try {
-                await createUserApi(values);
+            onSubmit={(values, { success, error }) => {
+
+              createUserApi(values).then(() => {
                 success();
                 // 刷新表格
                 if (tableRef.current) {
-                  await tableRef.current.refresh();
+                  tableRef.current.refresh();
                 }
-              } catch (error) {
-                console.error(t("users.message.createError"), error);
-                throw error;
-              }
+              }).catch(() => {
+                error(t("users.message.createError"));
+              });
+
             }}
           >
             {renderForm(false)}
