@@ -190,21 +190,20 @@ const Users = () => {
                 nickname: record.nickname || "",
                 avatar: record.avatar || "",
                 status: record.status,
+                email: record.email,
                 isSuper: record.isSuper,
                 roleIds: record.roles?.map((r) => r.id) || [],
               }}
-              onSubmit={async (values, { success }) => {
-                try {
-                  await updateUserApi(record.id, values);
+              onSubmit={(values, { success, error }) => {
+                updateUserApi(record.id, values).then(() => {
                   success();
                   // 刷新表格
                   if (tableRef.current) {
-                    await tableRef.current.refresh();
+                    tableRef.current.refresh();
                   }
-                } catch (error) {
-                  console.error(t("users.message.updateError"), error);
-                  throw error;
-                }
+                }).catch(() => {
+                  error(t("users.message.updateError"));
+                });
               }}
             >
               {renderForm(true)}
