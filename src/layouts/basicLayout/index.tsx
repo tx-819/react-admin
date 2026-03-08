@@ -4,7 +4,10 @@ import { Layout } from "antd";
 import SideMenu from "./_components/SideMenu";
 import RouteTransition from "./_components/RouteTransition";
 import Header from "./_components/Header";
-import { useThemeStore } from "../../../store/themeStore";
+import {
+  getEffectiveTheme,
+  useThemeStore,
+} from "../../../store/themeStore";
 import { theme as antdTheme } from "antd";
 
 const { Sider, Content } = Layout;
@@ -12,7 +15,8 @@ const { Sider, Content } = Layout;
 const BasicLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const outlet = useOutlet();
-  const { theme } = useThemeStore();
+  const theme = useThemeStore((s) => s.theme);
+  const effectiveTheme = getEffectiveTheme(theme);
   const {
     token: { colorBgContainer },
   } = antdTheme.useToken();
@@ -29,7 +33,7 @@ const BasicLayout = () => {
           background: colorBgContainer,
         }}
         trigger={null}
-        theme={theme}
+        theme={effectiveTheme}
         collapsible
         collapsed={collapsed}
       >

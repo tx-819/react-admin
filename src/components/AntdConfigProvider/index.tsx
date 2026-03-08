@@ -3,7 +3,10 @@ import zhCN from "antd/locale/zh_CN";
 import enUS from "antd/locale/en_US";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { useThemeStore } from "../../../store/themeStore";
+import {
+  getEffectiveTheme,
+  useThemeStore,
+} from "../../../store/themeStore";
 
 const antdLocaleMap = {
   zh: zhCN,
@@ -16,7 +19,8 @@ interface AntdConfigProviderProps {
 
 const AntdConfigProvider = ({ children }: AntdConfigProviderProps) => {
   const { i18n } = useTranslation();
-  const { theme } = useThemeStore();
+  const theme = useThemeStore((s) => s.theme);
+  const effectiveTheme = getEffectiveTheme(theme);
   const currentLanguage = (i18n.language || "zh") as keyof typeof antdLocaleMap;
   const antdLocale = antdLocaleMap[currentLanguage] || zhCN;
 
@@ -24,9 +28,9 @@ const AntdConfigProvider = ({ children }: AntdConfigProviderProps) => {
     <ConfigProvider
       theme={{
         algorithm:
-          theme === "dark"
+          effectiveTheme === "dark"
             ? antdTheme.darkAlgorithm
-            : antdTheme.defaultAlgorithm,
+            : antdTheme.defaultAlgorithm
       }}
       locale={antdLocale}
     >
