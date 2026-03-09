@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Form, Input, Button, message } from "antd";
+import { Form, Input, Button, message, Space } from "antd";
 import { useNavigate, Link } from "react-router-dom";
 import { register } from "../../api/auth";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import SelectLang from "@/components/SelectLang";
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
@@ -40,22 +41,14 @@ const Register = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#f0f4ff] dark:bg-gray-900">
-      {/* 背景几何图形装饰 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-blue-200/30 dark:bg-blue-500/20 rounded-full blur-2xl"></div>
-        <div className="absolute top-40 right-40 w-24 h-24 bg-blue-300/20 dark:bg-blue-400/15 rounded-lg blur-xl"></div>
-        <div className="absolute bottom-20 left-40 w-40 h-40 bg-blue-200/20 dark:bg-blue-500/15 rounded-lg blur-2xl"></div>
-        <div className="absolute bottom-40 right-20 w-28 h-28 bg-blue-300/30 dark:bg-blue-400/20 rounded-full blur-xl"></div>
-        <div className="absolute top-1/2 left-1/4 w-20 h-20 bg-blue-200/25 dark:bg-blue-500/15 rounded-lg blur-lg"></div>
-      </div>
       <div className="flex items-center justify-between p-8 relative z-10">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
-            <div className="w-6 h-6 bg-white rounded-sm"></div>
-          </div>
           <span className="text-xl font-semibold text-gray-800 dark:text-gray-100">Admin</span>
         </div>
-        <ThemeSwitcher />
+        <Space>
+          <SelectLang />
+          <ThemeSwitcher />
+        </Space>
       </div>
 
       {/* 注册表单区域 */}

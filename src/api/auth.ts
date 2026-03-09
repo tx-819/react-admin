@@ -107,3 +107,34 @@ export const verifyToken = async (): Promise<UserInfo> => {
 export const getUserMenus = async (): Promise<MenuRecord[]> => {
   return get<MenuRecord[]>("/auth/menus");
 };
+
+/* ==================== 邮箱链接登录 ==================== */
+
+/**
+ * 发送登录链接到邮箱
+ * @param email 用户邮箱
+ */
+export const sendLoginLink = async (
+  email: string,
+): Promise<{ success: boolean }> => {
+  return post<{ success: boolean }>(
+    "/auth/sendLoginEmail",
+    { email },
+    { skipAuth: true },
+  );
+};
+
+/**
+ * 验证邮箱链接 Token 并登录
+ * @param token 邮件中的链接 token（URL 参数）
+ * @returns 与密码登录相同的登录响应
+ */
+export const verifyLoginLink = async (
+  token: string,
+): Promise<LoginResponse> => {
+  return post<LoginResponse>(
+    "/auth/magic-link/verify",
+    { token },
+    { skipAuth: true },
+  );
+};

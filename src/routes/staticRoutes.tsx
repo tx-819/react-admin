@@ -1,9 +1,11 @@
 import { Navigate } from "react-router";
 import BasicLayout from "../layouts/basicLayout";
 import Login from "../pages/login";
+import LoginSuccess from "../pages/login-success";
 import Register from "../pages/register";
 import NotFound from "../pages/not-found";
 import type { RouteObject } from "react-router-dom";
+
 
 /**
  * 静态路由配置
@@ -13,6 +15,10 @@ export const staticRoutes: RouteObject[] = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/login-success",
+    element: <LoginSuccess />,
   },
   {
     path: "/register",
