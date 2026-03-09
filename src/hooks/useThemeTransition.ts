@@ -4,8 +4,8 @@
  */
 
 import { useCallback } from "react";
-import { getSystemTheme, useThemeStore } from "../../store/themeStore";
-import type { ThemeMode } from "../../store/themeStore";
+import { getSystemTheme, useThemeStore } from "@/store/themeStore";
+import type { ThemeMode } from "@/store/themeStore";
 
 const DURATION_MS = 500;
 const STYLE_ID_VIEW_TRANSITION = "view-transition-theme-style";

@@ -10,11 +10,7 @@ import type {
   AxiosError,
 } from "axios";
 
-import {
-  clearAuth,
-  getAccessToken,
-  setAccessToken,
-} from "../../store/userStore";
+import { clearAuth, getAccessToken, setAccessToken } from "@/store/userStore";
 import { message } from "antd";
 import i18n from "./i18n";
 

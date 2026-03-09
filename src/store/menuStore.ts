@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import type { MenuRecord } from "../src/api/permission";
+import type { MenuRecord } from "@/api/permission";
 import type { ItemType } from "antd/es/menu/interface";
-import { getIcon } from "../src/utils/renderIcon";
+import { getIcon } from "@/utils/renderIcon";
 
 // 菜单转换函数
 const transformMenuItems = (routes: MenuRecord[]): ItemType[] => {

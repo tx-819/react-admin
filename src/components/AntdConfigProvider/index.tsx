@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import {
   getEffectiveTheme,
   useThemeStore,
-} from "../../../store/themeStore";
+} from "@/store/themeStore";
 
 const antdLocaleMap = {
   zh: zhCN,

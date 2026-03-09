@@ -1,6 +1,6 @@
 import type { AuthType } from "@/api/permission";
 import { useLoaderData } from "react-router-dom";
-import { useUserStore } from "../../../store/userStore";
+import { useUserStore } from "@/store/userStore";
 
 interface AccessProps {
   children: React.ReactNode;

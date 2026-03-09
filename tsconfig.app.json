@@ -16,10 +16,11 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Path mapping */
+    /* Path mapping：与 vite.config resolve.alias 保持一致 */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "src/*": ["./src/*"]
     },
 
     /* Linting */

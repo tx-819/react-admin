@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { getUserMenus } from "../api/auth";
+import { getCurrentUser, getUserMenus } from "../api/auth";
 import buildRoutes from "./buildRoutes";
 import { createBrowserRouter } from "react-router-dom";
-import { setMenuList } from "../../store/menuStore";
+import { setMenuList } from "@/store/menuStore";
 import { staticRoutes } from "./staticRoutes";
-import { getIsLogin } from "../../store/userStore";
+import { getIsLogin, setUser } from "@/store/userStore";
 
 const useInitRouter = () => {
   const [router, setRouter] = useState<ReturnType<
@@ -20,6 +20,9 @@ const useInitRouter = () => {
         setRouter(routerInstance);
         return;
       }
+      // 刷新时拉取最新用户信息并写入 store
+      const user = await getCurrentUser();
+      setUser(user);
       // 获取当前用户有权限的菜单列表
       const userMenus = await getUserMenus();
       // 转换为路由格式

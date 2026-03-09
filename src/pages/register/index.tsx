@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form, Input, Button, message, Space } from "antd";
 import { useNavigate, Link } from "react-router-dom";
-import { register } from "../../api/auth";
+import { register } from "@/api/auth";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import SelectLang from "@/components/SelectLang";
 

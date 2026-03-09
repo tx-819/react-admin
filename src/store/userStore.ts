@@ -1,4 +1,4 @@
-import type { UserInfo } from "../src/api/auth";
+import type { UserInfo } from "@/api/auth";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 

@@ -18,7 +18,7 @@ import {
 import type { MenuProps } from "antd";
 import { useTranslation } from "react-i18next";
 import BreadcrumbNav from "./BreadcrumbNav";
-import { getUser, clearAuth } from "../../../../store/userStore";
+import { getUser, clearAuth } from "@/store/userStore";
 import type { UserInfo } from "@/api/auth";
 import SelectLang from "@/components/SelectLang";
 import ThemeSwitcher from "@/components/ThemeSwitcher";

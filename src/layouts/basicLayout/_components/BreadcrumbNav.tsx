@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router";
 import { Breadcrumb } from "antd";
-import { useMenuStore } from "../../../../store/menuStore";
+import { useMenuStore } from "@/store/menuStore";
 import { useMemo } from "react";
 import type { ItemType } from "antd/es/menu/interface";
 

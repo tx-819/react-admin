@@ -11,11 +11,11 @@ import {
     getEffectiveTheme,
     getSystemTheme,
     useThemeStore,
-} from "../../../store/themeStore";
+} from "@/store/themeStore";
 import {
     injectViewTransitionStyle,
     toggleThemeWithTransition,
-} from "../../hooks/useThemeTransition";
+} from "@/hooks/useThemeTransition";
 
 const IconStyle = "text-xl cursor-pointer text-black/80 p-2 hover:bg-black/10 rounded-md dark:text-white dark:hover:bg-white/10 transition-all duration-300";
 

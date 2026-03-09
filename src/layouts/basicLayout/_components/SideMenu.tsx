@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu } from "antd";
-import { useMenuStore } from "../../../../store/menuStore";
+import { useMenuStore } from "@/store/menuStore";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo, useState, useEffect } from "react";
 

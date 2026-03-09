@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { applyThemeFromStorage } from "../store/themeStore";
+import { applyThemeFromStorage } from "@/store/themeStore";
 import "antd/dist/reset.css";
 import "nprogress/nprogress.css";
 import "./index.css";

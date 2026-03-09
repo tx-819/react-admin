@@ -7,7 +7,7 @@ import Header from "./_components/Header";
 import {
   getEffectiveTheme,
   useThemeStore,
-} from "../../../store/themeStore";
+} from "@/store/themeStore";
 import { theme as antdTheme } from "antd";
 
 const { Sider, Content } = Layout;

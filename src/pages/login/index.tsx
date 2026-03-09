@@ -3,7 +3,7 @@ import { Form, Input, Button, message, Tabs, Space } from "antd";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { login, sendLoginLink } from "../../api/auth";
-import { setUser, setAccessToken } from "../../../store/userStore";
+import { setUser, setAccessToken } from "@/store/userStore";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import SelectLang from "@/components/SelectLang";
 

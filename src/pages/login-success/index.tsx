@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { setAccessToken } from "../../../store/userStore";
+import { setAccessToken } from "@/store/userStore";
 import { Spin } from "antd";
 
 

@@ -101,6 +101,14 @@ export const verifyToken = async (): Promise<UserInfo> => {
 };
 
 /**
+ * 获取当前登录用户信息（需携带 token，用于刷新页面时同步用户信息）
+ * @returns 用户信息
+ */
+export const getCurrentUser = async (): Promise<UserInfo> => {
+  return get<UserInfo>("/auth/me");
+};
+
+/**
  * 获取当前用户有权限的菜单列表
  * @returns 用户菜单列表（树形结构）
  */
