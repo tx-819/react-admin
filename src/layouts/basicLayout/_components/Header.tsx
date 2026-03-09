@@ -96,8 +96,10 @@ const Header = ({ collapsed, onToggle }: HeaderProps) => {
         <BreadcrumbNav />
       </div>
       <div className="flex items-center gap-2">
-        <ThemeSwitcher />
-        <SelectLang />
+        <Space>
+          <ThemeSwitcher />
+          <SelectLang />
+        </Space>
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space
             className="cursor-pointer px-2"

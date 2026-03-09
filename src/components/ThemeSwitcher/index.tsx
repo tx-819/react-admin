@@ -17,6 +17,8 @@ import {
     toggleThemeWithTransition,
 } from "../../hooks/useThemeTransition";
 
+const IconStyle = "text-xl cursor-pointer text-black/80 p-2 hover:bg-black/10 rounded-md dark:text-white dark:hover:bg-white/10 transition-all duration-300";
+
 const ThemeSwitcher = () => {
     const { t } = useTranslation();
     const { theme, setTheme } = useThemeStore();
@@ -37,8 +39,8 @@ const ThemeSwitcher = () => {
     ];
 
     const getThemeIcon = () => {
-        if (theme === "system") return <DesktopOutlined />;
-        return theme === "dark" ? <MoonOutlined /> : <SunOutlined />;
+        if (theme === "system") return <DesktopOutlined className={IconStyle} />;
+        return theme === "dark" ? <MoonOutlined className={IconStyle} /> : <SunOutlined className={IconStyle} />;
     };
 
     const handleThemeChange: MenuProps["onSelect"] = (info) => {
@@ -77,9 +79,7 @@ const ThemeSwitcher = () => {
             }}
             placement="bottomRight"
         >
-            <div className="cursor-pointer text-xl text-gray-500 dark:text-white">
-                {getThemeIcon()}
-            </div>
+            {getThemeIcon()}
         </Dropdown>
     );
 };
