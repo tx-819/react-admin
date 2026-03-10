@@ -40,44 +40,35 @@ function SearchFormInner(
 
   return (
     <div className="rounded-lg shadow-md p-4 mb-4" style={{ background: colorBgContainer }}>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-start",
-          gap: 8,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0, display: "inline-block" }}>
-          <Form form={form} layout="inline" {...formProps}>
-            <Row gutter={[16, 16]} style={{ width: "100%" }}>
-              {displayItems.map((item) => {
-                return (
-                  <Col
-                    key={Array.isArray(item.name) ? item.name.join(".") : item.name}
-                    span={item.span ?? 8}
-                  >
-                    <FormItemRenderer item={item} form={form} />
-                  </Col>
-                );
-              })}
-            </Row>
-          </Form>
+      <Form form={form} {...formProps}>
+        <Row gutter={24}>
+          {displayItems.map((item) => {
+            return (
+              <Col
+                key={Array.isArray(item.name) ? item.name.join(".") : item.name}
+                span={item.span ?? 8}
+              >
+                <FormItemRenderer item={item} form={form} />
+              </Col>
+            );
+          })}
+        </Row>
+        <div className="flex justify-end">
+          <ActionButtons
+            showSearchButton={searchOptions.showSearchButton}
+            searchText={searchOptions.searchText}
+            showResetButton={searchOptions.showResetButton}
+            resetText={searchOptions.resetText}
+            showCollapseButton={showCollapseButton}
+            collapsed={collapsed}
+            searchLoading={searchLoading}
+            onSearch={handleSearch}
+            onReset={handleReset}
+            onToggleCollapse={toggleCollapse}
+          />
         </div>
-        {/* 自定义按钮区域 */}
-        <ActionButtons
-          showSearchButton={searchOptions.showSearchButton}
-          searchText={searchOptions.searchText}
-          showResetButton={searchOptions.showResetButton}
-          resetText={searchOptions.resetText}
-          showCollapseButton={showCollapseButton}
-          collapsed={collapsed}
-          searchLoading={searchLoading}
-          onSearch={handleSearch}
-          onReset={handleReset}
-          onToggleCollapse={toggleCollapse}
-        />
-      </div>
+
+      </Form>
     </div>
   );
 }
