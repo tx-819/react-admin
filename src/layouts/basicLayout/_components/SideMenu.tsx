@@ -1,117 +1,86 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu } from "antd";
-import isEqual from "lodash/isEqual";
+import { isObject, isArray, get, isEmpty, map, omit, reduce, startsWith, trimEnd, compact, isEqual } from "lodash";
 import { setOpenKeys, useMenuStore } from "@/store/menuStore";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo, useEffect } from "react";
 
 const hasChildren = (
   item: ItemType
-): item is ItemType & { children: ItemType[] } => {
-  return (
-    item !== null &&
-    typeof item === "object" &&
-    "children" in item &&
-    Array.isArray(item.children) &&
-    item.children.length > 0
-  );
-};
+): item is ItemType & { children: ItemType[] } =>
+  isObject(item) && isArray(get(item, "children")) && !isEmpty(get(item, "children"));
 
 // children 为 null 或空数组时不渲染为 submenu
-const normalizeMenuItems = (items: ItemType[]): ItemType[] => {
-  return items.map((item) => {
-    if (!item || typeof item !== "object") return item;
-    const next = { ...item };
-    if ("children" in next) {
-      if (next.children == null || (Array.isArray(next.children) && next.children.length === 0)) {
-        delete next.children;
-      } else if (Array.isArray(next.children)) {
-        next.children = normalizeMenuItems(next.children);
-      }
-    }
-    return next;
+const normalizeMenuItems = (items: ItemType[]): ItemType[] =>
+  map(items, (item) => {
+    if (!item || !isObject(item)) return item;
+    const children = get(item, "children");
+    if (children == null || isEmpty(children)) return omit(item, "children") as ItemType;
+    return { ...item, children: normalizeMenuItems(children) };
   });
-};
 
 const getFullPath = (
   menuList: ItemType[],
   key: string,
   parentPath = ""
-): string | null => {
-  for (const item of menuList) {
-    if (!item) continue;
-
-    const itemKey = item.key?.toString() || "";
-    const currentPath = parentPath ? `${parentPath}/${itemKey}` : itemKey;
-
-    if (itemKey === key) {
-      return currentPath;
-    }
-
-    if (hasChildren(item)) {
-      const result = getFullPath(item.children, key, currentPath);
-      if (result !== null) {
-        return result;
-      }
-    }
-  }
-  return null;
-};
+): string | null =>
+  reduce(
+    menuList,
+    (acc, item) => {
+      if (acc !== null || !item) return acc;
+      const itemKey = get(item, "key", "")?.toString() || "";
+      const currentPath = parentPath ? `${parentPath}/${itemKey}` : itemKey;
+      if (itemKey === key) return currentPath;
+      if (hasChildren(item)) return getFullPath(item.children, key, currentPath);
+      return null;
+    },
+    null as string | null
+  );
 
 // 根据路径查找菜单 key 和父级 keys
+const normalizePath = (path: string) => {
+  const normalized = trimEnd(path, "/");
+  return startsWith(normalized, "/") ? normalized : `/${normalized}`;
+};
+
 const findMenuKeysByPath = (
   menuList: ItemType[],
   targetPath: string,
   parentPath = "",
   parentKeys: string[] = []
-): { selectedKey: string | null; openKeys: string[] } | null => {
-  // 规范化路径
-  const normalizePath = (path: string) => {
-    const normalized = path.replace(/\/+$/, "");
-    return normalized.startsWith("/") ? normalized : `/${normalized}`;
-  };
+): { selectedKey: string | null; openKeys: string[] } | null =>
+  reduce(
+    menuList,
+    (acc, item) => {
+      if (acc !== null || !item) return acc;
+      const itemKey = get(item, "key", "")?.toString() || "";
+      const currentPath = parentPath
+        ? `${parentPath}/${itemKey}`.replace(/\/+/g, "/")
+        : `/${itemKey}`;
+      const normalizedCurrent = normalizePath(currentPath);
+      const normalizedTarget = normalizePath(targetPath);
 
-  const normalizedTarget = normalizePath(targetPath);
-
-  for (const item of menuList) {
-    if (!item) continue;
-
-    const itemKey = item.key?.toString() || "";
-    const currentPath = parentPath
-      ? `${parentPath}/${itemKey}`.replace(/\/+/g, "/")
-      : `/${itemKey}`;
-    const normalizedCurrent = normalizePath(currentPath);
-
-    // 检查当前路径是否匹配目标路径
-    if (normalizedCurrent === normalizedTarget) {
-      return {
-        selectedKey: itemKey,
-        openKeys: parentKeys,
-      };
-    }
-
-    // 如果有子项，递归查找
-    if (hasChildren(item)) {
-      const result = findMenuKeysByPath(
-        item.children,
-        targetPath,
-        currentPath,
-        [...parentKeys, itemKey].filter(Boolean)
-      );
-      if (result !== null) {
-        return result;
+      if (normalizedCurrent === normalizedTarget) {
+        return { selectedKey: itemKey, openKeys: parentKeys };
       }
-    }
-  }
-  return null;
-};
+      if (hasChildren(item)) {
+        return findMenuKeysByPath(
+          item.children,
+          targetPath,
+          currentPath,
+          compact([...parentKeys, itemKey])
+        );
+      }
+      return null;
+    },
+    null as { selectedKey: string | null; openKeys: string[] } | null
+  );
 
 const SideMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { menuList, collapsed, selectedKey, openKeys } = useMenuStore();
-  // 根据路由路径计算选中的 key 和展开的 keys
-  // collapsed 变化时需重新计算：折叠时 Menu 会清空 openKeys，展开时需从路径恢复
+
   useEffect(() => {
     const result = findMenuKeysByPath(menuList, location.pathname);
     const newSelectedKey = result?.selectedKey ?? "";
