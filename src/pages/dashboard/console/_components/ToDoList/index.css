@@ -1,6 +1,0 @@
-.delItem {
-  visibility: hidden;
-}
-.todoItem:hover .delItem {
-  visibility: visible;
-}

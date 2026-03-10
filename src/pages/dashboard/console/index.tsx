@@ -1,140 +1,104 @@
-import { Row, Col } from "antd";
+import { Card, Row, Col, Typography, Space } from "antd";
 import {
-  UserOutlined,
-  ShoppingCartOutlined,
-  DollarOutlined,
-  RiseOutlined,
+  SmileOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  RocketOutlined,
 } from "@ant-design/icons";
-import StatisticCards from "./_components/StatisticCards";
-import RecentOrders from "./_components/RecentOrders";
-import RecentActivity from "./_components/RecentActivity";
-import SalesProgress from "./_components/SalesProgress";
-import type {
-  StatisticData,
-  ActivityItem,
-  SalesProgressItem,
-  ToDoItem,
-} from "./_components/types";
-import ToDoList from "./_components/ToDoList/ToDoList";
 import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
+import { getUser } from "@/store/userStore";
+
+dayjs.locale("zh-cn");
+
+const { Title, Text } = Typography;
+
+const getGreeting = () => {
+  const hour = dayjs().hour();
+  if (hour < 6) return "夜深了";
+  if (hour < 9) return "早上好";
+  if (hour < 12) return "上午好";
+  if (hour < 14) return "中午好";
+  if (hour < 18) return "下午好";
+  if (hour < 22) return "晚上好";
+  return "夜深了";
+};
 
 const Console = () => {
-  const [todoData, setTodoData] = useState<ToDoItem[]>([]);
+  const [currentTime, setCurrentTime] = useState(dayjs());
+  const user = getUser();
 
   useEffect(() => {
-    // 模拟获取待办数据
-    // 待办数据
-    const todoDataResponse: ToDoItem[] = [
-      {
-        id: "1",
-        task: "学node",
-        time: "上午 9:00",
-        completed: false,
-      },
-      {
-        id: "2",
-        task: "学React",
-        time: "上午 10:00",
-        completed: true,
-      },
-      {
-        id: "3",
-        task: "写组件",
-        time: "下午 2:00",
-        completed: false,
-      },
-    ];
-    setTodoData(todoDataResponse);
+    const timer = setInterval(() => setCurrentTime(dayjs()), 1000);
+    return () => clearInterval(timer);
   }, []);
-  // 统计数据
-  const statisticsData: StatisticData[] = [
-    {
-      title: "总用户数",
-      value: 11280,
-      prefix: <UserOutlined />,
-      trend: { value: 12.5, isRise: true },
-    },
-    {
-      title: "今日访问",
-      value: 3245,
-      prefix: <RiseOutlined />,
-      trend: { value: 8.2, isRise: true },
-    },
-    {
-      title: "订单总数",
-      value: 8567,
-      prefix: <ShoppingCartOutlined />,
-      trend: { value: -3.1, isRise: false },
-    },
-    {
-      title: "总收入",
-      value: 1284567,
-      prefix: <DollarOutlined />,
-      suffix: "元",
-      trend: { value: 15.8, isRise: true },
-      valueStyle: { color: "#3f8600" },
-    },
-  ];
 
-  // 最近活动数据
-  const activityData: ActivityItem[] = [
-    {
-      id: "1",
-      user: "张三",
-      action: "创建了新订单",
-      time: "2分钟前",
-    },
-    {
-      id: "2",
-      user: "李四",
-      action: "更新了个人信息",
-      time: "15分钟前",
-    },
-    {
-      id: "3",
-      user: "王五",
-      action: "完成了支付",
-      time: "1小时前",
-    },
-    {
-      id: "4",
-      user: "赵六",
-      action: "提交了反馈",
-      time: "2小时前",
-    },
-  ];
-
-  // 销售进度数据
-  const salesProgress: SalesProgressItem[] = [
-    { name: "本月目标", current: 75, target: 100, unit: "万元" },
-    { name: "季度目标", current: 180, target: 300, unit: "万元" },
-    { name: "年度目标", current: 650, target: 1200, unit: "万元" },
-  ];
+  const displayName = user?.nickname || user?.username || "访客";
 
   return (
-    <div className="space-y-6">
-      <StatisticCards data={statisticsData} />
+    <div className="space-y-8">
+      <div className="rounded-2xl bg-linear-to-br from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-600/20 dark:via-indigo-600/10 p-8 border border-blue-200/50 dark:border-blue-800/30">
+        <Space orientation="vertical" size="large" className="w-full">
+          <Space align="center" className="flex-wrap">
+            <SmileOutlined className="text-4xl text-blue-500" />
+            <div>
+              <Title level={2} className="mb-1! font-semibold!">
+                {getGreeting()}，{displayName}！
+              </Title>
+              <Text type="secondary" className="text-base">
+                欢迎回来，祝您今天工作顺利
+              </Text>
+            </div>
+          </Space>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={24}>
-          <RecentOrders />
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <RecentActivity data={activityData} />
-        </Col>
-        <Col xs={24} lg={12}>
-          <SalesProgress data={salesProgress} />
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <ToDoList data={todoData} setData={setTodoData} />
-        </Col>
-      </Row>
+          <Row gutter={[24, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <Card size="small" className="shadow-sm">
+                <Space>
+                  <CalendarOutlined className="text-xl text-blue-500" />
+                  <div>
+                    <Text type="secondary" className="text-xs">
+                      今日日期
+                    </Text>
+                    <div className="font-medium">
+                      {currentTime.format("YYYY年MM月DD日 dddd")}
+                    </div>
+                  </div>
+                </Space>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Card size="small" className="shadow-sm">
+                <Space>
+                  <ClockCircleOutlined className="text-xl text-green-500" />
+                  <div>
+                    <Text type="secondary" className="text-xs">
+                      当前时间
+                    </Text>
+                    <div className="font-medium font-mono">
+                      {currentTime.format("HH:mm:ss")}
+                    </div>
+                  </div>
+                </Space>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Card size="small" className="shadow-sm">
+                <Space>
+                  <RocketOutlined className="text-xl text-orange-500" />
+                  <div>
+                    <Text type="secondary" className="text-xs">
+                      今日宜
+                    </Text>
+                    <div className="font-medium">高效工作 · 专注创造</div>
+                  </div>
+                </Space>
+              </Card>
+            </Col>
+          </Row>
+        </Space>
+      </div>
     </div>
   );
 };

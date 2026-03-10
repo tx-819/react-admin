@@ -30,7 +30,7 @@ export const staticRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <Navigate to="/system/users" replace />,
+        element: <Navigate to="/dashboard/console" replace />,
       },
       {
         path: "*",
