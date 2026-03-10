@@ -1,8 +1,9 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu } from "antd";
-import { useMenuStore } from "@/store/menuStore";
+import isEqual from "lodash/isEqual";
+import { setOpenKeys, useMenuStore } from "@/store/menuStore";
 import type { ItemType } from "antd/es/menu/interface";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 
 const hasChildren = (
   item: ItemType
@@ -108,20 +109,24 @@ const findMenuKeysByPath = (
 const SideMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const menuList = useMenuStore((state) => state.menuList);
-
+  const { menuList, collapsed, selectedKey, openKeys } = useMenuStore();
   // 根据路由路径计算选中的 key 和展开的 keys
-  const menuKeys = useMemo(() => {
-    const result = findMenuKeysByPath(menuList, location.pathname);
-    return result || { selectedKey: null, openKeys: [] };
-  }, [menuList, location.pathname]);
-
-  // 计算合并后的 openKeys（路由需要的 + 用户手动展开的）
-  const [openKeys, setOpenKeys] = useState<string[]>(menuKeys.openKeys);
-
+  // collapsed 变化时需重新计算：折叠时 Menu 会清空 openKeys，展开时需从路径恢复
   useEffect(() => {
-    setOpenKeys(menuKeys.openKeys);
-  }, [menuKeys.openKeys]);
+    const result = findMenuKeysByPath(menuList, location.pathname);
+    const newSelectedKey = result?.selectedKey ?? "";
+    const newOpenKeys = collapsed ? [] : (result?.openKeys ?? []);
+
+    useMenuStore.setState((state) => {
+      if (
+        state.selectedKey === newSelectedKey &&
+        isEqual(state.openKeys, newOpenKeys)
+      ) {
+        return state;
+      }
+      return { selectedKey: newSelectedKey, openKeys: newOpenKeys };
+    });
+  }, [menuList, location.pathname, collapsed]);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     const fullPath = getFullPath(menuList, key);
@@ -129,6 +134,7 @@ const SideMenu = () => {
   };
 
   const handleOpenChange = (keys: string[]) => {
+    if (isEqual(openKeys, keys)) return;
     setOpenKeys(keys);
   };
 
@@ -142,7 +148,8 @@ const SideMenu = () => {
       theme="light"
       mode="inline"
       items={normalizedItems}
-      selectedKeys={menuKeys.selectedKey ? [menuKeys.selectedKey] : []}
+      inlineCollapsed={collapsed}
+      selectedKeys={selectedKey ? [selectedKey] : []}
       openKeys={openKeys}
       onOpenChange={handleOpenChange}
       onClick={handleMenuClick}

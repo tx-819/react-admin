@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { useOutlet } from "react-router-dom";
 import { Layout } from "antd";
 import SideMenu from "./_components/SideMenu";
@@ -9,11 +9,12 @@ import {
   useThemeStore,
 } from "@/store/themeStore";
 import { theme as antdTheme } from "antd";
+import { setCollapsed, useMenuStore } from "@/store/menuStore";
 
 const { Sider, Content } = Layout;
 
 const BasicLayout = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useMenuStore((state) => state.collapsed);
   const outlet = useOutlet();
   const theme = useThemeStore((s) => s.theme);
   const effectiveTheme = getEffectiveTheme(theme);

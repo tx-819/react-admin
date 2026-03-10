@@ -15,12 +15,30 @@ const transformMenuItems = (routes: MenuRecord[]): ItemType[] => {
 
 interface MenuStore {
   menuList: ItemType[];
+  collapsed: boolean;
+  openKeys: string[];
+  selectedKey: string;
+  setSelectedKey: (selectedKey: string) => void;
+  setOpenKeys: (openKeys: string[]) => void;
+  setCollapsed: (collapsed: boolean) => void;
   setMenuList: (menuList: MenuRecord[]) => void;
   getMenuList: () => ItemType[];
 }
 
 export const useMenuStore = create<MenuStore>((set, get) => ({
   menuList: [],
+  collapsed: false,
+  openKeys: [],
+  selectedKey: "",
+  setSelectedKey: (selectedKey: string) => {
+    set({ selectedKey });
+  },
+  setOpenKeys: (openKeys: string[]) => {
+    set({ openKeys });
+  },
+  setCollapsed: (collapsed: boolean) => {
+    set({ collapsed });
+  },
   setMenuList: (menuList: MenuRecord[]) => {
     const menuItems = transformMenuItems(menuList);
     set({ menuList: menuItems });
@@ -36,4 +54,12 @@ export const setMenuList = (menuList: MenuRecord[]): void => {
 
 export const getMenuList = (): ItemType[] => {
   return useMenuStore.getState().getMenuList();
+};
+
+export const setCollapsed = (collapsed: boolean): void => {
+  useMenuStore.getState().setCollapsed(collapsed);
+};
+
+export const setOpenKeys = (openKeys: string[]): void => {
+  useMenuStore.getState().setOpenKeys(openKeys);
 };
