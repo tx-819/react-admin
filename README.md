@@ -1,6 +1,8 @@
-# React Fashionable Admin
+# React Admin
 
 基于 React 19 + Vite 7 + Ant Design 6 的后台管理模板，支持动态路由、权限控制、主题切换与国际化。
+
+对应后端项目地址为 https://github.com/tx-819/nest-admin
 
 ## 技术栈
 
@@ -81,9 +83,6 @@ npm run dev
 
 # 构建
 npm run build
-
-# 预览构建产物
-npm run preview
 
 # 代码检查
 npm run lint
