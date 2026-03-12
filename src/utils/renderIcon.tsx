@@ -1,7 +1,6 @@
-import type { ReactNode, ComponentType, CSSProperties } from "react";
+import type { ReactNode, CSSProperties } from "react";
 import { createElement } from "react";
-// 使用动态导入避免 tree-shaking 问题
-import * as LucideIcons from "lucide-react";
+import { getIconComponent, getRegisteredIconNames } from "./iconRegistry";
 
 // 图标配置接口
 export interface IconProps {
@@ -12,10 +11,7 @@ export interface IconProps {
   style?: CSSProperties; // 自定义样式
 }
 
-// 创建一个图标映射缓存，避免每次都要查找
-const iconCache = new Map<string, ComponentType>();
-
-// 根据图标名称动态创建图标组件（仅支持 lucide-react）
+// 根据图标名称渲染图标组件（仅支持 iconRegistry 中注册的 lucide 图标）
 export const getIcon = (
   iconName?: string,
   props?: IconProps
@@ -23,34 +19,13 @@ export const getIcon = (
   if (!iconName) return undefined;
 
   try {
-    // 先从缓存中查找
-    let IconComponent = iconCache.get(iconName);
+    const IconComponent = getIconComponent(iconName);
 
-    // 如果缓存中没有，从 lucide-react 中查找
-    if (!IconComponent) {
-      IconComponent = (LucideIcons as unknown as Record<string, ComponentType>)[
-        iconName
-      ];
-
-      // 如果找到了，存入缓存
-      if (IconComponent) {
-        iconCache.set(iconName, IconComponent);
-      }
-    }
-
-    // 检查组件是否存在且有效
     if (!IconComponent) {
       if (import.meta.env.DEV) {
-        const lucideIcons = Object.keys(LucideIcons).filter(
-          (key) =>
-            typeof (LucideIcons as unknown as Record<string, unknown>)[key] ===
-            "function"
-        );
+        const available = getRegisteredIconNames().slice(0, 20).join(", ");
         console.warn(
-          `Icon "${iconName}" not found in lucide-react.`,
-          `Available lucide icons (first 20): ${lucideIcons
-            .slice(0, 20)
-            .join(", ")}`
+          `Icon "${iconName}" not found. Add it to iconRegistry.tsx or use one of: ${available}...`
         );
       }
       return undefined;
@@ -79,7 +54,6 @@ export const getIcon = (
       iconProps.style = props.style;
     }
 
-    // lucide 图标使用 createElement 创建，并传递属性
     return createElement(IconComponent, iconProps);
   } catch (error) {
     if (import.meta.env.DEV) {

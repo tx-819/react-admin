@@ -33,13 +33,22 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    // optimizeDeps: {
-    //   include: ["@ant-design/icons"],
-    // },
-    // build: {
-    //   commonjsOptions: {
-    //     include: [/@ant-design\/icons/, /node_modules/],
-    //   },
-    // },
+    build: {
+      target: "es2020",
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ["react", "react-dom", "react-router-dom"],
+            antd: ["antd"],
+            query: ["@tanstack/react-query"],
+          },
+          chunkFileNames: "assets/[name]-[hash].js",
+          entryFileNames: "assets/[name]-[hash].js",
+          assetFileNames: "assets/[name]-[hash][extname]",
+        },
+      },
+      chunkSizeWarningLimit: 600,
+    },
   };
 });

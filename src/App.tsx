@@ -5,9 +5,9 @@ import AntdConfigProvider from "./components/AntdConfigProvider";
 import QueryClientProvider from "./components/QueryClientProvider";
 
 function App() {
-  const { router, loading } = useInitRouter();
+  const { router } = useInitRouter();
 
-  if (loading || !router) {
+  if (!router) {
     return <FullScreenLoading />;
   }
 

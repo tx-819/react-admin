@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Menu } from "antd";
+import { Menu, Skeleton } from "antd";
 import { isObject, isArray, get, isEmpty, map, omit, reduce, startsWith, trimEnd, compact, isEqual } from "lodash";
 import { setOpenKeys, useMenuStore } from "@/store/menuStore";
 import type { ItemType } from "antd/es/menu/interface";
@@ -79,7 +79,8 @@ const findMenuKeysByPath = (
 const SideMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { menuList, collapsed, selectedKey, openKeys } = useMenuStore();
+  const { menuList, menuLoading, collapsed, selectedKey, openKeys } =
+    useMenuStore();
 
   useEffect(() => {
     const result = findMenuKeysByPath(menuList, location.pathname);
@@ -112,11 +113,38 @@ const SideMenu = () => {
     [menuList]
   );
 
+  // 菜单加载中时展示骨架项
+  const skeletonItems: ItemType[] = [
+    {
+      key: "skeleton-1",
+      label: <Skeleton.Button active size="small" block />,
+      icon: null,
+    },
+    {
+      key: "skeleton-2",
+      label: <Skeleton.Button active size="small" block />,
+      icon: null,
+    },
+    {
+      key: "skeleton-3",
+      label: <Skeleton.Button active size="small" block />,
+      icon: null,
+    },
+    {
+      key: "skeleton-4",
+      label: <Skeleton.Button active size="small" block />,
+      icon: null,
+    },
+  ];
+
+  const displayItems = menuLoading ? skeletonItems : normalizedItems;
+
   return (
     <Menu
       theme="light"
       mode="inline"
-      items={normalizedItems}
+      items={displayItems}
+      disabled={menuLoading}
       inlineCollapsed={collapsed}
       selectedKeys={selectedKey ? [selectedKey] : []}
       openKeys={openKeys}

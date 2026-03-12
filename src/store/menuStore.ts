@@ -15,6 +15,7 @@ const transformMenuItems = (routes: MenuRecord[]): ItemType[] => {
 
 interface MenuStore {
   menuList: ItemType[];
+  menuLoading: boolean;
   collapsed: boolean;
   openKeys: string[];
   selectedKey: string;
@@ -22,11 +23,13 @@ interface MenuStore {
   setOpenKeys: (openKeys: string[]) => void;
   setCollapsed: (collapsed: boolean) => void;
   setMenuList: (menuList: MenuRecord[]) => void;
+  setMenuLoading: (loading: boolean) => void;
   getMenuList: () => ItemType[];
 }
 
 export const useMenuStore = create<MenuStore>((set, get) => ({
   menuList: [],
+  menuLoading: false,
   collapsed: false,
   openKeys: [],
   selectedKey: "",
@@ -41,7 +44,10 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
   },
   setMenuList: (menuList: MenuRecord[]) => {
     const menuItems = transformMenuItems(menuList);
-    set({ menuList: menuItems });
+    set({ menuList: menuItems, menuLoading: false });
+  },
+  setMenuLoading: (loading: boolean) => {
+    set({ menuLoading: loading });
   },
   getMenuList: () => get().menuList,
 }));
@@ -58,6 +64,10 @@ export const getMenuList = (): ItemType[] => {
 
 export const setCollapsed = (collapsed: boolean): void => {
   useMenuStore.getState().setCollapsed(collapsed);
+};
+
+export const setMenuLoading = (loading: boolean): void => {
+  useMenuStore.getState().setMenuLoading(loading);
 };
 
 export const setOpenKeys = (openKeys: string[]): void => {
