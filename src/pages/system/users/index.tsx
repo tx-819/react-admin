@@ -1,5 +1,18 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Tag, Space, Button, Modal, message, Avatar, Form, Input, Select, Switch, Row, Col } from "antd";
+import {
+  Tag,
+  Space,
+  Button,
+  Modal,
+  message,
+  Avatar,
+  Form,
+  Input,
+  Select,
+  Switch,
+  Row,
+  Col,
+} from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -41,7 +54,6 @@ const Users = () => {
     loadRoles();
   }, [t]);
 
-
   // 处理删除用户
   const handleDelete = useCallback(
     (record: User) => {
@@ -64,7 +76,7 @@ const Users = () => {
         },
       });
     },
-    [t]
+    [t],
   );
 
   // 表格列定义
@@ -177,11 +189,7 @@ const Users = () => {
               title={t("users.edit")}
               width={960}
               trigger={
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<EditOutlined />}
-                >
+                <Button type="link" size="small" icon={<EditOutlined />}>
                   {t("edit")}
                 </Button>
               }
@@ -195,15 +203,17 @@ const Users = () => {
                 roleIds: record.roles?.map((r) => r.id) || [],
               }}
               onSubmit={(values, { success, error }) => {
-                updateUserApi(record.id, values).then(() => {
-                  success();
-                  // 刷新表格
-                  if (tableRef.current) {
-                    tableRef.current.refresh();
-                  }
-                }).catch(() => {
-                  error(t("users.message.updateError"));
-                });
+                updateUserApi(record.id, values)
+                  .then(() => {
+                    success();
+                    // 刷新表格
+                    if (tableRef.current) {
+                      tableRef.current.refresh();
+                    }
+                  })
+                  .catch(() => {
+                    error(t("users.message.updateError"));
+                  });
               }}
             >
               {renderForm(true)}
@@ -245,7 +255,10 @@ const Users = () => {
               },
             ]}
           >
-            <Input placeholder={t("users.placeholder.usernameWithRule")} autoComplete="off" />
+            <Input
+              placeholder={t("users.placeholder.usernameWithRule")}
+              autoComplete="off"
+            />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -261,7 +274,10 @@ const Users = () => {
               },
             ]}
           >
-            <Input placeholder={t("users.placeholder.email")} autoComplete="off" />
+            <Input
+              placeholder={t("users.placeholder.email")}
+              autoComplete="off"
+            />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -323,7 +339,7 @@ const Users = () => {
         </Col>
       </Row>
     ),
-    [t, roles]
+    [t, roles],
   );
 
   return (
@@ -337,25 +353,22 @@ const Users = () => {
             title={t("users.create")}
             width={960}
             trigger={
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-              >
+              <Button type="primary" icon={<PlusOutlined />}>
                 {t("users.create")}
               </Button>
             }
             onSubmit={(values, { success, error }) => {
-
-              createUserApi(values).then(() => {
-                success();
-                // 刷新表格
-                if (tableRef.current) {
-                  tableRef.current.refresh();
-                }
-              }).catch(() => {
-                error(t("users.message.createError"));
-              });
-
+              createUserApi(values)
+                .then(() => {
+                  success();
+                  // 刷新表格
+                  if (tableRef.current) {
+                    tableRef.current.refresh();
+                  }
+                })
+                .catch(() => {
+                  error(t("users.message.createError"));
+                });
             }}
           >
             {renderForm(false)}

@@ -61,9 +61,11 @@ export default {
   // 表格设置
   tableSettings: {
     columnSettings: "列设置",
+    refresh: "刷新",
     selectAll: "全选",
     noColumns: "暂无列配置",
     noFilterableColumns: "暂无可筛选的列",
+    density: "密度",
     size: {
       small: "紧凑",
       middle: "中等",

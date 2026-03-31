@@ -1,5 +1,6 @@
-import { Button } from "antd";
+import { Button, Popover } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 interface RefreshButtonProps {
   /** 加载状态 */
@@ -9,15 +10,18 @@ interface RefreshButtonProps {
 }
 
 const RefreshButton = ({ loading = false, onRefresh }: RefreshButtonProps) => {
+  const { t } = useTranslation();
   return (
-    <Button
-      icon={<ReloadOutlined spin={loading} />}
-      onClick={onRefresh}
-      loading={loading}
-      disabled={loading}
-    />
+    <Popover content={t("tableSettings.refresh")} trigger="hover">
+      <Button
+        icon={<ReloadOutlined spin={loading} />}
+        onClick={onRefresh}
+        loading={loading}
+        disabled={loading}
+        type="text"
+      />
+    </Popover>
   );
 };
 
 export default RefreshButton;
-

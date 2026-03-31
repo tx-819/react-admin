@@ -14,8 +14,6 @@ interface SettingsProps {
   showColumnFilter?: boolean;
   /** 加载状态 */
   loading?: boolean;
-  /** 当前表格大小 */
-  tableSize?: TableProps["size"];
   /** 表格列配置 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns?: ColumnsType<any>;
@@ -34,7 +32,6 @@ const Settings = ({
   showSizeChanger = true,
   showColumnFilter = true,
   loading = false,
-  tableSize = "middle",
   columns = [],
   visibleColumnKeys = [],
   onRefresh,
@@ -44,9 +41,7 @@ const Settings = ({
   return (
     <Space>
       {showRefresh && <RefreshButton loading={loading} onRefresh={onRefresh} />}
-      {showSizeChanger && (
-        <SizeChanger tableSize={tableSize} onSizeChange={onSizeChange} />
-      )}
+      {showSizeChanger && <SizeChanger onSizeChange={onSizeChange} />}
       {showColumnFilter && (
         <ColumnFilter
           columns={columns}

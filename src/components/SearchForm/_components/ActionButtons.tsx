@@ -48,17 +48,11 @@ const ActionButtons = ({
   }
 
   return (
-    <div style={{ flexShrink: 0 }}>
+    <div style={{ flexShrink: 0 }} className="text-right">
       <Space>
-        {showResetButton && (
-          <Button onClick={onReset}>{resetText}</Button>
-        )}
+        {showResetButton && <Button onClick={onReset}>{resetText}</Button>}
         {showSearchButton && (
-          <Button
-            type="primary"
-            onClick={onSearch}
-            loading={searchLoading}
-          >
+          <Button type="primary" onClick={onSearch} loading={searchLoading}>
             {searchText}
           </Button>
         )}
@@ -77,4 +71,3 @@ const ActionButtons = ({
 };
 
 export default ActionButtons;
-

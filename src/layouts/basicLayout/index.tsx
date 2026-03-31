@@ -1,13 +1,9 @@
-
 import { useOutlet } from "react-router-dom";
 import { Layout } from "antd";
 import SideMenu from "./_components/SideMenu";
 import RouteTransition from "./_components/RouteTransition";
 import Header from "./_components/Header";
-import {
-  getEffectiveTheme,
-  useThemeStore,
-} from "@/store/themeStore";
+import { getEffectiveTheme, useThemeStore } from "@/store/themeStore";
 import { theme as antdTheme } from "antd";
 import { setCollapsed, useMenuStore } from "@/store/menuStore";
 
@@ -48,7 +44,7 @@ const BasicLayout = () => {
           collapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
         />
-        <Content className="p-6 overflow-hidden">
+        <Content className="m-6 overflow-hidden">
           <RouteTransition>{outlet}</RouteTransition>
         </Content>
       </Layout>

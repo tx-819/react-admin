@@ -17,7 +17,7 @@ const useSearchFormOptions = (options?: SearchFormOptions) => {
       resetText: t("reset"),
       showCollapseButton: true,
       defaultCollapsed: true,
-      defaultShowItems: 3,
+      defaultShowItems: 2,
     };
 
     return {
@@ -30,4 +30,3 @@ const useSearchFormOptions = (options?: SearchFormOptions) => {
 };
 
 export default useSearchFormOptions;
-

@@ -128,7 +128,6 @@ const useTableSettings = <T = unknown>({
       showRefresh,
       showSizeChanger,
       showColumnFilter,
-      tableSize,
       visibleColumnKeys,
       columns,
       onSizeChange: (size: TableProps["size"]) => setTableSize(size),

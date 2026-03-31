@@ -2,10 +2,7 @@ import { ConfigProvider, theme as antdTheme } from "antd";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
-import {
-  getEffectiveTheme,
-  useThemeStore,
-} from "@/store/themeStore";
+import { getEffectiveTheme, useThemeStore } from "@/store/themeStore";
 import type { Locale } from "antd/es/locale";
 
 // 语言包按需加载，避免同时打包 zh + en（约节省 20-50KB）
@@ -37,6 +34,11 @@ const AntdConfigProvider = ({ children }: AntdConfigProviderProps) => {
           effectiveTheme === "dark"
             ? antdTheme.darkAlgorithm
             : antdTheme.defaultAlgorithm,
+        components: {
+          Layout: {
+            headerPadding: "calc(var(--spacing) * 6)",
+          },
+        },
       }}
       locale={antdLocale ?? undefined}
     >

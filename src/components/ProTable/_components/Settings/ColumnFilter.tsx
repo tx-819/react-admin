@@ -1,4 +1,4 @@
-import { Button, Dropdown, Checkbox } from "antd";
+import { Button, Dropdown, Checkbox, Popover } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -64,7 +64,7 @@ const ColumnFilter = ({
 
     // 获取所有可筛选的列（有 dataIndex 或 key 的列）
     const filterableColumns = columns.filter(
-      (col) => getColumnIdentifier(col) !== null
+      (col) => getColumnIdentifier(col) !== null,
     );
 
     if (filterableColumns.length === 0) {
@@ -145,9 +145,9 @@ const ColumnFilter = ({
       placement="bottomRight"
       trigger={["click"]}
     >
-      <Button icon={<SettingOutlined />}>
-        {t("tableSettings.columnSettings")}
-      </Button>
+      <Popover content={t("tableSettings.columnSettings")} trigger="hover">
+        <Button icon={<SettingOutlined />} type="text"></Button>
+      </Popover>
     </Dropdown>
   );
 };

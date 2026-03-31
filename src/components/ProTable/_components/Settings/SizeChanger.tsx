@@ -1,4 +1,4 @@
-import { Button, Dropdown } from "antd";
+import { Button, Dropdown, Popover } from "antd";
 import { ColumnHeightOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { useTranslation } from "react-i18next";
@@ -11,10 +11,7 @@ interface SizeChangerProps {
   onSizeChange?: (size: TableProps["size"]) => void;
 }
 
-const SizeChanger = ({
-  tableSize = "middle",
-  onSizeChange,
-}: SizeChangerProps) => {
+const SizeChanger = ({ onSizeChange }: SizeChangerProps) => {
   const { t } = useTranslation();
 
   // 表格大小菜单项
@@ -37,10 +34,13 @@ const SizeChanger = ({
   ];
 
   return (
-    <Dropdown menu={{ items: sizeMenuItems }} placement="bottomRight">
-      <Button icon={<ColumnHeightOutlined />}>
-        {t(`tableSettings.size.${tableSize}`)}
-      </Button>
+    <Dropdown
+      menu={{ items: sizeMenuItems, selectable: true }}
+      trigger={["click"]}
+    >
+      <Popover content={t("tableSettings.density")} trigger="hover">
+        <Button icon={<ColumnHeightOutlined />} type="text" />
+      </Popover>
     </Dropdown>
   );
 };

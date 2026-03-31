@@ -22,8 +22,6 @@ export type SearchFormItemType =
 export interface SearchFormItemConfig extends FormItemProps {
   /** 表单项类型 */
   type?: SearchFormItemType;
-  /** 表单项宽度（栅格布局） */
-  span?: number;
   /** 输入组件额外属性 */
   fieldProps?: Record<string, unknown>;
   /** 自定义渲染函数 */
@@ -53,8 +51,10 @@ export interface SearchFormOptions {
 }
 
 /** SearchForm 属性 */
-export interface SearchFormProps
-  extends Omit<FormProps, "layout" | "onFinish"> {
+export interface SearchFormProps extends Omit<
+  FormProps,
+  "layout" | "onFinish"
+> {
   /** 表单项配置数组 */
   items: SearchFormItemConfig[];
   /** 搜索表单选项配置 */
