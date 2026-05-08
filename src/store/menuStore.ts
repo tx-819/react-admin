@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { MenuRecord } from "@/api/permission";
 import type { ItemType } from "antd/es/menu/interface";
+import { collectNormalizedMenuPaths } from "@/utils/menuPaths";
 import { getIcon } from "@/utils/renderIcon";
 
 // 菜单转换函数
@@ -15,6 +16,7 @@ const transformMenuItems = (routes: MenuRecord[]): ItemType[] => {
 
 interface MenuStore {
   menuList: ItemType[];
+  allowedPathnames: string[];
   menuLoading: boolean;
   collapsed: boolean;
   openKeys: string[];
@@ -29,6 +31,7 @@ interface MenuStore {
 
 export const useMenuStore = create<MenuStore>((set, get) => ({
   menuList: [],
+  allowedPathnames: [],
   menuLoading: false,
   collapsed: false,
   openKeys: [],
@@ -44,7 +47,8 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
   },
   setMenuList: (menuList: MenuRecord[]) => {
     const menuItems = transformMenuItems(menuList);
-    set({ menuList: menuItems, menuLoading: false });
+    const allowedPathnames = collectNormalizedMenuPaths(menuList);
+    set({ menuList: menuItems, allowedPathnames, menuLoading: false });
   },
   setMenuLoading: (loading: boolean) => {
     set({ menuLoading: loading });
