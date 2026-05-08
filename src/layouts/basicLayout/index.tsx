@@ -1,7 +1,6 @@
 import { Layout } from "antd";
 import SideMenu from "./_components/SideMenu";
 import MenuRouteGuard from "./_components/MenuRouteGuard";
-import RouteTransition from "./_components/RouteTransition";
 import Header from "./_components/Header";
 import { getEffectiveTheme, useThemeStore } from "@/store/themeStore";
 import { theme as antdTheme } from "antd";
@@ -44,7 +43,7 @@ const BasicLayout = () => {
           onToggle={() => setCollapsed(!collapsed)}
         />
         <Content className="m-6 overflow-hidden">
-          <RouteTransition><MenuRouteGuard /></RouteTransition>
+          <MenuRouteGuard />
         </Content>
       </Layout>
     </Layout>
