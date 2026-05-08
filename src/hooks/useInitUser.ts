@@ -29,6 +29,7 @@ const useInitUser = () => {
       .catch((err) => {
         if (cancelled) return;
         console.error(err);
+        setMenuList([]);
       });
     return () => {
       cancelled = true;

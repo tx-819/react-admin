@@ -1,5 +1,6 @@
 import type { UserInfo } from "@/api/auth";
 import type { AuthAction } from "@/api/permission";
+import { setMenuList } from "./menuStore";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -68,4 +69,5 @@ export const getIsLogin = (): boolean => {
  */
 export const clearAuth = (): void => {
   useUserStore.setState({ ...initialState });
+  setMenuList([]);
 };
