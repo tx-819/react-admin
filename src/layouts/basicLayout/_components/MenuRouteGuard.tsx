@@ -1,18 +1,13 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { useLocation, useOutlet } from "react-router-dom";
 import { useUserStore } from "@/store/userStore";
 import { useMenuStore } from "@/store/menuStore";
 import { normalizeMenuPath } from "@/utils/menuPaths";
 import Forbidden403 from "@/components/Forbidden403";
 import RouteTransition from "./RouteTransition";
 
-/** Outlet must sit inside RouteTransition so AnimatePresence exits the previous page, not a stable wrapper. */
 const AnimatedOutlet = () => {
-  const { pathname } = useLocation();
-  return (
-    <RouteTransition>
-      <Outlet key={pathname} />
-    </RouteTransition>
-  );
+  const outlet = useOutlet();
+  return <RouteTransition>{outlet}</RouteTransition>;
 };
 
 const MenuRouteGuard = () => {
