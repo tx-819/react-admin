@@ -3,14 +3,18 @@ import { get, post, put, del } from "../utils/request";
 // 权限类型
 export type PermissionType = "menu" | "action";
 
-export interface MenuRecord extends Omit<Permission, "children"> {
+export interface MenuRecord extends Omit<Permission, "code"> {
   children?: MenuRecord[];
-  authList?: AuthType[];
 }
 
-export interface AuthType {
+export interface ActionItem {
   name: string;
   code: string;
+}
+
+export interface AuthAction {
+  pathname: string;
+  actions: ActionItem[];
 }
 
 /**

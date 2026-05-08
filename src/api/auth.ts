@@ -3,7 +3,7 @@
  */
 
 import { post, get } from "../utils/request";
-import type { MenuRecord } from "./permission";
+import type { AuthAction, MenuRecord } from "./permission";
 /**
  * 用户信息
  */
@@ -114,6 +114,14 @@ export const getCurrentUser = async (): Promise<UserInfo> => {
  */
 export const getUserMenus = async (): Promise<MenuRecord[]> => {
   return get<MenuRecord[]>("/auth/menus");
+};
+
+/**
+ * 获取当前用户有权限的操作列表
+ * @returns 用户操作权限列表
+ */
+export const getAuthActions = async (): Promise<AuthAction[]> => {
+  return get<AuthAction[]>("/auth/actions");
 };
 
 /* ==================== 邮箱链接登录 ==================== */

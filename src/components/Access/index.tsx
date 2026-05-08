@@ -1,5 +1,4 @@
-import type { AuthType } from "@/api/permission";
-import { useLoaderData } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useUserStore } from "@/store/userStore";
 
 interface AccessProps {
@@ -9,11 +8,13 @@ interface AccessProps {
 
 const Access = (props: AccessProps) => {
   const { children, code } = props;
-  const user = useUserStore();
-  const loaderData = useLoaderData<{ authList: AuthType[] }>();
-  const authList = loaderData?.authList ?? [];
-  const hasAccess = authList?.map((item) => item.code === code);
-  if (user.isSuper) {
+  const { pathname } = useLocation();
+  const isSuper = useUserStore((s) => s.isSuper);
+  const authActions = useUserStore((s) => s.authActions);
+  const entry = authActions.find((item) => item.pathname === pathname);
+  const hasAccess = entry?.actions.some((a) => a.code === code) ?? false;
+
+  if (isSuper) {
     return children;
   }
   if (!hasAccess) {

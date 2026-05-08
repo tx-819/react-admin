@@ -1,4 +1,5 @@
 import type { UserInfo } from "@/api/auth";
+import type { AuthAction } from "@/api/permission";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -6,6 +7,8 @@ interface userStore extends UserInfo {
   token?: string;
   isLogin: boolean;
   setUser: (user: UserInfo | null) => void;
+  authActions: AuthAction[];
+  setAuthActions: (authActions: AuthAction[]) => void;
 }
 
 const initialState = {
@@ -16,6 +19,7 @@ const initialState = {
   isSuper: false,
   token: "",
   isLogin: false,
+  authActions: [],
 };
 
 export const useUserStore = create<userStore>()(
@@ -24,6 +28,9 @@ export const useUserStore = create<userStore>()(
       ...initialState,
       setUser: (user: UserInfo | null) => {
         set({ ...user });
+      },
+      setAuthActions: (authActions: AuthAction[]) => {
+        set({ authActions });
       },
     }),
     { name: "user-storage" },
@@ -49,7 +56,7 @@ export const setAccessToken = (token: string): void => {
 };
 
 export const removeAccessToken = (): void => {
-  useUserStore.setState({ token: "", isLogin: false });
+  useUserStore.setState({ token: "", isLogin: false, authActions: [] });
 };
 
 export const getIsLogin = (): boolean => {
