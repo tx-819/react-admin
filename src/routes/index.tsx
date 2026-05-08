@@ -1,1 +1,1 @@
-export { default as useInitRouter } from "./useInitRouter";
+export { default as useInitRouter } from "./_hooks/useInitRouter";
