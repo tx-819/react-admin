@@ -8,24 +8,44 @@ export function normalizeMenuPath(path: string): string {
   return withSlash.replace(/\/+$/, "") || "/";
 }
 
-/** DFS collect of every node's path in menu tree; normalize and dedupe (stable unique). */
+/**
+ * Join parent full path with a menu segment (same idea as SideMenu: parent + "/" + key).
+ * Absolute `segment` (leading `/`) is treated as a full path and ignores `parentFull`.
+ */
+export function joinToFullMenuPath(parentFull: string, segment: string): string {
+  const s = segment.trim();
+  if (!s) return parentFull;
+  if (s.startsWith("/")) {
+    return normalizeMenuPath(s);
+  }
+  if (!parentFull) {
+    return normalizeMenuPath(`/${s}`);
+  }
+  return normalizeMenuPath(`${parentFull}/${s}`.replace(/\/+/g, "/"));
+}
+
+/**
+ * DFS collect of every node's **full** path (parent + child segments), normalize and dedupe.
+ * Matches how the sidebar resolves `location.pathname` for nested menus.
+ */
 export function collectNormalizedMenuPaths(menus: MenuRecord[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
 
-  const walk = (nodes: MenuRecord[]) => {
+  const walk = (nodes: MenuRecord[], parentFull: string) => {
     for (const n of nodes) {
+      let fullForChildren = parentFull;
       if (n.path) {
-        const p = normalizeMenuPath(n.path);
-        if (!seen.has(p)) {
-          seen.add(p);
-          out.push(p);
+        fullForChildren = joinToFullMenuPath(parentFull, n.path);
+        if (!seen.has(fullForChildren)) {
+          seen.add(fullForChildren);
+          out.push(fullForChildren);
         }
       }
-      if (n.children?.length) walk(n.children);
+      if (n.children?.length) walk(n.children, fullForChildren);
     }
   };
 
-  walk(menus);
+  walk(menus, "");
   return out;
 }
