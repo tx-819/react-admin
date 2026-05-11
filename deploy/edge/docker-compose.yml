@@ -1,0 +1,30 @@
+# Edge 栈：服务器上所有项目共用的"前台"。在服务器上拷到 ~/edge/ 启动一次即可。
+# 通过监听 docker 事件，自动收集各项目容器上的 caddy.* labels 生成路由与 TLS 配置。
+# 新增项目无需改动这里——只要项目容器贴上 caddy labels 并接入 edge 网络。
+services:
+  caddy:
+    image: lucaslorentz/caddy-docker-proxy:ci-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # 只扫描 edge 网络上的容器作为上游，避免误抓到无关容器
+      CADDY_INGRESS_NETWORKS: edge
+      # 让基础 Caddyfile（全局选项）与 labels 合并生效
+      CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    restart: unless-stopped
+
+networks:
+  edge:
+    name: edge
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,8 +1,21 @@
-# ECS / 服务器上使用：与 workflow 写入的 .env 配合（DOCKER_IMAGE）
-# 首次部署前在服务器创建目录，workflow 会 scp 本文件并 ssh 执行 pull/up。
+# 服务器侧 compose：与 workflow 写入的 .env 配合（DOCKER_IMAGE、SSL_DOMAIN）
+# 本服务不绑定宿主机端口；由 ~/edge/ 里的 caddy-docker-proxy 通过下方 labels 自动接管路由与 TLS。
+# SSL_DOMAIN 用于设置 caddy 的站点地址；留空则该项目对外不可达（仅用于内网调试）。
 services:
   web:
     image: ${DOCKER_IMAGE}
-    ports:
-      - "${HTTP_PORT:-80}:80"
+    container_name: react-admin
+    expose:
+      - "80"
+    labels:
+      caddy: ${SSL_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 80}}"
+      caddy.encode: gzip
+    networks:
+      - edge
     restart: unless-stopped
+
+networks:
+  edge:
+    external: true
+    name: edge
