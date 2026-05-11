@@ -7,6 +7,11 @@ services:
     container_name: react-admin
     expose:
       - "80"
+    environment:
+      # 后端 API 上游地址，由 nginx 反向代理使用。
+      # 形如 http://<后端容器名>:<端口>，例如 http://backend:8000
+      # 后端容器需要同样加入 edge 网络才能用容器名互通。
+      BACKEND_UPSTREAM: ${BACKEND_UPSTREAM}
     labels:
       caddy: ${SSL_DOMAIN}
       caddy.reverse_proxy: "{{upstreams 80}}"

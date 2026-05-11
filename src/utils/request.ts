@@ -15,9 +15,10 @@ import { message } from "antd";
 import i18n from "./i18n";
 
 // Base URL
-const BASE_URL = import.meta.env.PROD
-  ? import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
-  : "/api";
+// 生产 & 开发都默认走 `/api`，由各自的反向代理（nginx / vite dev server）转发到真正后端。
+// 这样：1) 同源，无 CORS；2) 后端地址不会暴露在前端 bundle 里；3) 切环境只改部署侧配置。
+// 仍允许通过 VITE_API_BASE_URL 在构建时强制指向某个完整地址（一般用于本地连远端联调）。
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 /**
  * 通用响应格式

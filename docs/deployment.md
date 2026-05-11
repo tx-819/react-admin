@@ -14,9 +14,12 @@ flowchart LR
   User[浏览器] -->|HTTPS| Edge[edge / caddy-docker-proxy]
   Edge -->|edge 网络| Web[react-admin / web]
   Web --> Nginx[容器内 nginx 静态站点]
+  Nginx -->|/api/* 反向代理| Backend[后端 API 容器]
   GHA[GitHub Actions] -->|构建并推送镜像| Hub[Docker Hub]
   GHA -->|scp compose + ssh pull/up| Server[服务器]
 ```
+
+前端所有 API 请求都走同源的 `/api/*`，由容器内 nginx 反向代理到后端容器，前端 bundle 中不暴露后端地址。
 
 触发方式：
 
@@ -97,8 +100,15 @@ Edge 使用镜像 `lucaslorentz/caddy-docker-proxy:ci-alpine`。它会读取业�
 | `SSH_PRIVATE_KEY`    | 是       | 与服务器 `authorized_keys` 匹配的私钥全文               |
 | `DEPLOY_PATH`        | 是       | 本项目在服务器上的目录，例如 `/home/deploy/react-admin` |
 | `SSL_DOMAIN`         | 是       | 对外访问域名，只填主机名，例如 `admin.example.com`      |
+| `BACKEND_UPSTREAM`   | 是       | 后端 API 上游地址，nginx 反向代理目标，例如 `http://backend:8000` |
 
 `SSL_DOMAIN` 不要包含 `https://`、端口或路径。该值会写入服务器 `.env`，并映射到容器标签 `caddy: ${SSL_DOMAIN}`。
+
+`BACKEND_UPSTREAM` 必须包含协议（`http://` 或 `https://`），不要带尾部斜杠。前端容器内 nginx 会把 `/api/<path>` 重写为 `<path>` 后转发到该地址（与开发环境 Vite proxy 行为保持一致）。
+
+- 后端是另一个 Docker 容器并已加入 `edge` 网络：`http://<容器名>:<端口>`，例如 `http://backend:8000`
+- 后端是同台机器上的另一个进程（监听宿主机端口）：`http://host.docker.internal:<端口>`，并在 `docker-compose.yml` 的 `web` 服务下加 `extra_hosts: ["host.docker.internal:host-gateway"]`
+- 后端是外部服务：`https://api.example.com`
 
 ## 首次部署本项目
 
@@ -126,6 +136,7 @@ Workflow 会依次执行：
 ```env
 DOCKER_IMAGE=<dockerhub-username>/react-admin:<git-sha>
 SSL_DOMAIN=admin.tangyinxuan.top
+BACKEND_UPSTREAM=http://backend:8000
 ```
 
 ### 3. 验证
@@ -150,14 +161,38 @@ docker compose logs --tail 100 caddy
 docker build -t react-admin:local .
 ```
 
+## API 反向代理
+
+前端所有请求统一走同源 `/api/*`，由容器内 nginx 反向代理到 `BACKEND_UPSTREAM`：
+
+```text
+浏览器  https://admin.example.com/api/users
+   ↓ HTTPS
+Caddy（edge）-> web 容器 nginx
+   ↓ /api/users 重写为 /users
+后端容器 http://backend:8000/users
+```
+
+要点：
+
+- nginx 模板位于 `nginx/default.conf.template`，容器启动时由官方镜像的 entrypoint 通过 envsubst 替换 `${BACKEND_UPSTREAM}` 生成实际配置。
+- 使用 Docker 内置 DNS（`127.0.0.11`）解析容器名，后端容器重启换 IP 也能自动恢复，无需重启前端容器。
+- 已设置 `Host`、`X-Real-IP`、`X-Forwarded-For`、`X-Forwarded-Proto` 等转发头，后端可正常拿到原始客户端信息与协议。
+- 已开启 `Upgrade` 头转发，兼容 WebSocket / SSE。
+- 已关闭 `proxy_buffering` 并将超时调至 300s，适合长连接与流式响应。
+
+修改后端地址只需更新 GitHub Secret `BACKEND_UPSTREAM` 并重跑 workflow，无需重新构建镜像。
+
 ## 构建时环境变量
 
-若生产环境需要注入 `VITE_API_BASE_URL` 等 Vite 变量，需同时修改：
+正常情况下前端不需要 `VITE_API_BASE_URL`，所有 API 走同源 `/api`。
+
+若有特殊场景需要让构建产物直连某个绝对地址（例如本地开发连远端联调，绕开 nginx 代理），可在构建时注入：
 
 - `Dockerfile` 中对应的 `ARG` / `ENV`
 - `.github/workflows/deploy.yml` 的 `build-push-action` 步骤，补充 `build-args`
 
-未注入时，前端使用代码中的默认值。
+未注入时，前端使用代码中的默认值（`/api`，同源走 nginx 代理）。
 
 ## 接入更多项目
 
@@ -197,10 +232,11 @@ docker build -t react-admin:local .
 
 ## 相关文件
 
-| 路径                           | 作用                      |
-| ------------------------------ | ------------------------- |
-| `.github/workflows/deploy.yml` | 构建、推送、部署 workflow |
-| `docker-compose.yml`           | 服务器业务栈定义          |
-| `Dockerfile`                   | 前端构建与运行时镜像      |
-| `deploy/edge/`                 | Edge 栈一次性部署模板     |
-| `deploy/edge/README.md`        | Edge 栈补充说明           |
+| 路径                             | 作用                                    |
+| -------------------------------- | --------------------------------------- |
+| `.github/workflows/deploy.yml`   | 构建、推送、部署 workflow               |
+| `docker-compose.yml`             | 服务器业务栈定义                        |
+| `Dockerfile`                     | 前端构建与运行时镜像                    |
+| `nginx/default.conf.template`    | 容器内 nginx 模板（含 `/api` 反向代理） |
+| `deploy/edge/`                   | Edge 栈一次性部署模板                   |
+| `deploy/edge/README.md`          | Edge 栈补充说明                         |

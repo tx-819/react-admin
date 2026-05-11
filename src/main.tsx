@@ -18,15 +18,18 @@ if (getIsLogin()) {
 }
 
 // 预连接 API 域名，加速首屏请求
-const apiOrigin =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-try {
-  const link = document.createElement("link");
-  link.rel = "preconnect";
-  link.href = new URL(apiOrigin).origin;
-  document.head.appendChild(link);
-} catch {
-  // 无效 URL 时忽略
+// 仅当 VITE_API_BASE_URL 是绝对 URL（跨域）时才需要 preconnect；
+// 默认走同源 /api 反向代理，无需 preconnect。
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+if (apiBaseUrl && /^https?:\/\//i.test(apiBaseUrl)) {
+  try {
+    const link = document.createElement("link");
+    link.rel = "preconnect";
+    link.href = new URL(apiBaseUrl).origin;
+    document.head.appendChild(link);
+  } catch {
+    // 无效 URL 时忽略
+  }
 }
 
 createRoot(document.getElementById("root")!).render(
