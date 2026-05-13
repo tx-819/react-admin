@@ -115,7 +115,7 @@ Let’s Encrypt 在证书临近到期时才会真正续签；`certbot renew` 会
 
 ### 一键写入 cron（推荐）
 
-若你曾用旧路径（例如 **`/opt/edge/renew-cert.sh`**）写过 crontab，升级本目录后请改为 **`/opt/edge/scripts/renew-cert.sh`**，或重新执行一次 **`install-auto-renew-cron.sh --install`**（会先检测是否已存在同路径条目）。
+若你曾用旧路径（例如 **`/opt/edge/renew-cert.sh`**）写过 crontab，升级本目录后请改为 **`/opt/edge/scripts/renew-cert.sh`**，或重新执行一次 **`scripts/install-auto-renew-cron.sh --install`**（会先检测是否已存在同路径条目）。
 
 在 edge 目录执行（**用跑 `docker compose` 的同一 Linux 用户**，且该用户已在 **`docker` 组**内）：
 
