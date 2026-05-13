@@ -142,9 +142,46 @@ sh ./scripts/install-auto-renew-cron.sh
 
 ## 档 B：同一宿主机多站点
 
-1. 在 **`nginx/conf.d/`** 新增 **`other-site.conf`**：新的 **`server_name`** 与 **`proxy_pass http://其他容器:端口;`**。
-2. 为新域名执行 **`certbot certonly -d 其他域名 ...`**（或规划 **SAN** 证书并在 nginx 中同步 **`server_name`**）。
-3. **`nginx -t`** 后 **`nginx -s reload`**。
+前提：新业务容器已加入 **`edge`** 网络，并有稳定 **`container_name`**（或你能在 `proxy_pass` 里写对的容器名）；边缘仍只有这一套 **`edge-nginx`**，多站点 = 多个 **`server` 块**（通常 **一域名一个 `.conf` 文件**）。
+
+### 1. DNS
+
+新域名 **A/AAAA** 指向本机（与第一台站相同公网 IP）。
+
+### 2. Nginx：新增站点配置
+
+在 **`nginx/conf.d/`** 新建例如 **`other-site.conf`**（文件名随意，以 **`.conf`** 结尾即可被加载）。
+
+- **仅 HTTP、尚未有证书时**（便于先 `certonly`）：参考现有 **`react-admin.conf`**——`listen 80`、`server_name 新域名`、`/.well-known/acme-challenge/` 用 **`root /var/www/certbot`**，`location /` **`proxy_pass http://上游容器名:端口;`**，并带上与现网一致的 **`proxy_set_header`**（含 **`Upgrade` / `Connection`**）。
+- **已有证书、要 HTTPS**：可复制 **`react-admin.conf.https.example`** 的结构改两份：把 **`server_name`**、**`ssl_certificate` 路径**（`live/<域名>/`）改成新域名；**80** 上保留 ACME 路径 + 其余跳 **HTTPS**；**443** 上 **`proxy_pass`** 指向新业务容器。
+
+若 **`edge-nginx` 启动时上游容器还不存在**，为避免解析失败导致 nginx 起不来，可用 **`resolver 127.0.0.11`** + **变量** `proxy_pass`（与仓库内应用 nginx 反代后端写法相同）。
+
+### 3. 证书
+
+**每域名一张证书（最常见）：**
+
+```bash
+cd /opt/edge
+docker compose run --rm certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d "新域名" \
+  --email "你的邮箱" \
+  --agree-tos --non-interactive
+```
+
+**一张证书覆盖多个域名（SAN）**：`certbot` 多次 **`-d`**；nginx 里 **`server_name`** 与证书 SAN 一致。
+
+### 4. 重载
+
+```bash
+docker compose exec nginx nginx -t
+docker compose exec nginx nginx -s reload
+```
+
+### 5. 自动续期
+
+现有 **`scripts/renew-cert.sh`** 会 **`certbot renew`** 卷内**所有**证书，一般**无需**为每个新站点单独加 cron；仍建议偶发执行 **`sh ./scripts/renew-cert.sh --dry-run`** 做演练。
 
 ## 排障
 
