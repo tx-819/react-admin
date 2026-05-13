@@ -1,74 +1,111 @@
-# Edge 反向代理栈
+# Edge 反向代理栈（nginx + certbot）
 
-服务器上所有项目共用的"前台"。**一次性部署，永远在跑**，新增/升级业务项目无需改动这里。
+服务器上所有项目共用的「前台」：**在宿主机监听 80/443**，终止 TLS，并将流量反代到接入 **`edge`** 网络的各业务容器（例如 **`react-admin:80`**）。
 
-底层用 [caddy-docker-proxy](https://github.com/lucaslorentz/caddy-docker-proxy)：监听 docker 事件，按容器的 `caddy.*` labels 自动生成 Caddy 路由与 TLS 配置。
+与旧版 **caddy-docker-proxy** 的差异：路由与证书 **不再** 通过 Docker labels 自动生成，须在 **`nginx/conf.d/`** 内 **显式维护** `server` 配置；每新增一个对外域名，通常新增一份 conf（档 B）并执行一次 **certbot**。
 
-## 首次设置（服务器执行一次）
+## 前置条件
+
+- 域名 **A 记录**（或 AAAA）指向本机公网 IP。
+- 本机 **80、443** 未被其他进程占用；若曾运行旧 Caddy edge，需先 **`docker compose down`** 释放端口。
+- 业务容器与 **`edge-nginx`** 在同一 Docker 网络 **`edge`** 上，且业务 **`expose`** 了 nginx 要访问的端口（一般为 **80**）。
+
+## 首次部署（顺序重要）
+
+### 1. 拷贝到服务器
+
+将本目录拷到服务器，例如 `~/edge`。
+
+### 2. 准备环境变量（可选）
 
 ```bash
-# 1. 把本目录拷到服务器
-scp -r deploy/edge user@server:~/edge
+cp .env.example .env
+# 编辑 .env：EDGE_DOMAIN、CERTBOT_EMAIL 等；nginx 配置中的 server_name 须与 EDGE_DOMAIN 一致
+```
 
-# 2. SSH 上去，编辑 Caddyfile 把 email 改成你自己的邮箱
-ssh user@server
+### 3. 启动 edge 栈（创建 `edge` 网络并启动 nginx）
+
+```bash
 cd ~/edge
-vi Caddyfile
-
-# 3. 启动 edge 栈
 docker compose up -d
-
-# 4. 验证：edge 网络已创建、容器在运行
-docker network ls | grep edge
+docker network ls | grep '\bedge\b'
 docker compose ps
 ```
 
-## 接入新项目
+说明：**`certbot` 服务**在 `docker compose up -d` 后可能显示为 **Exited**，且 **`restart: "no"`**，这是预期现象；日常请使用 **`docker compose run --rm certbot`**。
 
-业务项目侧 `docker-compose.yml` 模板（参考本仓库 react-admin 的 compose）：
+### 4. 启动业务项目
 
-```yaml
-services:
-  web:
-    image: <your-image>
-    container_name: <project-name>
-    expose:
-      - "<container-port>"
-    labels:
-      caddy: ${SSL_DOMAIN}                       # 该项目对外的域名
-      caddy.reverse_proxy: "{{upstreams <container-port>}}"
-      caddy.encode: gzip
-    networks:
-      - edge
-    restart: unless-stopped
-
-networks:
-  edge:
-    external: true
-    name: edge
-```
-
-部署该项目后，edge 容器会自动发现它、签发证书、配置路由。**几秒后** `https://${SSL_DOMAIN}` 即可访问，全程不用 SSH 改任何配置文件。
-
-## 排查
+在业务仓库目录（已配置 **`networks.edge.external: true`**）：
 
 ```bash
-# edge 当前生成的 Caddy 配置（动态合并 labels 之后）
-docker compose exec caddy cat /config/caddy/autosave.json | jq
-
-# 实时日志（看证书签发情况）
-docker compose logs -f caddy
-
-# 手动重新加载（极少需要，labels 变更会自动触发）
-docker compose exec caddy caddy reload --config /config/caddy/Caddyfile
-```
-
-## 升级 Caddy
-
-```bash
-cd ~/edge
-docker compose pull
 docker compose up -d
 ```
 
-证书数据存放在名为 `edge_caddy_data` 的 docker volume 里，重启/升级不会丢。
+确认业务容器名（如 **`react-admin`**）与 **`nginx/conf.d/react-admin.conf`** 中的 **`proxy_pass`** 一致。
+
+### 5. 首次申请证书（HTTP-01 + webroot）
+
+确保 **`nginx/conf.d/react-admin.conf`** 仍为 **仅监听 80** 的版本（含 **`/.well-known/acme-challenge/`**）。
+
+```bash
+cd ~/edge
+docker compose run --rm certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d "你的域名" \
+  --email "你的邮箱" \
+  --agree-tos --non-interactive
+```
+
+成功后，卷 **`certbot_conf`** 内会出现 **`/etc/letsencrypt/live/你的域名/`**。
+
+### 6. 启用 HTTPS
+
+按实现计划 **任务 6**，将 **`nginx/conf.d/react-admin.conf`** 全文替换为 **含 443 与 301** 的最终版本（`ssl_certificate` 路径中的目录名须与上一步 **`-d`** 的主名一致）。
+
+```bash
+docker compose exec nginx nginx -t
+docker compose exec nginx nginx -s reload
+```
+
+### 7. 验证
+
+```bash
+curl -I "http://你的域名/"
+curl -I "https://你的域名/"
+```
+
+浏览器打开站点，测试 SPA 子路由刷新与 **`/api/`** 接口。
+
+## 续期
+
+```bash
+cd ~/edge
+docker compose run --rm certbot renew
+docker compose exec nginx nginx -s reload
+```
+
+演练：
+
+```bash
+docker compose run --rm certbot renew --dry-run
+```
+
+## 档 B：同一宿主机多站点
+
+1. 在 **`nginx/conf.d/`** 新增 **`other-site.conf`**：新的 **`server_name`** 与 **`proxy_pass http://其他容器:端口;`**。
+2. 为新域名执行 **`certbot certonly -d 其他域名 ...`**（或规划 **SAN** 证书并在 nginx 中同步 **`server_name`**）。
+3. **`nginx -t`** 后 **`nginx -s reload`**。
+
+## 排障
+
+```bash
+docker compose logs nginx
+docker compose exec nginx nginx -t
+```
+
+查看当前加载的配置文件目录：`./nginx/conf.d`（挂载为容器内 **`/etc/nginx/conf.d`**）。
+
+## 回滚
+
+停止本栈、恢复旧 **Caddy / caddy-docker-proxy** 的 compose 与数据卷（若仍保留备份）。业务侧若临时恢复 **`caddy.*` labels** 需自行与旧栈对齐，不在本仓库规格范围内。
