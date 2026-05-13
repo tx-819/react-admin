@@ -14,7 +14,7 @@
 
 ### 1. 拷贝到服务器
 
-将本目录拷到服务器，例如 `~/edge`。
+将本目录拷到服务器，例如 `/opt/edge`。
 
 ### 2. 准备环境变量
 
@@ -27,7 +27,7 @@ cp .env.example .env
 ### 3. 启动 edge 栈（创建 `edge` 网络并启动 nginx）
 
 ```bash
-cd ~/edge
+cd /opt/edge
 docker compose up -d
 docker network ls | grep '\bedge\b'
 docker compose ps
@@ -50,11 +50,11 @@ docker compose up -d
 确保 **`nginx/conf.d/react-admin.conf`** 仍为 **仅监听 80** 的版本（含 **`/.well-known/acme-challenge/`**）。
 
 ```bash
-cd ~/edge
 sh ./setup-https.sh
 ```
 
 脚本会自动读取 `.env` 里的 **`EDGE_DOMAIN`** 与 **`CERTBOT_EMAIL`**，并依次执行：
+
 - `certbot certonly` 申请证书
 - 复制 `react-admin.conf.https.example` 覆盖 `react-admin.conf`
 - 将文件中的 `app.example.com` 替换为 `$EDGE_DOMAIN`
@@ -77,7 +77,7 @@ docker compose exec nginx nginx -s reload
 ### 7. 验证
 
 ```bash
-cd ~/edge
+cd /opt/edge
 sh ./verify-https.sh
 ```
 
@@ -85,49 +85,51 @@ sh ./verify-https.sh
 
 浏览器打开站点，测试 SPA 子路由刷新与 **`/api/`** 接口。
 
-## 续期
+## 手动续期
 
 ```bash
-cd ~/edge
-docker compose run --rm certbot renew
-docker compose exec nginx nginx -s reload
+cd /opt/edge
+sh ./renew-cert.sh
 ```
 
-演练：
+等价于：`certbot renew`（经 compose）成功后 **`nginx -s reload`**（脚本内使用 **`exec -T`**，无终端也可用）。
+
+演练（不修改证书，仅模拟续期流程）：
 
 ```bash
-docker compose run --rm certbot renew --dry-run
+cd /opt/edge
+sh ./renew-cert.sh --dry-run
 ```
 
 ## 自动续期（推荐：宿主机定时任务）
 
-**建议把调度放在宿主机**（`cron` 或 **systemd timer**）：与 edge 里「一次性 `docker compose run --rm certbot`」一致，不增加常驻容器，日志与排障都在系统侧完成。
+**建议把调度放在宿主机**（`cron` 或 **systemd timer**）：定时调用 **`renew-cert.sh`**，不增加常驻容器，日志与排障都在系统侧完成。
 
 Let’s Encrypt 在证书临近到期时才会真正续签；`certbot renew` 会跳过尚不需要的证书。续签成功后应 **`nginx -s reload`**，否则进程可能仍持有旧文件句柄（视环境而定，reload 最稳妥）。
 
 ### 使用 cron（示例）
 
-1. 将 **`~/edge`** 换成你在服务器上的 **edge 目录绝对路径**（与 `docker compose` 所用目录一致）。
+1. 将 **`/opt/edge`** 换成你在服务器上的 **edge 目录绝对路径**（与 `docker compose` 所用目录一致）。
 2. 编辑当前用户的 crontab：`crontab -e`。
 3. 增加一行（示例为 **每天 03:12** 执行一次；可自行改分钟/小时）：
 
 ```cron
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-12 3 * * * cd /home/你的用户/edge && docker compose run --rm certbot renew && docker compose exec -T nginx nginx -s reload >>/var/log/edge-certbot-renew.log 2>&1
+12 3 * * * /opt/edge/renew-cert.sh >>/var/log/edge-certbot-renew.log 2>&1
 ```
 
 说明：
 
-- **`docker compose exec -T nginx`**：`-T` 避免在无 TTY 的 cron 环境下报错。
-- 若 cron 环境里找不到 **`docker`**，请把上述命令里的 **`docker`** 换成 **`which docker`** 得到的绝对路径，或把 Docker 的 bin 目录加入 **`PATH`**。
+- 请把 **`/opt/edge/renew-cert.sh`** 换成脚本的 **绝对路径**；脚本开头会 **`cd` 到自身所在目录**，再执行 compose。
+- 若 cron 环境里找不到 **`docker`**，请把 **`PATH`** 补全为含 Docker CLI 的目录，或在该 cron 行最前面 **`export PATH=...`**。
 - 日志路径 **`/var/log/edge-certbot-renew.log`** 需当前用户可写，或改到 **`$HOME/logs/...`**。
 
-配置完成后建议先手动跑一遍「续期 + reload」，再保留 **`certbot renew --dry-run`** 的演练习惯（升级 certbot 或改卷之后可再跑一次）。
+配置完成后建议先执行 **`sh ./renew-cert.sh --dry-run`**，再启用 cron。
 
 ### 使用 systemd timer（可选）
 
-若更希望用 **`journalctl`** 看执行记录，可新增 **`edge-certbot-renew.service`**（`Type=oneshot`，`WorkingDirectory=/home/你的用户/edge`，`ExecStart` 为与上文相同的 **`docker compose run …` + `exec … reload`**）及 **`edge-certbot-renew.timer`**（`OnCalendar=daily` 等），`systemctl enable --now edge-certbot-renew.timer`。具体 unit 内容按你发行版路径微调即可。
+`Type=oneshot` 的 service 里 **`ExecStart=/opt/edge/renew-cert.sh`**（路径改为你的绝对路径），timer 用 **`OnCalendar=daily`** 等；日志用 **`journalctl -u <服务名>`** 查看。
 
 ## 档 B：同一宿主机多站点
 
