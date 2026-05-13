@@ -1,5 +1,0 @@
-# 全局选项；具体的站点路由由各项目容器的 caddy.* labels 自动注入。
-# 想接收 Let's Encrypt 证书到期通知，把 email 改成你自己的邮箱。
-{
-	email admin@example.com
-}
