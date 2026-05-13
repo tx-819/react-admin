@@ -16,11 +16,12 @@
 
 将本目录拷到服务器，例如 `~/edge`。
 
-### 2. 准备环境变量（可选）
+### 2. 准备环境变量
 
 ```bash
 cp .env.example .env
-# 编辑 .env：EDGE_DOMAIN、CERTBOT_EMAIL 等；nginx 配置中的 server_name 须与 EDGE_DOMAIN 一致
+# 编辑 .env：EDGE_DOMAIN、CERTBOT_EMAIL 等
+# 后续命令将直接读取这些变量，避免手工替换字符串
 ```
 
 ### 3. 启动 edge 栈（创建 `edge` 网络并启动 nginx）
@@ -50,21 +51,23 @@ docker compose up -d
 
 ```bash
 cd ~/edge
-docker compose run --rm certbot certonly \
-  --webroot -w /var/www/certbot \
-  -d "你的域名" \
-  --email "你的邮箱" \
-  --agree-tos --non-interactive
+sh ./setup-https.sh
 ```
 
-成功后，卷 **`certbot_conf`** 内会出现 **`/etc/letsencrypt/live/你的域名/`**。
+脚本会自动读取 `.env` 里的 **`EDGE_DOMAIN`** 与 **`CERTBOT_EMAIL`**，并依次执行：
+- `certbot certonly` 申请证书
+- 复制 `react-admin.conf.https.example` 覆盖 `react-admin.conf`
+- 将文件中的 `app.example.com` 替换为 `$EDGE_DOMAIN`
+- `nginx -t` 校验并 `nginx -s reload`
+
+如需排查可直接打开脚本：`setup-https.sh`。
 
 ### 6. 启用 HTTPS
 
 仓库内默认 **`react-admin.conf` 为仅 80**（无证书也能启动）。证书签发成功后：
 
-1. 将 **`nginx/conf.d/react-admin.conf.https.example`** 复制为 **`nginx/conf.d/react-admin.conf`**（覆盖），并把文件中 **三处** `app.example.com` 全部改为你的 **`certbot -d` 域名**（须与 `live/<域名>/` 目录名一致）。
-2. 校验并重载：
+1. `setup-https.sh` 已自动完成模板覆盖、域名替换、配置校验与重载。
+2. 如需手动复核，可再次执行：
 
 ```bash
 docker compose exec nginx nginx -t
@@ -74,9 +77,11 @@ docker compose exec nginx nginx -s reload
 ### 7. 验证
 
 ```bash
-curl -I "http://你的域名/"
-curl -I "https://你的域名/"
+cd ~/edge
+sh ./verify-https.sh
 ```
+
+脚本会读取 `.env` 中的 **`EDGE_DOMAIN`**，对 **HTTP / HTTPS** 各发一次 `HEAD` 请求并打印响应头。
 
 浏览器打开站点，测试 SPA 子路由刷新与 **`/api/`** 接口。
 
