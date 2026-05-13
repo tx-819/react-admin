@@ -4,6 +4,8 @@
 
 与旧版 **caddy-docker-proxy** 的差异：路由与证书 **不再** 通过 Docker labels 自动生成，须在 **`nginx/conf.d/`** 内 **显式维护** `server` 配置；每新增一个对外域名，通常新增一份 conf（档 B）并执行一次 **certbot**。
 
+运维脚本集中在 **`scripts/`** 目录（在 edge 根目录执行时需带路径，例如 **`sh ./scripts/setup-https.sh`**）。
+
 ## 前置条件
 
 - 域名 **A 记录**（或 AAAA）指向本机公网 IP。
@@ -54,7 +56,7 @@ docker compose up -d
 确保 **`nginx/conf.d/react-admin.conf`** 仍为 **仅监听 80** 的版本（含 **`/.well-known/acme-challenge/`**）。
 
 ```bash
-sh ./setup-https.sh
+sh ./scripts/setup-https.sh
 ```
 
 脚本会自动读取 `.env` 里的 **`EDGE_DOMAIN`** 与 **`CERTBOT_EMAIL`**，并依次执行：
@@ -64,13 +66,13 @@ sh ./setup-https.sh
 - 将文件中的 `app.example.com` 替换为 `$EDGE_DOMAIN`
 - `nginx -t` 校验并 `nginx -s reload`
 
-如需排查可直接打开脚本：`setup-https.sh`。
+如需排查可直接打开脚本：`scripts/setup-https.sh`。
 
 ### 6. 启用 HTTPS
 
 仓库内默认 **`react-admin.conf` 为仅 80**（无证书也能启动）。证书签发成功后：
 
-1. `setup-https.sh` 已自动完成模板覆盖、域名替换、配置校验与重载。
+1. `scripts/setup-https.sh` 已自动完成模板覆盖、域名替换、配置校验与重载。
 2. 如需手动复核，可再次执行：
 
 ```bash
@@ -82,7 +84,7 @@ docker compose exec nginx nginx -s reload
 
 ```bash
 cd /opt/edge
-sh ./verify-https.sh
+sh ./scripts/verify-https.sh
 ```
 
 脚本会读取 `.env` 中的 **`EDGE_DOMAIN`**，对 **HTTP / HTTPS** 各发一次 `HEAD` 请求并打印响应头。
@@ -93,7 +95,7 @@ sh ./verify-https.sh
 
 ```bash
 cd /opt/edge
-sh ./renew-cert.sh
+sh ./scripts/renew-cert.sh
 ```
 
 等价于：`certbot renew`（经 compose）成功后 **`nginx -s reload`**（脚本内使用 **`exec -T`**，无终端也可用）。
@@ -102,30 +104,32 @@ sh ./renew-cert.sh
 
 ```bash
 cd /opt/edge
-sh ./renew-cert.sh --dry-run
+sh ./scripts/renew-cert.sh --dry-run
 ```
 
 ## 自动续期（推荐：宿主机定时任务）
 
-**建议把调度放在宿主机**（`cron` 或 **systemd timer**）：定时调用 **`renew-cert.sh`**，不增加常驻容器，日志与排障都在系统侧完成。
+**建议把调度放在宿主机**（`cron` 或 **systemd timer**）：定时调用 **`scripts/renew-cert.sh`**，不增加常驻容器，日志与排障都在系统侧完成。
 
 Let’s Encrypt 在证书临近到期时才会真正续签；`certbot renew` 会跳过尚不需要的证书。续签成功后应 **`nginx -s reload`**，否则进程可能仍持有旧文件句柄（视环境而定，reload 最稳妥）。
 
 ### 一键写入 cron（推荐）
 
+若你曾用旧路径（例如 **`/opt/edge/renew-cert.sh`**）写过 crontab，升级本目录后请改为 **`/opt/edge/scripts/renew-cert.sh`**，或重新执行一次 **`install-auto-renew-cron.sh --install`**（会先检测是否已存在同路径条目）。
+
 在 edge 目录执行（**用跑 `docker compose` 的同一 Linux 用户**，且该用户已在 **`docker` 组**内）：
 
 ```bash
 cd /opt/edge
-sh ./renew-cert.sh --dry-run
-sh ./install-auto-renew-cron.sh --install
+sh ./scripts/renew-cert.sh --dry-run
+sh ./scripts/install-auto-renew-cron.sh --install
 ```
 
 - 默认 **每天 03:12** 执行一次；默认日志：**`$HOME/logs/edge-certbot-renew.log`**（脚本会创建目录）。
 - 自定义时间与日志：
 
 ```bash
-CRON_SCHEDULE="0 4 * * *" CRON_LOG="/var/log/edge-certbot-renew.log" sh ./install-auto-renew-cron.sh --install
+CRON_SCHEDULE="0 4 * * *" CRON_LOG="/var/log/edge-certbot-renew.log" sh ./scripts/install-auto-renew-cron.sh --install
 ```
 
 （若日志在 **`/var/log`**，需保证当前用户对该文件可写，或改用 **`$HOME/logs/...`**。）
@@ -133,7 +137,7 @@ CRON_SCHEDULE="0 4 * * *" CRON_LOG="/var/log/edge-certbot-renew.log" sh ./instal
 只查看将写入的内容、不修改 crontab：
 
 ```bash
-sh ./install-auto-renew-cron.sh
+sh ./scripts/install-auto-renew-cron.sh
 ```
 
 ## 档 B：同一宿主机多站点

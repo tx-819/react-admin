@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-cd "$ROOT_DIR"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+EDGE_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+cd "$EDGE_ROOT"
 
 case "${1:-}" in
   "")

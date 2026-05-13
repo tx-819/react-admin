@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-RENEW_SCRIPT="$ROOT_DIR/renew-cert.sh"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+RENEW_SCRIPT="$SCRIPT_DIR/renew-cert.sh"
 LOG_FILE="${CRON_LOG:-$HOME/logs/edge-certbot-renew.log}"
 SCHEDULE="${CRON_SCHEDULE:-12 3 * * *}"
 
