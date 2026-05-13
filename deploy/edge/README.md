@@ -61,7 +61,10 @@ docker compose run --rm certbot certonly \
 
 ### 6. 启用 HTTPS
 
-按实现计划 **任务 6**，将 **`nginx/conf.d/react-admin.conf`** 全文替换为 **含 443 与 301** 的最终版本（`ssl_certificate` 路径中的目录名须与上一步 **`-d`** 的主名一致）。
+仓库内默认 **`react-admin.conf` 为仅 80**（无证书也能启动）。证书签发成功后：
+
+1. 将 **`nginx/conf.d/react-admin.conf.https.example`** 复制为 **`nginx/conf.d/react-admin.conf`**（覆盖），并把文件中 **三处** `app.example.com` 全部改为你的 **`certbot -d` 域名**（须与 `live/<域名>/` 目录名一致）。
+2. 校验并重载：
 
 ```bash
 docker compose exec nginx nginx -t
