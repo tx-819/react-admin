@@ -16,6 +16,10 @@
 
 将本目录拷到服务器，例如 `/opt/edge`。
 
+```bash
+scp -i 你的ssh私钥 -r deploy/edge/ 用户名@服务器IP:/opt
+```
+
 ### 2. 准备环境变量
 
 ```bash
@@ -131,21 +135,6 @@ CRON_SCHEDULE="0 4 * * *" CRON_LOG="/var/log/edge-certbot-renew.log" sh ./instal
 ```bash
 sh ./install-auto-renew-cron.sh
 ```
-
-### 手工编辑 cron（可选）
-
-1. `crontab -e`
-2. 粘贴 **`sh ./install-auto-renew-cron.sh`** 打印出的块；把其中的 **`renew-cert.sh`** 路径保持为脚本所在目录的**绝对路径**。
-
-说明：
-
-- cron 行使用 **`/bin/sh /path/to/renew-cert.sh`**，不依赖脚本是否带 **`+x`**。
-- 若 cron 里找不到 **`docker`**，在 **`PATH=`** 中补全 Docker CLI 所在目录。
-- 配置完成后建议先 **`sh ./renew-cert.sh --dry-run`**。
-
-### 使用 systemd timer（可选）
-
-`Type=oneshot` 的 service 里 **`ExecStart=/opt/edge/renew-cert.sh`**（路径改为你的绝对路径），timer 用 **`OnCalendar=daily`** 等；日志用 **`journalctl -u <服务名>`** 查看。
 
 ## 档 B：同一宿主机多站点
 
