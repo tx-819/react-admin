@@ -107,25 +107,41 @@ sh ./renew-cert.sh --dry-run
 
 Let’s Encrypt 在证书临近到期时才会真正续签；`certbot renew` 会跳过尚不需要的证书。续签成功后应 **`nginx -s reload`**，否则进程可能仍持有旧文件句柄（视环境而定，reload 最稳妥）。
 
-### 使用 cron（示例）
+### 一键写入 cron（推荐）
 
-1. 将 **`/opt/edge`** 换成你在服务器上的 **edge 目录绝对路径**（与 `docker compose` 所用目录一致）。
-2. 编辑当前用户的 crontab：`crontab -e`。
-3. 增加一行（示例为 **每天 03:12** 执行一次；可自行改分钟/小时）：
+在 edge 目录执行（**用跑 `docker compose` 的同一 Linux 用户**，且该用户已在 **`docker` 组**内）：
 
-```cron
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-12 3 * * * /opt/edge/renew-cert.sh >>/var/log/edge-certbot-renew.log 2>&1
+```bash
+cd /opt/edge
+sh ./renew-cert.sh --dry-run
+sh ./install-auto-renew-cron.sh --install
 ```
+
+- 默认 **每天 03:12** 执行一次；默认日志：**`$HOME/logs/edge-certbot-renew.log`**（脚本会创建目录）。
+- 自定义时间与日志：
+
+```bash
+CRON_SCHEDULE="0 4 * * *" CRON_LOG="/var/log/edge-certbot-renew.log" sh ./install-auto-renew-cron.sh --install
+```
+
+（若日志在 **`/var/log`**，需保证当前用户对该文件可写，或改用 **`$HOME/logs/...`**。）
+
+只查看将写入的内容、不修改 crontab：
+
+```bash
+sh ./install-auto-renew-cron.sh
+```
+
+### 手工编辑 cron（可选）
+
+1. `crontab -e`
+2. 粘贴 **`sh ./install-auto-renew-cron.sh`** 打印出的块；把其中的 **`renew-cert.sh`** 路径保持为脚本所在目录的**绝对路径**。
 
 说明：
 
-- 请把 **`/opt/edge/renew-cert.sh`** 换成脚本的 **绝对路径**；脚本开头会 **`cd` 到自身所在目录**，再执行 compose。
-- 若 cron 环境里找不到 **`docker`**，请把 **`PATH`** 补全为含 Docker CLI 的目录，或在该 cron 行最前面 **`export PATH=...`**。
-- 日志路径 **`/var/log/edge-certbot-renew.log`** 需当前用户可写，或改到 **`$HOME/logs/...`**。
-
-配置完成后建议先执行 **`sh ./renew-cert.sh --dry-run`**，再启用 cron。
+- cron 行使用 **`/bin/sh /path/to/renew-cert.sh`**，不依赖脚本是否带 **`+x`**。
+- 若 cron 里找不到 **`docker`**，在 **`PATH=`** 中补全 Docker CLI 所在目录。
+- 配置完成后建议先 **`sh ./renew-cert.sh --dry-run`**。
 
 ### 使用 systemd timer（可选）
 
