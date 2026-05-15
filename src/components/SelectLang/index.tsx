@@ -27,7 +27,7 @@ const SelectLang = () => {
 
   return (
     <Dropdown menu={{ items: menuItems }} placement="bottomRight">
-      <TranslationOutlined className="text-xl cursor-pointer text-black/80 p-2 hover:bg-black/10 rounded-md dark:text-white dark:hover:bg-white/10 transition-all duration-300" />
+      <TranslationOutlined className="text-xl cursor-pointer text-black/80 p-2 hover:bg-black/10 rounded-md dark:text-white! dark:hover:bg-white/10 transition-all duration-300" />
     </Dropdown>
   );
 };
