@@ -48,6 +48,7 @@ export const login = async (params: LoginParams): Promise<LoginResponse> => {
  */
 export interface RegisterParams {
   username: string;
+  email: string;
   password: string;
   nickname?: string;
   avatar?: string;

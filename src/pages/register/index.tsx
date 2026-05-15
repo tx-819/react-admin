@@ -12,6 +12,7 @@ const Register = () => {
 
   const onFinish = async (values: {
     username: string;
+    email: string;
     password: string;
     confirmPassword: string;
     nickname?: string;
@@ -22,6 +23,7 @@ const Register = () => {
       // 调用注册API
       await register({
         username: values.username,
+        email: values.email,
         password: values.password,
         nickname: values.nickname,
         avatar: values.avatar,
@@ -43,7 +45,9 @@ const Register = () => {
     <div className="min-h-screen relative overflow-hidden bg-[#f0f4ff] dark:bg-gray-900">
       <div className="flex items-center justify-between p-8 relative z-10">
         <div className="flex items-center gap-2">
-          <span className="text-xl font-semibold text-gray-800 dark:text-gray-100">Admin</span>
+          <span className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+            Admin
+          </span>
         </div>
         <Space>
           <SelectLang />
@@ -55,8 +59,12 @@ const Register = () => {
       <div className="w-full p-8 mt-8 relative z-10 mx-auto flex flex-col items-center">
         <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">创建账号</h1>
-            <p className="text-gray-500 dark:text-gray-400">填写以下信息完成注册</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+              创建账号
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              填写以下信息完成注册
+            </p>
           </div>
 
           <Form
@@ -76,6 +84,17 @@ const Register = () => {
               className="mb-4"
             >
               <Input size="large" placeholder="用户名" className="h-12" />
+            </Form.Item>
+
+            <Form.Item
+              name="email"
+              rules={[
+                { required: true, message: "请输入邮箱" },
+                { type: "email", message: "请输入有效的邮箱地址" },
+              ]}
+              className="mb-4"
+            >
+              <Input size="large" placeholder="邮箱" className="h-12" />
             </Form.Item>
 
             <Form.Item
@@ -169,4 +188,3 @@ const Register = () => {
 };
 
 export default Register;
-
