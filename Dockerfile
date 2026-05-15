@@ -7,9 +7,7 @@ COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY . .
-# Uncomment and set GitHub Actions build-args if you need Vite env at build time:
-# ARG VITE_API_BASE_URL
-# ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
