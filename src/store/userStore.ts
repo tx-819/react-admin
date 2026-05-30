@@ -13,7 +13,7 @@ interface userStore extends UserInfo {
 }
 
 const initialState = {
-  id: "",
+  id: 0,
   username: "",
   nickname: "",
   avatar: "",

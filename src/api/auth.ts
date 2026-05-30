@@ -5,14 +5,21 @@
 import { post, get } from "../utils/request";
 import type { AuthAction, MenuRecord } from "./permission";
 /**
- * 用户信息
+ * 用户信息（对应后端 UserDto）
  */
 export interface UserInfo {
-  id: string;
+  id: number;
   username: string;
-  nickname: string;
-  avatar?: string;
+  nickname: string | null;
+  avatar: string | null;
   isSuper: boolean;
+  email?: string | null;
+  phone?: string | null;
+  openid?: string | null;
+  unionid?: string | null;
+  status?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -24,11 +31,10 @@ export interface LoginParams {
 }
 
 /**
- * 登录响应数据
+ * 登录响应数据（对应后端 AuthResponseDto）
  */
 export interface LoginResponse {
   accessToken: string;
-  expiresIn: number;
   user: UserInfo;
 }
 
@@ -55,24 +61,9 @@ export interface RegisterParams {
 }
 
 /**
- * 注册响应数据中的用户信息
+ * 注册响应数据（后端 register 直接返回 UserDto）
  */
-export interface RegisterUserInfo {
-  id: string;
-  username: string;
-  nickname: string;
-  avatar: string | null;
-  status: number;
-  isSuper: boolean;
-  createdAt: string;
-}
-
-/**
- * 注册响应数据
- */
-export interface RegisterResponse {
-  user: RegisterUserInfo;
-}
+export type RegisterResponse = UserInfo;
 
 /**
  * 用户注册
@@ -85,20 +76,6 @@ export const register = async (
   return post<RegisterResponse>("/auth/register", params, {
     skipAuth: true, // 注册接口不需要认证
   });
-};
-
-/**
- * 验证Token
- * @returns 用户信息
- */
-export const verifyToken = async (): Promise<UserInfo> => {
-  return post<UserInfo>(
-    "/auth/verify",
-    {},
-    {
-      skipAuth: true, // 验证接口不需要认证
-    },
-  );
 };
 
 /**
@@ -125,33 +102,17 @@ export const getAuthActions = async (): Promise<AuthAction[]> => {
   return get<AuthAction[]>("/auth/actions");
 };
 
-/* ==================== 邮箱链接登录 ==================== */
+/* ==================== 邮箱一键登录 ==================== */
 
 /**
- * 发送登录链接到邮箱
+ * 发送一键登录链接到邮箱
+ *
+ * 后端流程：发送的邮件链接直接指向后端 `GET /auth/magic-login?token=...`，
+ * 校验通过后由后端重定向到前端 `/login-success?accessToken=...`，
+ * 因此前端无需再调用「校验链接」接口。
+ *
  * @param email 用户邮箱
  */
-export const sendLoginLink = async (
-  email: string,
-): Promise<{ success: boolean }> => {
-  return post<{ success: boolean }>(
-    "/auth/sendLoginEmail",
-    { email },
-    { skipAuth: true },
-  );
-};
-
-/**
- * 验证邮箱链接 Token 并登录
- * @param token 邮件中的链接 token（URL 参数）
- * @returns 与密码登录相同的登录响应
- */
-export const verifyLoginLink = async (
-  token: string,
-): Promise<LoginResponse> => {
-  return post<LoginResponse>(
-    "/auth/magic-link/verify",
-    { token },
-    { skipAuth: true },
-  );
+export const sendLoginLink = async (email: string): Promise<void> => {
+  return post<void>("/auth/sendLoginEmail", { email }, { skipAuth: true });
 };
